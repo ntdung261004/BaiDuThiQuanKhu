@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, redirect, url_for, request, Response, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import base64, threading, time
@@ -29,12 +28,11 @@ pi_connected = False
 last_heartbeat = 0
 frame_lock = threading.Lock()
 latest_processed_data = {
-    'time': '10:30',
-    'target': 'Bia số 4',
-    'score': '10.5',
-    'force': '15N',
-    # Thay đổi URL ảnh mặc định để hiển thị khung ảnh
-    'image_url': 'https://i.imgur.com/vHqB3pG.png' # Một ảnh placeholder trống
+    'time': '--:--:--',
+    'target': 'Chưa có kết quả',
+    'score': '--.-',
+    'force': '--',
+    'image_url': 'https://i.imgur.com/vHqB3pG.png'
 }
 
 # Register controllers
@@ -44,7 +42,6 @@ app.register_blueprint(soldier_bp)
 @app.route('/')
 @login_required
 def index():
-    # giao diện sẽ gọi API để đổ dữ liệu
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -67,21 +64,32 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('login')
+)
 
-# Livestream APIs (giữ nguyên)
+# Livestream APIs
 @app.route('/video_upload', methods=['POST'])
 def video_upload():
     global latest_frame, pi_connected, last_heartbeat
-    data = request.get_json(silent=True) or {}
-    if 'frame' not in data:
+    # Nhận dữ liệu nhị phân thô (raw binary data)
+    frame_data_binary = request.data
+    if not frame_data_binary:
         return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
-    frame_data_base64 = data['frame']
     with frame_lock:
-        latest_frame = base64.b64decode(frame_data_base64)
+        latest_frame = frame_data_binary
         last_heartbeat = time.time()
         pi_connected = True
     return jsonify({'status': 'success'})
+
+@app.route('/processed_data_upload', methods=['POST'])
+def processed_data_upload():
+    global latest_processed_data
+    data = request.get_json()
+    if data:
+        latest_processed_data = data
+        print('Nhận dữ liệu thành công!')
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
 
 @app.route('/connection-status')
 def connection_status():
