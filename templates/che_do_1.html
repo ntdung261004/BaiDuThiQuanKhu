@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Chế độ Huấn luyện cơ bản{% endblock %}
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper" style="width: 85%;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
+            <h2 class="fs-2 m-0">
+                Chế độ Huấn luyện cơ bản
+                <span id="soldier-info" class="text-muted fs-4 ms-2 d-none"></span>
+            </h2>
+            <div class="ms-auto">
+                <a href="#" id="back-to-livestream" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại
+                </a>
+            </div>
+        </nav>
+
+        <div class="container-fluid px-4 mt-4">
+            <div class="row d-flex align-items-stretch">
+                <div class="col-md-8 mb-4">
+                    <div class="d-flex flex-column h-100">
+                        <div class="bg-light rounded p-3 shadow-sm flex-fill d-flex flex-column">
+                            <h5 class="mb-2">
+                                <i class="fas fa-video me-2"></i> Luồng Trực Tiếp
+                                <span id="connection-status-banner" class="ms-3 fw-bold"></span>
+                            </h5>
+                            <div class="video-container livestream-frame mb-3">
+                                <div id="status-message" class="text-white text-center d-flex flex-column justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; font-size: 1.5rem; background-color: rgba(0, 0, 0, 0.7); display: none;">
+                                    <i class="fas fa-exclamation-triangle mb-3"></i>
+                                    <p>Không có luồng video</p>
+                                    <small>Đang chờ kết nối từ thiết bị...</small>
+                                </div>
+                                <img src="" id="video-feed" class="img-fluid rounded" alt="Luồng video trực tiếp" style="height: 100%; width: 100%; object-fit: contain;">
+                            </div>
+                            
+                            <div class="bg-white rounded p-3 shadow-sm mt-3 flex-fill d-flex flex-column">
+                                <h5 class="mb-3"><i class="fas fa-history me-2"></i> Lịch sử Phát Bắn</h5>
+                                <div class="table-responsive flex-fill">
+                                    <table class="table table-hover table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Thời gian</th>
+                                                <th>Mục tiêu</th>
+                                                <th>Điểm</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="shot-history-tbody">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <div class="d-flex flex-column h-100">
+                        <div class="bg-light rounded p-3 shadow-sm flex-fill">
+                            <h5 class="mb-2"><i class="fas fa-bullseye me-2"></i> Kết quả Phát Bắn Mới Nhất</h5>
+                            <div id="latest-result">
+                                <p><strong>Thời gian:</strong> <span id="latest-time">--:--:--</span></p>
+                                <p><strong>Mục tiêu:</strong> <span id="latest-target">---</span></p>
+                                <p><strong>Điểm số:</strong> <span class="badge bg-success fs-5" id="latest-score">--.-</span></p>
+                                
+                                <div class="text-center mt-3">
+                                    <p class="mb-1"><small class="text-muted">Ảnh Phân Tích</small></p>
+                                    <div class="image-frame">
+                                        <img id="latest-image" class="img-fluid rounded border" alt="Ảnh kết quả phân tích">
+                                    </div>
+                                    <small id="image-note" class="text-muted mt-2 d-block">Đang chờ kết quả từ thiết bị...</small>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-light rounded p-3 shadow-sm mb-4">
+                <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i> Thống kê Phiên Huấn luyện</h5>
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="p-2">
+                            <i class="fas fa-sort-numeric-up-alt fa-2x text-primary mb-2"></i>
+                            <h6>Tổng Phát Bắn</h6>
+                            <span class="fs-4" id="total-shots">0</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="p-2">
+                            <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                            <h6>Tổng Điểm Số</h6>
+                            <span class="fs-4" id="current-score">0.0</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="p-2">
+                            <i class="fas fa-bullseye fa-2x text-success mb-2"></i>
+                            <h6>Tỷ lệ Bắn Trúng</h6>
+                            <span class="fs-4" id="hit-rate">--.-%</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="p-2">
+                            <i class="fas fa-calculator fa-2x text-info mb-2"></i>
+                            <h6>Điểm Trung Bình</h6>
+                            <span class="fs-4" id="average-score">--.-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-light rounded p-3 shadow-sm mb-4">
+                <h5 class="mb-3"><i class="fas fa-paint-brush me-2"></i> Gợi ý Bổ Sung</h5>
+                <ul>
+                    <li><strong>Biểu đồ đường điểm số:</strong> Hiển thị sự tiến bộ của người bắn theo thời gian.</li>
+                    <li><strong>Hình ảnh bia bắn ảo:</strong> Vẽ vị trí các phát bắn lên một hình ảnh bia ảo để trực quan hóa độ chính xác.</li>
+                    <li><strong>Bảng lịch sử bắn:</strong> Hiển thị một bảng nhỏ với lịch sử các phát bắn gần nhất.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stream.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="{{ url_for('static', filename='js/che_do_1.js') }}"></script>
+{% endblock %}

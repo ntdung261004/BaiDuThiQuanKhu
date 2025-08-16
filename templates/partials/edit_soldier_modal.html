@@ -1,0 +1,35 @@
+<div class="modal fade" id="editSoldierModal" tabindex="-1" aria-labelledby="editSoldierModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Sửa chiến sĩ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-soldier-form">
+          <input type="hidden" name="id">
+          <div class="mb-3">
+            <label class="form-label">Họ và tên</label>
+            <input name="name" type="text" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Đơn vị</label>
+            <input name="unit" type="text" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Cấp bậc</label>
+            <input name="rank" type="text" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ghi chú</label>
+            <textarea name="notes" class="form-control" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-edit-cancel" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button id="btn-edit-save" type="button" class="btn btn-primary">Lưu thay đổi</button>
+      </div>
+    </div>
+  </div>
+</div>

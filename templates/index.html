@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Trang chủ{% endblock %}
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper" style="width: 85%;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
+            <div class="d-flex align-items-center">
+                <h2 class="fs-2 m-0">Trang chủ</h2>
+            </div>
+            <div class="ms-auto">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle second-text fw-bold" href="#" id="navbarDropdown"
+                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-2"></i>Chào, {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="#">Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        
+        <div class="container-fluid px-4">
+            <div class="row g-3 my-2">
+                <div class="col-12">
+                    <div class="p-4 bg-white shadow-sm rounded">
+                        <h3 class="fs-3">Chào mừng đến với Hệ thống Mô Phỏng Đường Ngắm Súng Tiểu Liên</h3>
+                        <p class="text-muted">
+                            Đây là hệ thống huấn luyện bắn súng thông minh, tích hợp AI và xử lý ảnh để đánh giá chính xác kết quả.
+                            Hệ thống theo dõi hiệu suất, cung cấp phân tích chuyên sâu và hỗ trợ bộ đội cải thiện đường ngắm,
+                            đồng thời nâng cao tiêu chuẩn an toàn trong kiểm tra.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 my-4">
+                <h3 class="fs-4">
+                        Thiết bị đồng bộ                      
+                    </h3>
+                <div class="col-md-6">                
+                    <div class="p-3 bg-white shadow-sm d-flex justify-content-between align-items-center rounded">
+                        <div>
+                            <h3 class="fs-4">Thiết bị bắn (Raspberry Pi)</h3>
+                            <p id="pi-status" class="fs-6 text-success fw-bold">Trạng thái: Đang hoạt động</p>
+                        </div>
+                        <i class="fas fa-robot fs-1 text-primary"></i>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="p-3 bg-white shadow-sm d-flex justify-content-between align-items-center rounded">
+                        <div>
+                            <h3 class="fs-4">Kết nối âm thanh (Bluetooth)</h3>
+                            <p class="fs-6 text-danger fw-bold">Trạng thái: Ngắt kết nối</p>
+                        </div>
+                        <i class="fas fa-bluetooth-b fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row my-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="fs-4">
+                        Danh sách chiến sĩ
+                        <span id="soldier-count" class="text-muted" style="font-size: 0.8em;">
+                            (Tổng số: 0)
+                        </span>
+                    </h3>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSoldierModal">
+                        <i class="fas fa-plus me-1"></i> Thêm chiến sĩ
+                    </button>
+                </div>
+                <div class="table-responsive bg-white shadow-sm rounded p-3">
+                    <table class="table table-hover align-middle" id="soldier-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Họ và tên</th>
+                                <th>Đơn vị</th>
+                                <th>Cấp bậc</th>
+                                <th>Ghi chú</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="soldier-tbody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row my-4">
+                <h3 class="fs-4 mb-3">Chức năng chính của hệ thống</h3>
+                <div class="col-12">
+                    <ul class="list-group list-group-flush bg-white rounded shadow-sm">
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="fas fa-video me-3 text-primary"></i>
+                            Phát Livestream thời gian thực
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="fas fa-crosshairs me-3 text-primary"></i>
+                            Phân tích điểm số tự động
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="fas fa-chart-bar me-3 text-primary"></i>
+                            Thống kê và báo cáo chi tiết
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/add_soldier_modal.html' %}
+{% include 'partials/edit_soldier_modal.html' %}
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<script>
+window.SOLDIER_API = {
+  list: "{{ url_for('soldier_bp.get_soldiers') }}",
+  create: "{{ url_for('soldier_bp.create_soldier') }}",
+  update_template: "{{ url_for('soldier_bp.update_soldier', soldier_id=0) }}",
+  delete_template: "{{ url_for('soldier_bp.delete_soldier', soldier_id=0) }}",
+  count: "{{ url_for('soldier_bp.get_soldier_count') }}"
+};
+</script>
+
+<script src="{{ url_for('static', filename='js/soldiers.js') }}"></script>
+
+{% endblock %}

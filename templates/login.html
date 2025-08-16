@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng nhập{% endblock %}
+
+{% block content %}
+<body id="login-page">
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="card shadow">
+            <h2 class="text-center mb-4">Chào mừng quay lại</h2>
+            {% if error %}
+                <div class="alert alert-danger text-center" role="alert">
+                    {{ error }}
+                </div>
+            {% endif %}
+            <form action="{{ url_for('login') }}" method="post">
+                <div class="mb-4">
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Tên đăng nhập" required>
+                </div>
+                <div class="mb-4">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Mật khẩu" required>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">Đăng nhập</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+{% endblock %}
+{% block scripts %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}

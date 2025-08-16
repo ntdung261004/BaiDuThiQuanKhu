@@ -1,0 +1,53 @@
+/* ------------------------------------------- */
+/* Các kiểu dáng riêng cho trang login     */
+/* ------------------------------------------- */
+
+body#login-page {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #343a40; /* Màu nền tối được yêu cầu */
+}
+
+body#login-page .card {
+    background-color: #f1f1f1; /* Form login màu trắng xám */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body#login-page .form-control {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    color: #212529;
+}
+
+body#login-page .form-control:focus {
+    border-color: #343a40;
+}
+
+body#login-page .form-control::placeholder {
+    color: #6c757d;
+}
+
+body#login-page .btn-primary {
+    background-color: #343a40; /* Nút đăng nhập màu tối */
+    border-color: #343a40;
+    color: #fff;
+    font-weight: bold;
+}
+
+body#login-page .btn-primary:hover {
+    background-color: #23272b; /* Màu hover tối hơn */
+    border-color: #1d2124;
+}
+
+body#login-page h2 {
+    color: #343a40; /* Tiêu đề màu tối */
+}
+
+body#login-page .alert-danger {
+    background-color: #5d2525;
+    color: #ffb8b8;
+    border-color: #ffb8b8;
+}

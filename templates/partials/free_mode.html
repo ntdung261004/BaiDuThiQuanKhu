@@ -1,0 +1,56 @@
+<h3 class="mb-4">Chế độ Tự do</h3>
+<div id="connection-status-banner" class="mb-3 fw-bold">
+    <i class="fas fa-plug"></i> <span id="connection-text">Đang kiểm tra kết nối...</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="bg-dark p-2 rounded shadow-sm" style="position: relative; height: 500px;">
+            <div id="status-message" class="text-white text-center d-flex flex-column justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; font-size: 1.5rem; background-color: rgba(0, 0, 0, 0.7);">
+                <i class="fas fa-exclamation-triangle mb-3"></i>
+                <p>Không có luồng video</p>
+                <small>Đang chờ kết nối từ thiết bị...</small>
+            </div>
+            
+            <img id="video-feed" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="bg-white p-4 rounded shadow-sm h-100 d-flex flex-column justify-content-center align-items-center text-center">
+            <div id="info-placeholder">
+                <i class="fas fa-info-circle fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Thông tin sẽ hiển thị khi có kết nối</h4>
+                <p class="text-muted">Đang chờ dữ liệu từ hệ thống</p>
+            </div>
+            
+            <div id="info-display" style="display: none;">
+                <h4 class="mb-4">Kết quả bắn</h4>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <strong>Thời gian bắn:</strong>
+                        <span id="shot-time" class="text-primary">--:--</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <strong>Tên mục tiêu:</strong>
+                        <span id="target-name" class="text-primary">Bia số 4</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <strong>Điểm:</strong>
+                        <span id="shot-score" class="text-danger fs-3 fw-bold">--</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <strong>Lực bắn:</strong>
+                        <span id="shot-force" class="text-primary">--</span>
+                    </li>
+                </ul>
+                
+                <h5 class="mt-4">Vị trí điểm chạm</h5>
+                <div class="text-center">
+                    <div id="target-image-container" style="width: 250px; height: 250px; border: 1px solid #ccc; margin: auto; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                        <img id="target-image" src="https://i.imgur.com/G5T5j92.png" alt="Mô hình bia" style="max-width: 100%;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Cài đặt{% endblock %}
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper" style="width: 85%;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
+            <h2 class="fs-2 m-0">
+                Cài đặt
+                <span id="soldier-info" class="text-muted fs-4 ms-2 d-none"></span>
+            </h2>
+        </nav>
+        <div class="container-fluid px-4 mt-4">
+            <h3 class="mb-4">Giao diện của Cài đặt</h3>
+            <p>Bạn có thể thiết kế nội dung cho chế độ này tại đây.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

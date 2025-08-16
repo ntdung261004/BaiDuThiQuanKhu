@@ -1,0 +1,65 @@
+/*
+ * Tệp CSS này chứa các kiểu dáng riêng cho trang livestream
+ * và các chế độ huấn luyện liên quan.
+*/
+
+/* ------------------------------------------- */
+/* Các lớp hỗ trợ cho khung video và ảnh        */
+/* ------------------------------------------- */
+
+.livestream-frame {
+    /* Đảm bảo khung video luôn có tỷ lệ 16:9 */
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* Tỷ lệ khung hình 16:9 */
+    background-color: #000;
+}
+
+.livestream-frame #video-feed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+
+.image-frame {
+    /* Đảm bảo khung ảnh luôn có tỷ lệ 1:1 (hình vuông) */
+    position: relative;
+    width: 100%;
+    padding-top: 100%; /* Tỷ lệ khung hình 1:1 */
+    background-color: #f1f3f5;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+.image-frame #latest-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+
+/* ------------------------------------------- */
+/* Các kiểu dáng riêng cho trang livestream    */
+/* ------------------------------------------- */
+
+#connection-status-banner {
+    font-size: 1.1rem;
+}
+
+#connection-status-banner.connected {
+    color: #28a745; /* Xanh lá */
+}
+
+#connection-status-banner.disconnected {
+    color: #dc3545; /* Đỏ */
+}
+
+/* Các lớp CSS cho bảng lịch sử bắn mới */
+.table-responsive {
+    overflow-y: auto; /* Cho phép cuộn khi nội dung quá dài */
+}

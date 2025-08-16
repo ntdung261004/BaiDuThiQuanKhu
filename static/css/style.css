@@ -1,0 +1,164 @@
+/* ------------------------------------------- */
+/* Các kiểu dáng chung cho toàn bộ trang web   */
+/* ------------------------------------------- */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa; /* Màu nền mặc định cho các trang khác */
+    color: #212529; /* Màu chữ mặc định */
+}
+
+/* Các kiểu dáng chung cho card và form */
+.card {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.form-control {
+    border-radius: 5px;
+    height: 48px;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    color: #212529;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    font-weight: bold;
+    height: 48px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Sidebar */
+#sidebar-wrapper {
+    min-height: 100vh;
+    transition: margin 0.25s ease-out;
+}
+
+/* Kiểu dáng cho các danh mục */
+#sidebar-wrapper .list-group-item {
+    padding: 20px 20px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    border-radius: 5px; /* Thêm bo góc cho cả hai trạng thái */
+}
+
+/* Hiệu ứng khi di chuột vào */
+#sidebar-wrapper .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff;
+    transform: translateX(5px);
+}
+
+/* Hiệu ứng khi được chọn (active) */
+#sidebar-wrapper .list-group-item.active {
+    background-color: #0d6efd !important; /* Màu xanh nổi bật của nút chính */
+    color: #fff !important;
+    font-weight: bold; /* Làm nổi bật chữ */
+    transform: none; /* Đảm bảo không có hiệu ứng dịch chuyển */
+}
+
+/* Đảm bảo màu active không bị hover ghi đè */
+#sidebar-wrapper .list-group-item.active:hover {
+    background-color: #0b5ed7 !important; /* Màu đậm hơn khi hover */
+}
+
+/* Page Content */
+#page-content-wrapper {
+    min-width: 0;
+    width: 100%;
+}
+
+/* Điều chỉnh lại màu chữ và các icon */
+.second-text {
+    color: #4a5462;
+}
+
+/* Custom styles cho navbar */
+.navbar-nav .nav-link {
+    font-weight: bold;
+    color: #333 !important;
+}
+
+.navbar-nav .dropdown-item:hover {
+    background-color: #f1f1f1;
+}
+
+/* Cấu hình icon */
+.fa-tachometer-alt, .fa-camera, .fa-cogs, .fa-chart-line, .fa-sign-out-alt, .fa-user {
+    font-size: 1.2rem;
+}
+
+/* Các lớp tiện ích (utilities) chung */
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+}
+
+.rounded {
+    border-radius: .25rem!important;
+}
+
+/* ------------------------------------------- */
+/* Responsive spacing cho màn hình nhỏ         */
+/* ------------------------------------------- */
+@media (max-width: 992px) {
+    /* Mỗi hàng cách nhau nhiều hơn để dễ đọc */
+    .container-fluid .row {
+        margin-bottom: 2rem;
+    }
+
+    /* Bảng danh sách chiến sĩ */
+    .table-responsive {
+        padding: 0.75rem;
+    }
+
+    /* Nút trong bảng sẽ to hơn để dễ bấm */
+    .table .btn {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Các khối trạng thái thiết bị xuống hàng đầy đủ */
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Bảng có scroll ngang */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    /* Modal form full width */
+    .modal-dialog {
+        max-width: 95%;
+        margin: 1rem auto;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Tiêu đề nhỏ hơn để vừa màn hình */
+    h3.fs-4, h3.fs-3 {
+        font-size: 1.2rem;
+    }
+
+    /* Các nút bấm */
+    .btn {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+}

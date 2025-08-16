@@ -1,0 +1,100 @@
+/* ------------------------------------------- */
+/* Giao diện quản lý chiến sĩ - Trang chủ      */
+/* ------------------------------------------- */
+
+/* Khoảng cách giữa các hàng */
+.container-fluid .row {
+    margin-bottom: 1.5rem; /* Tăng khoảng cách giữa các khối */
+}
+
+/* Padding cho các khung nội dung */
+.p-3, .p-4 {
+    padding: 1.5rem !important; /* Tăng nhẹ padding bên trong */
+}
+
+/* Tiêu đề phần nội dung */
+h3.fs-4, h3.fs-3 {
+    margin-bottom: 1rem;
+}
+
+/* Giữ bảng và modal thoáng hơn */
+.table-responsive {
+    padding: 1rem;
+}
+
+/* Chức năng chính của hệ thống */
+.list-group-item {
+    padding: 1rem 1.25rem;
+}
+
+/* Giữa trạng thái thiết bị và chức năng */
+.row.g-3.my-4 {
+    margin-bottom: 2rem !important;
+}
+
+/* Bảng danh sách chiến sĩ */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead {
+    background-color: #f1f3f5;
+    font-weight: bold;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.table td, 
+.table th {
+    vertical-align: middle;
+}
+
+/* Các nút thao tác trong bảng */
+.table .btn {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
+
+.table .btn i {
+    font-size: 0.85rem;
+}
+
+/* Modal thêm/sửa chiến sĩ */
+.modal-content {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.modal-header {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1); /* nút đóng màu trắng */
+}
+
+.modal-footer .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    font-weight: bold;
+}
+
+.modal-footer .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Nút "Thêm chiến sĩ" */
+.btn-primary i {
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    font-weight: 600;
+}
