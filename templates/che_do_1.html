@@ -1,24 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}Chế độ Huấn luyện cơ bản{% endblock %}
+{% block title %}Huấn luyện cơ bản{% endblock %}
 
 {% block content %}
 <div class="d-flex" id="wrapper">
     {% include 'sidebar.html' %}
     <div id="page-content-wrapper" style="width: 85%;">
         <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
-            <h2 class="fs-2 m-0">
-                Chế độ Huấn luyện cơ bản
-                <span id="soldier-info" class="text-muted fs-4 ms-2 d-none"></span>
+            <h2 class="fs-2 m-0 mb-3">
+                Chế độ Huấn luyện cá nhân
+                <div class="dropdown d-inline-block ms-3">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="soldierDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        Chọn chiến sĩ
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="soldierDropdownMenu" id="soldier-list-dropdown">
+                        </ul>
+                </div>
             </h2>
             <div class="ms-auto">
-                <a href="#" id="back-to-livestream" class="btn btn-secondary">
+                <a href="/livestream" id="back-to-livestream" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Quay lại
                 </a>
             </div>
         </nav>
-
-        <div class="container-fluid px-4 mt-4">
+        <span id="soldier-info" class="text-muted fs-6 ms-5 d-none">chưa có</span>
+        <div class="container-fluid px-4 mt-2">
             <div class="row d-flex align-items-stretch">
                 <div class="col-md-8 mb-4">
                     <div class="d-flex flex-column h-100">
@@ -27,19 +33,26 @@
                                 <i class="fas fa-video me-2"></i> Luồng Trực Tiếp
                                 <span id="connection-status-banner" class="ms-3 fw-bold"></span>
                             </h5>
-                            <div class="video-container livestream-frame mb-3">
-                                <div id="status-message" class="text-white text-center d-flex flex-column justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; font-size: 1.5rem; background-color: rgba(0, 0, 0, 0.7); display: none;">
-                                    <i class="fas fa-exclamation-triangle mb-3"></i>
-                                    <p>Không có luồng video</p>
-                                    <small>Đang chờ kết nối từ thiết bị...</small>
+                            <div class="video-container livestream-frame mb-1">
+                                <div id="status-container" class="text-white text-center d-flex flex-column justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; font-size: 1.5rem; background-color: rgba(0, 0, 0, 0.7); display: none;">
+                                    <div id="no-connection-message">
+                                        <i class="fas fa-exclamation-triangle mb-3"></i>
+                                        <p>Không có luồng video</p>
+                                        <small>Đang chờ kết nối từ thiết bị...</small>
+                                    </div>
+                                    <div id="start-button-container" class="d-none">
+                                        <button id="start-stream-btn" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-play me-2"></i> Bắt đầu
+                                        </button>
+                                    </div>
                                 </div>
                                 <img src="" id="video-feed" class="img-fluid rounded" alt="Luồng video trực tiếp" style="height: 100%; width: 100%; object-fit: contain;">
                             </div>
                             
-                            <div class="bg-white rounded p-3 shadow-sm mt-3 flex-fill d-flex flex-column">
-                                <h5 class="mb-3"><i class="fas fa-history me-2"></i> Lịch sử Phát Bắn</h5>
-                                <div class="table-responsive flex-fill">
-                                    <table class="table table-hover table-sm">
+                            <div class="bg-white rounded p-3 shadow-sm mt-1 flex-fill d-flex flex-column">
+                                <p class="mb-1"><i class="fas fa-history me-2"></i> Lịch sử Phát Bắn</p>
+                                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                    <table class="table table-hover table-sm-custom table-sm">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -49,7 +62,25 @@
                                             </tr>
                                         </thead>
                                         <tbody id="shot-history-tbody">
-                                            </tbody>
+                                                <tr>
+                                                    <td>-</td>
+                                                    <td>--:--:--</td>
+                                                    <td>---</td>
+                                                    <td>--.-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>-</td>
+                                                    <td>--:--:--</td>
+                                                    <td>---</td>
+                                                    <td>--.-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>-</td>
+                                                    <td>--:--:--</td>
+                                                    <td>---</td>
+                                                    <td>--.-</td>
+                                                </tr>
+                                        </tbody>
                                     </table>
                                 </div>
                             </div>
@@ -68,8 +99,9 @@
                                 
                                 <div class="text-center mt-3">
                                     <p class="mb-1"><small class="text-muted">Ảnh Phân Tích</small></p>
-                                    <div class="image-frame">
-                                        <img id="latest-image" class="img-fluid rounded border" alt="Ảnh kết quả phân tích">
+                                    <div id="image-frame-container" class="image-frame mx-auto d-flex justify-content-center align-items-center">
+                                        <p id="image-placeholder" class="text-muted m-0">Đang chờ kết quả...</p>
+                                        <img id="latest-image" class="img-fluid rounded border d-none" alt="Ảnh kết quả phân tích">
                                     </div>
                                     <small id="image-note" class="text-muted mt-2 d-block">Đang chờ kết quả từ thiết bị...</small>
                                 </div>
@@ -131,4 +163,21 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stream.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="{{ url_for('static', filename='js/che_do_1.js') }}"></script>
+
+<div class="modal fade" id="selectSoldierModal" tabindex="-1" aria-labelledby="selectSoldierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="selectSoldierModalLabel">Thông báo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Bạn cần phải chọn một chiến sĩ để bắt đầu luyện tập.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

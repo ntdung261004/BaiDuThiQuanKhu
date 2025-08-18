@@ -62,9 +62,6 @@
         <td>${escapeHtml(s.rank || '-')}</td>
         <td>${escapeHtml(s.notes || '-')}</td>
         <td>
-          <a class="btn btn-sm btn-success me-1" href="/livestream?soldier_id=${s.id}">
-            <i class="fas fa-play"></i> Bắt đầu
-          </a>
           <button class="btn btn-sm btn-warning me-1 btn-edit">
             <i class="fas fa-edit"></i>
           </button>

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Phiên Tập{% endblock %}
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper" style="width: 85%;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
+            <h2 class="fs-2 m-0">Danh sách Phiên Tập</h2>
+            <button id="create-session-btn" class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#createSessionModal">
+                <i class="fas fa-plus me-2"></i> Tạo Phiên Mới
+            </button>
+        </nav>
+
+        <div class="container-fluid px-4 mt-4">
+            <div id="sessions-list" class="row row-cols-1 row-cols-md-3 g-4">
+                </div>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/training_session_modal.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/training_session.js') }}"></script>
+{% endblock %}

@@ -1,44 +1,22 @@
 // static/js/che_do_1.js
 
 document.addEventListener('DOMContentLoaded', async function() {
-    const soldierInfoEl = document.getElementById('soldier-info');
-    const backButton = document.getElementById('back-to-livestream');
-
-    const soldierId = sessionStorage.getItem('soldierId');
-
-    if (soldierId) {
-        try {
-            const response = await fetch(`/api/soldiers/${soldierId}`);
-            const data = await response.json();
-            if (response.ok) {
-                soldierInfoEl.textContent = `(Chiến sĩ: ${data.rank} ${data.name})`;
-                soldierInfoEl.classList.remove('d-none');
-            } else {
-                console.error('Lỗi khi lấy thông tin chiến sĩ:', data.error);
-            }
-        } catch (error) {
-            console.error('Lỗi mạng khi lấy thông tin chiến sĩ:', error);
-        }
-        
-        backButton.href = `/livestream?soldier_id=${soldierId}`;
-    } else {
-        backButton.href = `/livestream`;
-    }
-
-    // --- LOGIC MỚI CHO LIVESTREAM VÀ KẾT NỐI ---
-    const videoFeed = document.getElementById('video-feed');
-    const statusMessage = document.getElementById('status-message');
-    const connectionBanner = document.getElementById('connection-status-banner');
-    
-    const latestTime = document.getElementById('latest-time');
-    const latestTarget = document.getElementById('latest-target');
-    const latestScore = document.getElementById('latest-score');
+    // --- Các phần tử HTML ---
     const latestImage = document.getElementById('latest-image');
-    const imageNote = document.getElementById('image-note');
+    const imagePlaceholder = document.getElementById('image-placeholder');
+    const imageContainer = document.getElementById('image-frame-container');
+    const connectionBanner = document.getElementById('connection-status-banner');
+    const soldierInfoEl = document.getElementById('soldier-info');
 
+    const videoFeed = document.getElementById('video-feed');
+    const statusContainer = document.getElementById('status-container');
+    const noConnectionMessage = document.getElementById('no-connection-message');
+    const startButtonContainer = document.getElementById('start-button-container');
+    const startStreamBtn = document.getElementById('start-stream-btn');
+    
     let isConnected = false; 
 
-    // Hàm kiểm tra trạng thái kết nối
+    // Hàm cập nhật trạng thái kết nối
     function checkConnectionStatus() {
         fetch('/connection-status')
             .then(response => response.json())
@@ -47,17 +25,30 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (newStatus !== isConnected) {
                     isConnected = newStatus;
-
+                    
                     if (isConnected) {
-                        statusMessage.style.display = 'none';
-                        videoFeed.style.display = 'block';
-                        videoFeed.src = "/video_feed";
+                        statusContainer.style.display = 'flex';
+                        noConnectionMessage.classList.add('d-none');
+                        startButtonContainer.classList.remove('d-none');
+                        videoFeed.style.display = 'none';
+                        
+                        imageContainer.style.display = 'flex';
+                        imagePlaceholder.textContent = 'Đang chờ kết quả...';
+                        
                         connectionBanner.innerHTML = '<i class="fas fa-check-circle me-1"></i> Thiết bị đã kết nối';
                         connectionBanner.className = 'fw-bold text-success';
                     } else {
-                        statusMessage.style.display = 'flex';
+                        statusContainer.style.display = 'flex';
+                        noConnectionMessage.classList.remove('d-none');
+                        startButtonContainer.classList.add('d-none');
                         videoFeed.style.display = 'none';
                         videoFeed.src = "";
+
+                        imageContainer.style.display = 'flex';
+                        latestImage.classList.add('d-none');
+                        imagePlaceholder.classList.remove('d-none');
+                        imagePlaceholder.textContent = 'Mất kết nối với thiết bị...';
+                        
                         connectionBanner.innerHTML = '<i class="fas fa-times-circle me-1"></i> Mất kết nối với thiết bị';
                         connectionBanner.className = 'fw-bold text-danger';
                     }
@@ -67,31 +58,36 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.error("Lỗi khi gọi /connection-status:", error);
                 if (isConnected) {
                     isConnected = false;
-                    statusMessage.style.display = 'flex';
+                    statusContainer.style.display = 'flex';
+                    noConnectionMessage.classList.remove('d-none');
+                    startButtonContainer.classList.add('d-none');
                     videoFeed.style.display = 'none';
                     videoFeed.src = "";
+
+                    imageContainer.style.display = 'flex';
+                    latestImage.classList.add('d-none');
+                    imagePlaceholder.classList.remove('d-none');
+                    imagePlaceholder.textContent = 'Mất kết nối với thiết bị...';
+                    
                     connectionBanner.innerHTML = '<i class="fas fa-times-circle me-1"></i> Mất kết nối với thiết bị';
                     connectionBanner.className = 'fw-bold text-danger';
                 }
             });
     }
 
-    // Hàm cập nhật kết quả bắn
+    // Hàm cập nhật kết quả bắn và ảnh (giữ nguyên)
     function updateLatestResult() {
         fetch('/data_feed')
             .then(response => response.json())
             .then(data => {
                 if (data && Object.keys(data).length > 0) {
-                    latestTime.textContent = data.time;
-                    latestTarget.textContent = data.target;
-                    latestScore.textContent = data.score;
-                    
-                    // Cập nhật đường dẫn ảnh và ẩn/hiện chú thích
-                    latestImage.src = data.image_url;
-                    if (data.image_url.includes('vHqB3pG.png')) { // Kiểm tra nếu là ảnh mặc định
-                        imageNote.style.display = 'block';
+                    if (data.image_data) {
+                        latestImage.src = `data:image/jpeg;base64,${data.image_data}`;
+                        latestImage.classList.remove('d-none');
+                        imagePlaceholder.classList.add('d-none');
                     } else {
-                        imageNote.style.display = 'none';
+                        latestImage.classList.add('d-none');
+                        imagePlaceholder.classList.remove('d-none');
                     }
                 }
             })
@@ -100,21 +96,94 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
     }
 
-    // Lắng nghe sự kiện lỗi của luồng video
-    if (videoFeed) {
-        videoFeed.addEventListener('error', function() {
-            if (isConnected) {
-                isConnected = false;
-                statusMessage.style.display = 'flex';
-                videoFeed.style.display = 'none';
-                videoFeed.src = "";
+    const selectSoldierModal = new bootstrap.Modal(document.getElementById('selectSoldierModal'));
+
+    // Sửa lại logic click của nút "Bắt đầu"
+    startStreamBtn.addEventListener('click', function() {
+        const selectedSoldierId = sessionStorage.getItem('soldierId');
+        
+        if (isConnected) {
+            if (selectedSoldierId) {
+                // Nếu có kết nối và đã chọn chiến sĩ, bắt đầu video
+                statusContainer.style.display = 'none';
+                videoFeed.style.display = 'block';
+                videoFeed.src = "/video_feed";
+            } else {
+                // Nếu có kết nối nhưng chưa chọn chiến sĩ, hiển thị modal
+                selectSoldierModal.show();
             }
-        });
+        }
+    });
+
+    // --- Các hàm khác (hiển thị chiến sĩ, dropdown) ---
+    async function displaySoldierInfo(soldierId) {
+        if (soldierId) {
+            try {
+                const response = await fetch(`/api/soldiers/${soldierId}`);
+                const data = await response.json();
+                if (response.ok) {
+                    soldierInfoEl.textContent = `Chiến sĩ kiểm tra: ${data.name}`;
+                    soldierInfoEl.classList.remove('d-none');
+                } else {
+                    console.error('Lỗi khi lấy thông tin chiến sĩ:', data.error);
+                }
+            } catch (error) {
+                console.error('Lỗi mạng khi lấy thông tin chiến sĩ:', error);
+            }
+        } else {
+            soldierInfoEl.textContent = '';
+            soldierInfoEl.classList.add('d-none');
+        }
+    }
+    
+    async function loadSoldierDropdown() {
+        try {
+            const dropdownMenu = document.getElementById('soldier-list-dropdown');
+            dropdownMenu.innerHTML = '';
+
+            const response = await fetch('/api/soldiers');
+            const soldiers = await response.json();
+
+            if (soldiers.length > 0) {
+                soldiers.forEach(soldier => {
+                    const listItem = document.createElement('li');
+                    const link = document.createElement('a');
+                    link.className = 'dropdown-item';
+                    link.href = `#`;
+                    link.textContent = `${soldier.rank} ${soldier.name}`;
+                    link.setAttribute('data-soldier-id', soldier.id);
+                    listItem.appendChild(link);
+                    dropdownMenu.appendChild(listItem);
+                });
+            } else {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<span class="dropdown-item text-muted">Không có chiến sĩ nào</span>`;
+                dropdownMenu.appendChild(listItem);
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách chiến sĩ:', error);
+        }
     }
 
-    // Bắt đầu kiểm tra trạng thái ngay khi tải trang và cập nhật kết quả
+    document.getElementById('soldier-list-dropdown').addEventListener('click', function(e) {
+        e.preventDefault();
+        const selectedId = e.target.getAttribute('data-soldier-id');
+        if (selectedId) {
+            sessionStorage.setItem('soldierId', selectedId);
+            displaySoldierInfo(selectedId);
+        }
+    });
+
+    // --- Khởi chạy ban đầu ---
+    const storedSoldierId = sessionStorage.getItem('soldierId');
+    if (storedSoldierId) {
+        displaySoldierInfo(storedSoldierId);
+    }
+    
+    loadSoldierDropdown();
     checkConnectionStatus();
     updateLatestResult();
+    
     setInterval(checkConnectionStatus, 3000);
     setInterval(updateLatestResult, 1000);
 });

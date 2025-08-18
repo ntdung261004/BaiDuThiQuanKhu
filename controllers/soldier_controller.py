@@ -89,6 +89,7 @@ def get_soldier_count():
     Endpoint: GET /api/soldiers/count
     """
     total_soldiers = Soldier.query.count()
+    print("tổng CS: ", total_soldiers)
     return jsonify({'total': total_soldiers})
 
 # Endpoint mới để lấy thông tin một chiến sĩ cụ thể

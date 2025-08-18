@@ -63,3 +63,92 @@
 .table-responsive {
     overflow-y: auto; /* Cho phép cuộn khi nội dung quá dài */
 }
+
+/* Giới hạn chiều cao của bảng lịch sử và cho phép cuộn */
+.table-responsive {
+    max-height: 200px; /* Chiều cao tương đương khoảng 4-5 dòng */
+    overflow-y: auto;
+}
+
+/* Khung hình vuông cố định cho ảnh */
+.image-frame {
+    width: 350px; /* Kích thước chiều rộng */
+    height: 350px; /* Chiều cao bằng chiều rộng, tạo hình vuông */
+    border: 1px solid #ccc;
+    background-color: #f8f9fa;
+    padding: 5px;
+    overflow: hidden; /* Ẩn phần ảnh bị tràn */
+}
+
+/* Đảm bảo ảnh vừa khung */
+.image-frame img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Điều chỉnh ảnh để vừa khung mà không bị cắt */
+}
+
+/* Thu nhỏ cỡ chữ trong bảng */
+.table-sm-custom {
+    font-size: 0.85rem; /* Điều chỉnh kích thước chữ nhỏ hơn */
+}
+
+/* Điều chỉnh chiều cao của bảng lịch sử để hiển thị 4 dòng và cho phép cuộn */
+.table-responsive {
+    max-height: 160px; /* Điều chỉnh chiều cao tương ứng với 4 dòng */
+    overflow-y: auto;
+}
+
+/* điều chỉnh giao diện của thẻ phiên tập luyện */
+.card-session {
+    position: relative;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: none;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.card-session:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-corner {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 50px 50px 0;
+    border-color: transparent var(--bs-primary) transparent transparent;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    opacity: 0.9;
+}
+
+.card-session .card-body {
+    position: relative;
+    z-index: 2;
+}
+
+.card-session .dropdown-toggle::after {
+    display: none;
+}
+
+/* LỖI TRƯỚC ĐÂY: Ghi đè lại overflow của layout dashboard */
+#page-content-wrapper {
+    overflow: visible;
+}
+
+.card-divider {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0));
+    width: 80%; /* Đường kẻ chỉ chiếm 80% chiều rộng */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* === CSS MỚI: GIẢM PADDING CHO CARD-BODY === */
+.card-session .card-body {
+    padding: 0.8rem; /* Giá trị mặc định là 1rem, bạn có thể chỉnh thành 0.7rem, 0.75rem... tùy ý */
+}

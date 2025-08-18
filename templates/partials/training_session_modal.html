@@ -1,0 +1,27 @@
+<div class="modal fade" id="createSessionModal" tabindex="-1" aria-labelledby="createSessionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSessionModalLabel">Tạo Phiên Tập Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-session-form">
+                    <div class="mb-3">
+                        <label for="session-name" class="form-label">Tên Phiên Tập (Tùy chọn)</label>
+                        <input type="text" class="form-control" id="session-name" placeholder="Ví dụ: Luyện tập Bia số 7 - 18/08">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exercise-type" class="form-label">Loại Bài Tập</label>
+                        <select class="form-select" id="exercise-type" required>
+                            </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" form="create-session-form" class="btn btn-primary">Tạo</button>
+            </div>
+        </div>
+    </div>
+</div>

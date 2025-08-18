@@ -8,11 +8,7 @@
     <div id="page-content-wrapper" style="width: 85%;">
         <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
             <h2 class="fs-2 m-0">
-                Livestream
-                <span id="soldier-info" class="text-muted fs-4 ms-2 d-none"></span>
-                <button id="clear-soldier-btn" class="btn btn-sm btn-link text-danger p-0" style="vertical-align: super; display: none;">
-                    <i class="fas fa-times-circle"></i>
-                </button>
+                Tập luyện
             </h2>
             <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#modeSelectionModal">
                 <i class="fas fa-bullseye me-2"></i> Chọn Chế độ
@@ -21,7 +17,7 @@
 
         <div class="container-fluid px-4 mt-4">
             <div id="main-content-area">
-                <h3 class="mb-4">Chế độ Tự do</h3>
+                <h3 class="mb-4">Hiệu chỉnh đường ngắm & thử nghiệm - Kiểm tra kết nối</h3>
                 <div id="connection-status-banner" class="mb-3 fw-bold">
                     <i class="fas fa-plug"></i> <span id="connection-text">Đang kiểm tra kết nối...</span>
                 </div>
@@ -52,15 +48,11 @@
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <strong>Tên mục tiêu:</strong>
-                                        <span id="target-name" class="text-primary">Bia số 4</span>
+                                        <span id="target" class="text-primary">--</span>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <strong>Điểm:</strong>
                                         <span id="shot-score" class="text-danger fs-3 fw-bold">--</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <strong>Lực bắn:</strong>
-                                        <span id="shot-force" class="text-primary">--</span>
                                     </li>
                                 </ul>
                                 <h5 class="mt-4">Vị trí điểm chạm</h5>
@@ -89,16 +81,6 @@
         get_soldier_base: "{{ url_for('soldier_bp.get_soldier', soldier_id=0) }}"
     };
     
-    // Lấy soldier_id từ URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const soldierIdFromUrl = urlParams.get('soldier_id');
-
-    if (soldierIdFromUrl) {
-        window.currentSoldierId = soldierIdFromUrl;
-        sessionStorage.setItem('soldierId', soldierIdFromUrl);
-    } else {
-        window.currentSoldierId = sessionStorage.getItem('soldierId');
-    }
 </script>
 <script src="{{ url_for('static', filename='js/stream.js') }}"></script>
 {% endblock %}
