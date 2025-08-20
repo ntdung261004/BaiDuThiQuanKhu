@@ -22,13 +22,13 @@ class Soldier(db.Model):
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-# --- Bảng Exercises ---
 class Exercise(db.Model):
     __tablename__ = 'exercises'
     id = db.Column(db.Integer, primary_key=True)
     exercise_name = db.Column(db.String(100), unique=True, nullable=False)
+    # Thêm relationship
+    sessions = db.relationship('TrainingSession', backref='exercise', lazy=True)
 
-# --- Bảng TrainingSessions đã chỉnh sửa ---
 class TrainingSession(db.Model):
     __tablename__ = 'training_sessions'
     id = db.Column(db.Integer, primary_key=True)
@@ -36,6 +36,8 @@ class TrainingSession(db.Model):
     exercise_id = db.Column(db.Integer, db.ForeignKey('exercises.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=True)
     end_time = db.Column(db.DateTime, nullable=True)
+    # Thêm relationship
+    shots = db.relationship('Shot', backref='session', lazy=True, cascade="all, delete-orphan")
 
 class Shot(db.Model):
     __tablename__ = 'shots'
@@ -45,7 +47,8 @@ class Shot(db.Model):
     shot_time = db.Column(db.DateTime, default=datetime.utcnow)
     score = db.Column(db.Float, nullable=False)
     image_data = db.Column(db.Text, nullable=True)
-
+    # Thêm relationship
+    soldier = db.relationship('Soldier', backref='shots', lazy=True)
 # --- Khởi tạo cơ sở dữ liệu ---
 def init_db(app):
     with app.app_context():

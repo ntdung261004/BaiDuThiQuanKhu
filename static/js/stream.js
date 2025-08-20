@@ -181,4 +181,3 @@ document.addEventListener('DOMContentLoaded', function() {
     checkConnectionStatus();
     setInterval(checkConnectionStatus, 3000);
 });
-

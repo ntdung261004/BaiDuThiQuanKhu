@@ -197,12 +197,12 @@ def create_training_session():
 @app.route('/api/training_sessions', methods=['GET'])
 @login_required
 def get_training_sessions():
-    # Sắp xếp theo ID giảm dần để các phiên mới nhất hiện lên đầu
     sessions = TrainingSession.query.order_by(TrainingSession.id.desc()).all()
     session_list = []
     for session in sessions:
-        exercise = Exercise.query.get(session.exercise_id)
-        exercise_name = exercise.exercise_name if exercise else 'Không xác định'
+        # Giờ đây bạn có thể truy cập trực tiếp session.exercise.exercise_name
+        # thay vì phải query lại từ đầu.
+        exercise_name = session.exercise.exercise_name if session.exercise else 'Không xác định'
         
         session_list.append({
             'id': session.id,
@@ -211,6 +211,46 @@ def get_training_sessions():
         })
     return jsonify(session_list)
 
+@app.route('/api/training_sessions/<int:session_id>', methods=['DELETE'])
+@login_required
+def delete_training_session(session_id):
+    try:
+        session_to_delete = TrainingSession.query.get(session_id)
+        if session_to_delete is None:
+            return jsonify({'message': 'Không tìm thấy phiên tập.'}), 404
+
+        # (Tùy chọn nâng cao) Bạn có thể thêm logic để xóa các lần bắn (shots) liên quan ở đây
+        # shots_to_delete = Shot.query.filter_by(session_id=session_id).all()
+        # for shot in shots_to_delete:
+        #     db.session.delete(shot)
+
+        db.session.delete(session_to_delete)
+        db.session.commit()
+        return jsonify({'message': 'Đã xóa phiên tập thành công.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
+
+@app.route('/api/training_sessions/<int:session_id>', methods=['PUT'])
+@login_required
+def update_training_session(session_id):
+    data = request.get_json()
+    new_name = data.get('session_name')
+
+    if not new_name:
+        return jsonify({'message': 'Tên mới không được để trống.'}), 400
+
+    try:
+        session_to_update = TrainingSession.query.get(session_id)
+        if session_to_update is None:
+            return jsonify({'message': 'Không tìm thấy phiên tập.'}), 404
+
+        session_to_update.session_name = new_name
+        db.session.commit()
+        return jsonify({'message': 'Cập nhật tên phiên thành công.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
 
 if __name__ == '__main__':
     print("LOG: [Server] Khởi động Flask server…")

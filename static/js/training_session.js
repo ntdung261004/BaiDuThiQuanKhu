@@ -6,6 +6,40 @@ document.addEventListener('DOMContentLoaded', async function() {
     const exerciseTypeSelect = document.getElementById('exercise-type');
     const sessionsList = document.getElementById('sessions-list');
 
+    // Đặt đoạn mã này bên trong document.addEventListener('DOMContentLoaded', ...)
+    const saveSessionNameBtn = document.getElementById('save-session-name-btn');
+    saveSessionNameBtn.addEventListener('click', async function() {
+        const sessionId = document.getElementById('edit-session-id').value;
+        const newSessionName = document.getElementById('edit-session-name').value;
+
+        if (!newSessionName) {
+            alert('Tên phiên không được để trống.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/training_sessions/${sessionId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ session_name: newSessionName })
+            });
+
+            if (response.ok) {
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editSessionModal'));
+                editModal.hide();
+                loadSessions();
+                alert('Cập nhật thành công!');
+            } else {
+                alert('Có lỗi xảy ra khi cập nhật.');
+            }
+        } catch (error) {
+            console.error('Lỗi khi cập nhật:', error);
+            alert('Lỗi mạng, không thể cập nhật.');
+        }
+    });
+
     // Hàm tải danh sách bài tập vào dropdown
     async function loadExercises() {
         try {
@@ -46,6 +80,62 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // Đặt đoạn mã này bên trong document.addEventListener('DOMContentLoaded', ...)
+
+    sessionsList.addEventListener('click', async function(e) {
+        // Xử lý sự kiện nút Xóa
+        if (e.target.classList.contains('delete-session-btn') || e.target.closest('.delete-session-btn')) {
+            e.preventDefault();
+            
+            const button = e.target.closest('.delete-session-btn');
+            const sessionId = button.dataset.sessionId;
+            
+            if (confirm(`Bạn có chắc chắn muốn xóa Phiên Tập #${sessionId} không?`)) {
+                try {
+                    const response = await fetch(`/api/training_sessions/${sessionId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        // Tải lại danh sách phiên tập sau khi xóa thành công
+                        loadSessions(); 
+                        // Tùy chọn: Thêm thông báo toast ở đây
+                        showToast("Đã xóa phiên tập thành công!");
+                    } else {
+                        alert('Có lỗi xảy ra khi xóa phiên tập.');
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi xóa phiên tập:', error);
+                    alert('Lỗi mạng, không thể xóa.');
+                }
+            }
+        }
+        
+        // Chúng ta sẽ thêm logic cho nút Sửa ở đây trong phần sau
+        // Xử lý sự kiện nút Sửa
+        if (e.target.classList.contains('edit-session-btn') || e.target.closest('.edit-session-btn')) {
+            e.preventDefault();
+
+            const button = e.target.closest('.edit-session-btn');
+            const sessionId = button.dataset.sessionId;
+            const sessionName = button.dataset.sessionName;
+
+            // Lấy các phần tử trong modal
+            const editModal = new bootstrap.Modal(document.getElementById('editSessionModal'));
+            const modalSessionIdInput = document.getElementById('edit-session-id');
+            const modalSessionNameInput = document.getElementById('edit-session-name');
+            const modalTitle = document.getElementById('editSessionModalLabel');
+
+            // Điền thông tin cũ vào modal
+            modalTitle.textContent = `Sửa Tên cho Phiên Tập #${sessionId}`;
+            modalSessionIdInput.value = sessionId;
+            modalSessionNameInput.value = sessionName;
+
+            // Hiển thị modal
+            editModal.show();
+        }
+    });
+
     // Hàm hiển thị danh sách các phiên tập đã tạo
     async function loadSessions() {
         try {
@@ -58,17 +148,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (sessions.length > 0) {
                 sessions.forEach(session => {
+                    // Trong hàm loadSessions(), cập nhật cardHtml
                     const cardHtml = `
                         <div class="col">
                             <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid var(--bs-danger);">
-                                <span>Chưa huấn luyện</span>
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <h5 class="card-title mb-1">${session.session_name || `Phiên Tập #${session.id}`}</h5>
-                                            
                                             <hr class="card-divider my-2">
-
                                             <p class="card-text text-muted small mb-0">
                                                 Bài tập: <strong>${session.exercise_name}</strong>
                                             </p>
@@ -79,9 +167,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li><a class="dropdown-item" href="/che_do_1?session_id=${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>
-                                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit fa-fw me-2"></i> Sửa tên</a></li>
+                                                <li><a class="dropdown-item edit-session-btn" href="#" data-session-id="${session.id}" data-session-name="${session.session_name || `Phiên Tập #${session.id}`}"><i class="fas fa-edit fa-fw me-2"></i> Sửa tên</a></li>
                                                 <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash-alt fa-fw me-2"></i> Xóa phiên</a></li>
+                                                <li><a class="dropdown-item text-danger delete-session-btn" href="#" data-session-id="${session.id}"><i class="fas fa-trash-alt fa-fw me-2"></i> Xóa phiên</a></li>
                                             </ul>
                                         </div>
                                     </div>
