@@ -2,44 +2,68 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, R
 from flask_login import login_required, LoginManager, UserMixin, login_user, logout_user, current_user
 import base64, threading, time
 from datetime import datetime
+import queue
 
 from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db
 from controllers.soldier_controller import soldier_bp
 
 app = Flask(__name__)
+
+# --- Hàng đợi lệnh ---
+COMMAND_QUEUE = queue.Queue(maxsize=5)
+
+# --- Cấu hình ứng dụng ---
 app.config['SECRET_KEY'] = 'a_very_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# DB init
 init_db(app)
 
-# Login
+# --- Quản lý Login ---
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id)) # Dùng phương thức mới, tránh warning
 
-# Livestream state
-latest_frame = None
+# --- Trạng thái hệ thống ---
 pi_connected = False
 last_heartbeat = 0
-frame_lock = threading.Lock()
 latest_processed_data = {
-    'time': '--:--:--',
-    'target': 'Chưa có kết quả',
-    'score': '--.-',
+    'time': '--:--:--', 'target': 'Chưa có kết quả', 'score': '--.-',
     'image_data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 }
-new_frame_event = threading.Event()
+CURRENT_PI_CONFIG = {'zoom': 1.0, 'center': None}
 
-# Register controllers
+# --- Quản lý Livestream (Bản sửa lỗi không chặn) ---
+class LivestreamManager:
+    def __init__(self):
+        self.frame = None
+        self.lock = threading.Lock()
+    def update_frame(self, frame):
+        with self.lock:
+            self.frame = frame
+    def generate_frames_for_client(self):
+        while True:
+            with self.lock:
+                if self.frame is None:
+                    time.sleep(0.1)
+                    continue
+                frame_to_send = self.frame
+            try:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_to_send + b'\r\n')
+                time.sleep(1/30) # Giới hạn 30 FPS
+            except GeneratorExit:
+                return
+
+livestream_manager = LivestreamManager()
+
+# --- Đăng ký Blueprints ---
 app.register_blueprint(soldier_bp)
 
-# Pages
+# --- Các trang (Pages) ---
 @app.route('/')
 @login_required
 def index():
@@ -67,41 +91,6 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# Livestream APIs
-@app.route('/video_upload', methods=['POST'])
-def video_upload():
-    global latest_frame, pi_connected, last_heartbeat
-    frame_data_binary = request.data
-    if not frame_data_binary:
-        return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
-    with frame_lock:
-        latest_frame = frame_data_binary
-        last_heartbeat = time.time()
-        pi_connected = True
-        new_frame_event.set()
-    return jsonify({'status': 'success'})
-
-@app.route('/processed_data_upload', methods=['POST'])
-def processed_data_upload():
-    global latest_processed_data
-    data = request.get_json()
-    if data:
-        latest_processed_data['time'] = data.get('time', latest_processed_data['time'])
-        latest_processed_data['target'] = data.get('target_name', data.get('target', latest_processed_data['target']))
-        latest_processed_data['score'] = data.get('score', latest_processed_data['score'])
-        latest_processed_data['image_data'] = data.get('image_data', latest_processed_data['image_data'])
-        print('Nhận dữ liệu thành công!')
-        return jsonify({'status': 'success'})
-    return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
-
-@app.route('/connection-status')
-def connection_status():
-    global pi_connected, last_heartbeat
-    if time.time() - last_heartbeat > 5:
-        pi_connected = False
-    status = 'connected' if pi_connected else 'disconnected'
-    return jsonify({'status': status})
-
 @app.route('/livestream', endpoint='livestream')
 @login_required
 def livestream():
@@ -116,33 +105,6 @@ def reports():
 @login_required
 def setting():
     return render_template('settings.html')
-
-@app.route('/data_feed')
-@login_required
-def data_feed():
-    global latest_processed_data, pi_connected
-    if not pi_connected:
-        return jsonify({})
-    return jsonify(latest_processed_data)
-
-def generate_frames():
-    global latest_frame
-    while True:
-        new_frame_event.wait()
-        with frame_lock:
-            if latest_frame:
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + latest_frame + b'\r\n')
-        new_frame_event.clear()
-
-@app.route('/video_feed')
-@login_required
-def video_feed():
-    global pi_connected
-    if not pi_connected:
-        return Response("<h1>Không có luồng video</h1>", mimetype='text/html')
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
 
 @app.route('/che_do_1')
 @login_required
@@ -159,19 +121,101 @@ def che_do_2():
 def che_do_3():
     return render_template('che_do_3.html')
 
-# API for training sessions and exercises
+# --- Các API ---
+@app.route('/video_upload', methods=['POST'])
+def video_upload():
+    global pi_connected, last_heartbeat
+    livestream_manager.update_frame(request.data)
+    last_heartbeat = time.time()
+    pi_connected = True
+    return ('', 204)
+
+@app.route('/processed_data_upload', methods=['POST'])
+def processed_data_upload():
+    global latest_processed_data
+    data = request.get_json()
+    if data:
+        latest_processed_data.update(data)
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
+
+@app.route('/connection-status')
+def connection_status():
+    global pi_connected, last_heartbeat
+    if time.time() - last_heartbeat > 5:
+        pi_connected = False
+    return jsonify({'status': 'connected' if pi_connected else 'disconnected'})
+
+@app.route('/video_feed')
+@login_required
+def video_feed():
+    if not pi_connected:
+        return Response("<h1>Thiết bị không kết nối</h1>", mimetype='text/html')
+    return Response(livestream_manager.generate_frames_for_client(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/data_feed')
+@login_required
+def data_feed():
+    return jsonify(latest_processed_data)
+
+# --- API Điều khiển và Đồng bộ ---
+@app.route('/report_config', methods=['POST'])
+def report_config():
+    global CURRENT_PI_CONFIG
+    data = request.get_json()
+    if data:
+        CURRENT_PI_CONFIG['zoom'] = data.get('zoom', CURRENT_PI_CONFIG['zoom'])
+        CURRENT_PI_CONFIG['center'] = data.get('center', CURRENT_PI_CONFIG['center'])
+        print(f"Nhận được cấu hình từ Pi: {CURRENT_PI_CONFIG}")
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error'}), 400
+
+@app.route('/get_current_config')
+@login_required
+def get_current_config():
+    return jsonify(CURRENT_PI_CONFIG)
+
+@app.route('/set_zoom', methods=['POST'])
+def set_zoom():
+    data = request.get_json()
+    zoom_level = data.get('zoom')
+    if zoom_level:
+        command = {'type': 'zoom', 'value': zoom_level}
+        try:
+            COMMAND_QUEUE.put_nowait(command)
+            return jsonify({'status': 'success'})
+        except queue.Full:
+            return jsonify({'status': 'error', 'message': 'Hàng đợi lệnh đang đầy.'}), 503
+    return jsonify({'status': 'error', 'message': 'Dữ liệu không hợp lệ.'}), 400
+    
+@app.route('/set_center', methods=['POST'])
+def set_center():
+    data = request.get_json()
+    center_coords = data.get('center')
+    if center_coords and 'x' in center_coords and 'y' in center_coords:
+        command = {'type': 'center', 'value': center_coords}
+        try:
+            COMMAND_QUEUE.put_nowait(command)
+            return jsonify({'status': 'success'})
+        except queue.Full:
+            return jsonify({'status': 'error', 'message': 'Hàng đợi lệnh đang đầy.'}), 503
+    return jsonify({'status': 'error', 'message': 'Dữ liệu không hợp lệ.'}), 400
+
+@app.route('/get_command')
+def get_command():
+    try:
+        command = COMMAND_QUEUE.get_nowait()
+        return jsonify(command)
+    except queue.Empty:
+        return jsonify({})
+
+# --- Các API Database ---
 @app.route('/api/exercises', methods=['GET'])
 @login_required
 def get_exercises():
     try:
         exercises = Exercise.query.all()
-        exercises_list = []
-        for exercise in exercises:
-            exercises_list.append({
-                'id': exercise.id,
-                'exercise_name': exercise.exercise_name
-            })
-        return jsonify(exercises_list)
+        return jsonify([{'id': ex.id, 'exercise_name': ex.exercise_name} for ex in exercises])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -181,10 +225,8 @@ def create_training_session():
     data = request.get_json()
     exercise_id = data.get('exercise_id')
     session_name = data.get('session_name', 'Phiên tập')
-    
     if not exercise_id:
         return jsonify({'message': 'ID bài tập không được để trống.'}), 400
-
     try:
         new_session = TrainingSession(session_name=session_name, exercise_id=exercise_id)
         db.session.add(new_session)
@@ -200,14 +242,9 @@ def get_training_sessions():
     sessions = TrainingSession.query.order_by(TrainingSession.id.desc()).all()
     session_list = []
     for session in sessions:
-        # Giờ đây bạn có thể truy cập trực tiếp session.exercise.exercise_name
-        # thay vì phải query lại từ đầu.
         exercise_name = session.exercise.exercise_name if session.exercise else 'Không xác định'
-        
         session_list.append({
-            'id': session.id,
-            'session_name': session.session_name,
-            'exercise_name': exercise_name
+            'id': session.id, 'session_name': session.session_name, 'exercise_name': exercise_name
         })
     return jsonify(session_list)
 
@@ -215,16 +252,10 @@ def get_training_sessions():
 @login_required
 def delete_training_session(session_id):
     try:
-        session_to_delete = TrainingSession.query.get(session_id)
-        if session_to_delete is None:
+        session = TrainingSession.query.get(session_id)
+        if session is None:
             return jsonify({'message': 'Không tìm thấy phiên tập.'}), 404
-
-        # (Tùy chọn nâng cao) Bạn có thể thêm logic để xóa các lần bắn (shots) liên quan ở đây
-        # shots_to_delete = Shot.query.filter_by(session_id=session_id).all()
-        # for shot in shots_to_delete:
-        #     db.session.delete(shot)
-
-        db.session.delete(session_to_delete)
+        db.session.delete(session)
         db.session.commit()
         return jsonify({'message': 'Đã xóa phiên tập thành công.'}), 200
     except Exception as e:
@@ -236,22 +267,21 @@ def delete_training_session(session_id):
 def update_training_session(session_id):
     data = request.get_json()
     new_name = data.get('session_name')
-
     if not new_name:
         return jsonify({'message': 'Tên mới không được để trống.'}), 400
-
     try:
-        session_to_update = TrainingSession.query.get(session_id)
-        if session_to_update is None:
+        session = TrainingSession.query.get(session_id)
+        if session is None:
             return jsonify({'message': 'Không tìm thấy phiên tập.'}), 404
-
-        session_to_update.session_name = new_name
+        session.session_name = new_name
         db.session.commit()
         return jsonify({'message': 'Cập nhật tên phiên thành công.'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
 
+# --- Khởi chạy Server ---
 if __name__ == '__main__':
     print("LOG: [Server] Khởi động Flask server…")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Thêm threaded=True để server mặc định xử lý được nhiều request hơn
+    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
