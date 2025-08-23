@@ -120,10 +120,19 @@ def set_center():
             return jsonify({'status': 'error', 'message': 'Hàng đợi lệnh đang đầy.'}), 503
     return jsonify({'status': 'error', 'message': 'Dữ liệu không hợp lệ.'}), 400
 
+# <<< SỬA ĐỔI HOÀN TOÀN HÀM NÀY >>>
 @pi_bp.route('/get_command')
 def get_command():
+    response_data = {
+        'command': None,
+        'timestamp': time.time() # Luôn trả về timestamp hiện tại của server
+    }
     try:
+        # Lấy lệnh từ hàng đợi nếu có
         command = COMMAND_QUEUE.get_nowait()
-        return jsonify(command)
+        response_data['command'] = command
     except queue.Empty:
-        return jsonify({})
+        # Nếu không có lệnh, 'command' sẽ vẫn là None
+        pass
+    
+    return jsonify(response_data)
