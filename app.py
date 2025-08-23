@@ -3,6 +3,8 @@ from flask_login import login_required, LoginManager, UserMixin, login_user, log
 import base64, threading, time
 from datetime import datetime
 import queue
+from waitress import serve
+import socket # <<< THÊM MỚI
 
 from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db
 from controllers.soldier_controller import soldier_bp
@@ -10,7 +12,21 @@ from controllers.soldier_controller import soldier_bp
 app = Flask(__name__)
 
 # --- Hàng đợi lệnh ---
-COMMAND_QUEUE = queue.Queue(maxsize=5)
+COMMAND_QUEUE = queue.Queue(maxsize=10)
+
+# <<< THÊM MỚI: Hàm để lấy địa chỉ IP nội bộ >>>
+def get_ip_address():
+    """Tìm địa chỉ IP nội bộ của máy chủ."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Không cần gửi dữ liệu, chỉ cần kết nối tới một IP bất kỳ để lấy thông tin card mạng
+        s.connect(('8.8.8.8', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
 
 # --- Cấu hình ứng dụng ---
 app.config['SECRET_KEY'] = 'a_very_secret_key'
@@ -282,6 +298,12 @@ def update_training_session(session_id):
 
 # --- Khởi chạy Server ---
 if __name__ == '__main__':
-    print("LOG: [Server] Khởi động Flask server…")
-    # Thêm threaded=True để server mặc định xử lý được nhiều request hơn
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    # <<< SỬA ĐỔI: Thêm các dòng print mới >>>
+    ip_address = get_ip_address()
+    print("===================================================")
+    print(f"✅ Server Flask đã sẵn sàng!")
+    print(f"   - Địa chỉ IP của máy chủ: {ip_address}")
+    print(f"   - Vui lòng cấu hình Pi để kết nối tới: http://{ip_address}:5000")
+    print("🚀 Server đang khởi chạy bằng Waitress...")
+    print("===================================================")
+    serve(app, host='0.0.0.0', port=5000, threads=8)
