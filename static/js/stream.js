@@ -276,36 +276,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    // --- KHU VỰC LOGIC CHUYỂN ĐỔI CHẾ ĐỘ ---
-    const modal = document.getElementById('modeSelectionModal');
-
-    if (modal) {
-        modal.addEventListener('click', async function(event) {
-            const modeItem = event.target.closest('[data-mode]');
-            if (!modeItem) return;
-
-            const mode = modeItem.getAttribute('data-mode');
-
-            if (mode === 'livestream') {
-                window.location.href = window.location.origin + '/livestream';
-            } else {
-                try {
-                    const response = await fetch(window.API_ENDPOINTS.soldier_count);
-                    const data = await response.json();
-                    
-                    if (data.total > 0) {
-                        window.location.href = `/${mode}`;
-                    } else {
-                        alert('Bạn cần phải thêm ít nhất một chiến sĩ để sử dụng chế độ này.');
-                    }
-                } catch (error) {
-                    console.error('Lỗi khi kiểm tra số lượng chiến sĩ:', error);
-                    alert('Đã xảy ra lỗi. Vui lòng thử lại.');
-                }
-            }
-        });
-    }
 
     checkConnectionStatus();
     setInterval(checkConnectionStatus, 3000);
