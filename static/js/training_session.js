@@ -1,63 +1,24 @@
 // static/js/training_sessions.js
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
     const createSessionForm = document.getElementById('create-session-form');
     const sessionNameInput = document.getElementById('session-name');
     const exerciseTypeSelect = document.getElementById('exercise-type');
     const sessionsList = document.getElementById('sessions-list');
-
-    // Đặt đoạn mã này bên trong document.addEventListener('DOMContentLoaded', ...)
     const saveSessionNameBtn = document.getElementById('save-session-name-btn');
-    saveSessionNameBtn.addEventListener('click', async function() {
-        const sessionId = document.getElementById('edit-session-id').value;
-        const newSessionName = document.getElementById('edit-session-name').value;
+    const createSessionModalEl = document.getElementById('createSessionModal');
+    const soldierChecklist = document.getElementById('soldier-checklist');
 
-        if (!newSessionName) {
-            alert('Tên phiên không được để trống.');
-            return;
-        }
+    // --- CÁC HÀM TẢI DỮ LIỆU ---
 
-        try {
-            const response = await fetch(`/api/training_sessions/${sessionId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ session_name: newSessionName })
-            });
-
-            if (response.ok) {
-                const editModal = bootstrap.Modal.getInstance(document.getElementById('editSessionModal'));
-                editModal.hide();
-                loadSessions();
-                alert('Cập nhật thành công!');
-            } else {
-                alert('Có lỗi xảy ra khi cập nhật.');
-            }
-        } catch (error) {
-            console.error('Lỗi khi cập nhật:', error);
-            alert('Lỗi mạng, không thể cập nhật.');
-        }
-    });
-
-    // Hàm tải danh sách bài tập vào dropdown
     async function loadExercises() {
         try {
             const response = await fetch('/api/exercises');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const exercises = await response.json();
             
-            exerciseTypeSelect.innerHTML = '';
-            
-            const defaultOption = document.createElement('option');
-            defaultOption.textContent = "Chọn một bài tập";
-            defaultOption.value = "";
-            defaultOption.disabled = true;
-            defaultOption.selected = true;
-            exerciseTypeSelect.appendChild(defaultOption);
-
+            exerciseTypeSelect.innerHTML = '<option value="" disabled selected>Chọn một bài tập</option>';
             if (exercises.length > 0) {
                 exercises.forEach(exercise => {
                     const option = document.createElement('option');
@@ -66,89 +27,54 @@ document.addEventListener('DOMContentLoaded', async function() {
                     exerciseTypeSelect.appendChild(option);
                 });
             } else {
-                const noOptions = document.createElement('option');
-                noOptions.textContent = "Không có bài tập nào";
-                noOptions.disabled = true;
-                exerciseTypeSelect.appendChild(noOptions);
+                exerciseTypeSelect.innerHTML = '<option disabled>Không có bài tập nào</option>';
             }
         } catch (error) {
             console.error('Lỗi khi tải danh sách bài tập:', error);
-            const errorOption = document.createElement('option');
-            errorOption.textContent = "Không thể tải bài tập";
-            errorOption.disabled = true;
-            exerciseTypeSelect.appendChild(errorOption);
+            exerciseTypeSelect.innerHTML = '<option disabled>Không thể tải bài tập</option>';
         }
     }
 
-    // Đặt đoạn mã này bên trong document.addEventListener('DOMContentLoaded', ...)
-
-    sessionsList.addEventListener('click', async function(e) {
-        // Xử lý sự kiện nút Xóa
-        if (e.target.classList.contains('delete-session-btn') || e.target.closest('.delete-session-btn')) {
-            e.preventDefault();
+    // <<< THÊM MỚI: Hàm tải danh sách chiến sĩ vào modal >>>
+    async function loadSoldiersIntoModal() {
+        if (!soldierChecklist) return;
+        soldierChecklist.innerHTML = '<p class="text-muted text-center">Đang tải danh sách...</p>';
+        try {
+            const response = await fetch('/api/soldiers'); // API này đã có sẵn
+            if (!response.ok) throw new Error('Network response was not ok');
+            const soldiers = await response.json();
             
-            const button = e.target.closest('.delete-session-btn');
-            const sessionId = button.dataset.sessionId;
-            
-            if (confirm(`Bạn có chắc chắn muốn xóa Phiên Tập #${sessionId} không?`)) {
-                try {
-                    const response = await fetch(`/api/training_sessions/${sessionId}`, {
-                        method: 'DELETE'
-                    });
-
-                    if (response.ok) {
-                        // Tải lại danh sách phiên tập sau khi xóa thành công
-                        loadSessions(); 
-                        // Tùy chọn: Thêm thông báo toast ở đây
-                        showToast("Đã xóa phiên tập thành công!");
-                    } else {
-                        alert('Có lỗi xảy ra khi xóa phiên tập.');
-                    }
-                } catch (error) {
-                    console.error('Lỗi khi xóa phiên tập:', error);
-                    alert('Lỗi mạng, không thể xóa.');
-                }
+            soldierChecklist.innerHTML = ''; // Xóa thông báo "Đang tải"
+            if (soldiers.length > 0) {
+                soldiers.forEach(soldier => {
+                    const div = document.createElement('div');
+                    div.classList.add('form-check');
+                    div.innerHTML = `
+                        <input class="form-check-input" type="checkbox" value="${soldier.id}" id="soldier-${soldier.id}">
+                        <label class="form-check-label" for="soldier-${soldier.id}">
+                            ${soldier.rank} ${soldier.name}
+                        </label>
+                    `;
+                    soldierChecklist.appendChild(div);
+                });
+            } else {
+                soldierChecklist.innerHTML = '<p class="text-muted text-center">Chưa có chiến sĩ nào được thêm vào hệ thống.</p>';
             }
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách chiến sĩ:', error);
+            soldierChecklist.innerHTML = '<p class="text-danger text-center">Không thể tải danh sách chiến sĩ.</p>';
         }
-        
-        // Chúng ta sẽ thêm logic cho nút Sửa ở đây trong phần sau
-        // Xử lý sự kiện nút Sửa
-        if (e.target.classList.contains('edit-session-btn') || e.target.closest('.edit-session-btn')) {
-            e.preventDefault();
+    }
 
-            const button = e.target.closest('.edit-session-btn');
-            const sessionId = button.dataset.sessionId;
-            const sessionName = button.dataset.sessionName;
-
-            // Lấy các phần tử trong modal
-            const editModal = new bootstrap.Modal(document.getElementById('editSessionModal'));
-            const modalSessionIdInput = document.getElementById('edit-session-id');
-            const modalSessionNameInput = document.getElementById('edit-session-name');
-            const modalTitle = document.getElementById('editSessionModalLabel');
-
-            // Điền thông tin cũ vào modal
-            modalTitle.textContent = `Sửa Tên cho Phiên Tập #${sessionId}`;
-            modalSessionIdInput.value = sessionId;
-            modalSessionNameInput.value = sessionName;
-
-            // Hiển thị modal
-            editModal.show();
-        }
-    });
-
-    // Hàm hiển thị danh sách các phiên tập đã tạo
     async function loadSessions() {
         try {
             const response = await fetch('/api/training_sessions');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const sessions = await response.json();
             sessionsList.innerHTML = '';
 
             if (sessions.length > 0) {
                 sessions.forEach(session => {
-                    // Trong hàm loadSessions(), cập nhật cardHtml
                     const cardHtml = `
                         <div class="col">
                             <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid var(--bs-danger);">
@@ -162,11 +88,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                                             </p>
                                         </div>
                                         <div class="dropdown" style="position: relative; z-index: 2;">
-                                            <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" data-bs-container="body" aria-expanded="false">
+                                            <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="fas fa-ellipsis-v text-muted"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="/che_do_1?session_id=${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>
+                                                <li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>
                                                 <li><a class="dropdown-item edit-session-btn" href="#" data-session-id="${session.id}" data-session-name="${session.session_name || `Phiên Tập #${session.id}`}"><i class="fas fa-edit fa-fw me-2"></i> Sửa tên</a></li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item text-danger delete-session-btn" href="#" data-session-id="${session.id}"><i class="fas fa-trash-alt fa-fw me-2"></i> Xóa phiên</a></li>
@@ -174,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                         </div>
                                     </div>
                                 </div>
-                                <a href="/che_do_1?session_id=${session.id}" class="stretched-link"></a>
+                                <a href="/session/${session.id}" class="stretched-link"></a>
                             </div>
                         </div>
                     `;
@@ -189,7 +115,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                 `;
             }
-
         } catch (error) {
             console.error('Lỗi khi tải danh sách phiên tập:', error);
             sessionsList.innerHTML = `
@@ -202,14 +127,84 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // Xử lý khi form được submit để tạo phiên mới
+    // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
+
+    saveSessionNameBtn.addEventListener('click', async function() {
+        const sessionId = document.getElementById('edit-session-id').value;
+        const newSessionName = document.getElementById('edit-session-name').value;
+        if (!newSessionName) {
+            alert('Tên phiên không được để trống.');
+            return;
+        }
+        try {
+            const response = await fetch(`/api/training_sessions/${sessionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_name: newSessionName })
+            });
+            if (response.ok) {
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editSessionModal'));
+                editModal.hide();
+                loadSessions();
+                alert('Cập nhật thành công!');
+            } else {
+                alert('Có lỗi xảy ra khi cập nhật.');
+            }
+        } catch (error) {
+            console.error('Lỗi khi cập nhật:', error);
+            alert('Lỗi mạng, không thể cập nhật.');
+        }
+    });
+
+    sessionsList.addEventListener('click', async function(e) {
+        if (e.target.closest('.delete-session-btn')) {
+            e.preventDefault();
+            const button = e.target.closest('.delete-session-btn');
+            const sessionId = button.dataset.sessionId;
+            if (confirm(`Bạn có chắc chắn muốn xóa Phiên Tập #${sessionId} không?`)) {
+                try {
+                    const response = await fetch(`/api/training_sessions/${sessionId}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        loadSessions(); 
+                    } else {
+                        alert('Có lỗi xảy ra khi xóa phiên tập.');
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi xóa phiên tập:', error);
+                    alert('Lỗi mạng, không thể xóa.');
+                }
+            }
+        }
+        
+        if (e.target.closest('.edit-session-btn')) {
+            e.preventDefault();
+            const button = e.target.closest('.edit-session-btn');
+            const sessionId = button.dataset.sessionId;
+            const sessionName = button.dataset.sessionName;
+            const editModal = new bootstrap.Modal(document.getElementById('editSessionModal'));
+            document.getElementById('edit-session-id').value = sessionId;
+            document.getElementById('edit-session-name').value = sessionName;
+            document.getElementById('editSessionModalLabel').textContent = `Sửa Tên cho Phiên Tập #${sessionId}`;
+            editModal.show();
+        }
+    });
+
+    // <<< SỬA ĐỔI: Cập nhật hàm xử lý submit form >>>
     createSessionForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const sessionName = sessionNameInput.value;
         const exerciseId = exerciseTypeSelect.value;
         
+        // Lấy danh sách ID của các chiến sĩ được chọn
+        const selectedSoldiers = Array.from(soldierChecklist.querySelectorAll('input[type="checkbox"]:checked'))
+                                      .map(checkbox => checkbox.value);
+
         if (!exerciseId) {
             alert('Vui lòng chọn một loại bài tập.');
+            return;
+        }
+        if (selectedSoldiers.length === 0) {
+            alert('Vui lòng chọn ít nhất một chiến sĩ.');
             return;
         }
 
@@ -219,10 +214,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     session_name: sessionName,
-                    exercise_id: exerciseId
+                    exercise_id: exerciseId,
+                    soldier_ids: selectedSoldiers // Gửi danh sách ID
                 })
             });
-            const newSession = await response.json();
+            
             if (response.ok) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('createSessionModal'));
                 modal.hide();
@@ -236,6 +232,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
+    // --- GÁN SỰ KIỆN KHI MODAL MỞ RA ---
+    if (createSessionModalEl) {
+        createSessionModalEl.addEventListener('show.bs.modal', function() {
+            // Khi modal sắp được hiển thị, tải danh sách chiến sĩ
+            loadSoldiersIntoModal();
+            // Reset form để xóa các giá trị cũ
+            createSessionForm.reset();
+        });
+    }
+
+    // --- KHỞI CHẠY LẦN ĐẦU ---
     loadExercises();
     loadSessions();
 });

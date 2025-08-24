@@ -1,29 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Quản lý Phiên Tập{% endblock %}
+{% block title %}Quản lý Phiên tập{% endblock %}
 
 {% block content %}
 <div class="d-flex" id="wrapper">
     {% include 'sidebar.html' %}
     <div id="page-content-wrapper" style="width: 85%;">
         <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
-            <h2 class="fs-2 m-0">Danh sách Phiên Tập</h2>
-            <button id="create-session-btn" class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#createSessionModal">
+            <h2 class="fs-2 m-0">
+                Quản lý Phiên tập
+            </h2>
+            <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#createSessionModal">
                 <i class="fas fa-plus me-2"></i> Tạo Phiên Mới
             </button>
         </nav>
 
         <div class="container-fluid px-4 mt-4">
-            <div id="sessions-list" class="row row-cols-1 row-cols-md-3 g-4">
+            <div id="sessions-list" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 </div>
         </div>
     </div>
 </div>
 
-{% include 'partials/training_session_modal.html' %}
+{% include 'partials/create_session_modal.html' %}
 {% include 'partials/edit_session_modal.html' %}
 {% endblock %}
 
 {% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="{{ url_for('static', filename='js/training_session.js') }}"></script>
 {% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Chi tiết Phiên tập{% endblock %}
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper" style="width: 85%;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
+            <h2 class="fs-2 m-0">
+                <a href="{{ url_for('training') }}" class="btn btn-light me-3" title="Quay lại"><i class="fas fa-arrow-left"></i></a>
+                <span id="session-name-header">Đang tải phiên tập...</span>
+            </h2>
+        </nav>
+
+        <div class="container-fluid px-4 mt-4">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="row g-4">
+                        <div class="col-md-7">
+                            <div id="connection-status-banner" class="mb-2 fw-bold">
+                                <i class="fas fa-plug"></i> <span id="connection-text">Đang kiểm tra kết nối...</span>
+                            </div>
+                            <div class="video-container-session">
+                                <div id="status-message" class="text-white text-center d-flex flex-column justify-content-center align-items-center">
+                                    <i class="fas fa-video-slash mb-3"></i>
+                                    <p>Đang chờ kết nối từ thiết bị...</p>
+                                </div>
+                                <img src="" id="video-feed" class="img-fluid rounded bg-dark" alt="Luồng video trực tiếp">
+                            </div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="card h-100">
+                                <div class="card-header fw-bold">
+                                    Kết quả Bắn Mới nhất
+                                </div>
+                                <div class="card-body d-flex flex-column justify-content-center">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><i class="fas fa-user-shield me-2 text-muted"></i>Xạ thủ:</span>
+                                            <strong id="current-shooter-name" class="text-primary">Chưa chọn</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><i class="far fa-clock me-2 text-muted"></i>Thời gian:</span>
+                                            <strong id="shot-time">--:--:--</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><i class="fas fa-crosshairs me-2 text-muted"></i>Mục tiêu:</span>
+                                            <strong id="target-name">--</strong>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="fas fa-star me-2 text-muted"></i>Điểm:</span>
+                                            <strong id="shot-score" class="text-danger fs-4">--</strong>
+                                        </li>
+                                    </ul>
+                                    <div class="text-center mt-3">
+                                        <div id="target-image-container" class="target-img-container-session">
+                                            <img id="target-image" src="https://i.imgur.com/G5T5j92.png" alt="Mô hình bia">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header fw-bold">
+                                    <i class="fas fa-history me-2"></i>Lịch sử Bắn (Real-time)
+                                </div>
+                                <div id="shot-status-list" class="card-body shot-status-scroll">
+                                    <p class="text-muted mb-0">Chưa có phát bắn nào được ghi nhận.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-header fw-bold">
+                            Thông tin Phiên
+                        </div>
+                        <div class="card-body">
+                            <p id="exercise-name-display" class="card-text text-muted mb-0">Bài tập: Đang tải...</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                            <span>Danh sách Xạ thủ</span>
+                            <span id="shooter-count-badge" class="badge bg-secondary">0</span>
+                        </div>
+                        <div id="soldiers-list" class="list-group list-group-flush shooter-list-scroll">
+                            <div class="list-group-item text-center p-5">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/session_detail.css') }}">
+<script src="{{ url_for('static', filename='js/session_detail.js') }}"></script>
+{% endblock %}

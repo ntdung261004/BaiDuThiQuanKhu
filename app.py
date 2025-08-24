@@ -93,20 +93,17 @@ def reports():
 def setting():
     return render_template('settings.html')
 
-@app.route('/che_do_1')
+@app.route('/training', endpoint='training')
 @login_required
-def che_do_1():
+def training():
     return render_template('training_session.html')
 
-@app.route('/che_do_2')
+#Route để hiển thị trang chi tiết phiên tập >>>
+@app.route('/session/<int:session_id>')
 @login_required
-def che_do_2():
-    return render_template('che_do_2.html')
-
-@app.route('/che_do_3')
-@login_required
-def che_do_3():
-    return render_template('che_do_3.html')
+def session_details(session_id):
+    # Chúng ta chỉ cần render trang, JavaScript sẽ tự tải dữ liệu
+    return render_template('session_details.html', session_id=session_id)
 
 # --- Khởi chạy Server ---
 if __name__ == '__main__':

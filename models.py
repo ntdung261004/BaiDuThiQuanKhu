@@ -50,8 +50,7 @@ class TrainingSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     session_name = db.Column(db.String(255), nullable=True)
     exercise_id = db.Column(db.Integer, db.ForeignKey('exercises.id'), nullable=False)
-    start_time = db.Column(db.DateTime, default=datetime.utcnow)
-    end_time = db.Column(db.DateTime, nullable=True)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
     
     shots = db.relationship('Shot', backref='session', lazy=True, cascade="all, delete-orphan")
     
