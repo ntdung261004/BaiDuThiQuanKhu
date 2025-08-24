@@ -67,7 +67,7 @@
 
 /* Danh sách xạ thủ */
 .shooter-list-scroll {
-    max-height: 400px; /* Tăng chiều cao một chút */
+   /* max-height: 400px; /* Tăng chiều cao một chút */
     overflow-y: auto;
 }
 .shooter-list-scroll .list-group-item.active {
@@ -78,8 +78,8 @@
 
 /* Khung lịch sử bắn */
 .shot-status-scroll {
-    max-height: 250px; /* Tăng chiều cao tối đa */
-    width: 1500px;
+  /*  max-height: 250px; /* Tăng chiều cao tối đa */
+    overflow-y: auto;
     font-size: 0.8rem;
 }
 .shot-status-scroll p {
