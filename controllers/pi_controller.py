@@ -1,6 +1,6 @@
 # controllers/pi_controller.py
 
-from flask import Blueprint, request, jsonify, Response
+from flask import Blueprint, request, jsonify, Response, session
 import queue
 import threading
 import time
