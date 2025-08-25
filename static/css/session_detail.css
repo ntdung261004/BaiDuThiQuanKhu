@@ -1,20 +1,20 @@
 /* static/css/session_details.css */
 
 /* Định dạng chung */
-.card-header.fw-bold {
+#page-content-wrapper .card-header.fw-bold {
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
 }
-.card-body {
+#page-content-wrapper .card-body {
     padding: 0.8rem;
 }
-.list-group-item {
-    padding: 0.5rem 0;
+#page-content-wrapper .list-group-item {
+    padding: 0.5rem 0.8rem;
     font-size: 0.85rem;
     background-color: transparent;
     border: none;
 }
-.fs-4 {
+#page-content-wrapper .fs-4 {
     font-size: 1.15rem !important;
 }
 
@@ -65,20 +65,24 @@
     object-fit: contain;
 }
 
-/* Danh sách xạ thủ */
+/* <<< SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY >>> */
+
+/* Danh sách xạ thủ - Cố định chiều cao và cho phép cuộn */
 .shooter-list-scroll {
-   /* max-height: 400px; /* Tăng chiều cao một chút */
-    overflow-y: auto;
+    /* (font-size * line-height + padding-top + padding-bottom) * 5 items */
+    height: 10rem; 
+    overflow-y: auto; /* Tự động hiện thanh cuộn khi cần */
 }
-.shooter-list-scroll .list-group-item.active {
+
+#page-content-wrapper .shooter-list-scroll .list-group-item.active {
     background-color: var(--bs-primary);
-    color: white;
+    color: white !important;
     border-color: var(--bs-primary);
 }
 
-/* Khung lịch sử bắn */
+/* Khung lịch sử bắn - Cố định chiều cao và cho phép cuộn */
 .shot-status-scroll {
-  /*  max-height: 250px; /* Tăng chiều cao tối đa */
+    height: 160px; /* Chiều cao cố định */
     overflow-y: auto;
     font-size: 0.8rem;
 }
