@@ -1,7 +1,7 @@
 # controllers/training_controller.py
 
 from flask import Blueprint, request, jsonify, session
-from models import db, Exercise, TrainingSession, Soldier
+from models import db, Exercise, TrainingSession, Soldier, Shot
 
 training_bp = Blueprint('training_bp', __name__)
 
@@ -95,20 +95,50 @@ def update_training_session(session_id):
 
 @training_bp.route('/api/training_sessions/<int:session_id>', methods=['GET'])
 def get_session_details(session_id):
-    session = db.session.get(TrainingSession, session_id)
-    if not session:
+    session_obj = db.session.get(TrainingSession, session_id)
+    if not session_obj:
         return jsonify({'error': 'Không tìm thấy phiên tập'}), 404
 
-    # Lấy danh sách chiến sĩ tham gia phiên này
-    soldiers_in_session = [{'id': s.id, 'name': s.name, 'rank': s.rank} for s in session.soldiers]
+    soldiers_in_session = []
+    for soldier in session_obj.soldiers:
+        # Đếm số lần bắn của chiến sĩ này TRONG phiên tập này
+        shot_count = Shot.query.filter_by(session_id=session_id, soldier_id=soldier.id).count()
+        soldiers_in_session.append({
+            'id': soldier.id, 
+            'name': soldier.name, 
+            'rank': soldier.rank,
+            'shot_count': shot_count # Thêm số phát bắn vào dữ liệu trả về
+        })
     
     session_details = {
-        'id': session.id,
-        'session_name': session.session_name,
-        'exercise_name': session.exercise.exercise_name,
+        'id': session_obj.id,
+        'session_name': session_obj.session_name,
+        'exercise_name': session_obj.exercise.exercise_name,
         'soldiers': soldiers_in_session
     }
     return jsonify(session_details)
+
+@training_bp.route('/api/sessions/<int:session_id>/shots', methods=['GET'])
+def get_session_shots(session_id):
+    """API mới để lấy lịch sử bắn của một phiên."""
+    session_obj = db.session.get(TrainingSession, session_id)
+    if not session_obj:
+        return jsonify({'error': 'Không tìm thấy phiên tập'}), 404
+        
+    shots_history = []
+    # Sắp xếp các lần bắn theo thời gian mới nhất lên đầu
+    shots = Shot.query.filter_by(session_id=session_id).order_by(Shot.shot_time.desc()).all()
+    
+    for shot in shots:
+        shots_history.append({
+            'id': shot.id,
+            'score': shot.score,
+            'shot_time': shot.shot_time.strftime('%H:%M:%S'),
+            'target_name': shot.target_name,
+            'soldier_name': shot.soldier.name,
+            'soldier_rank': shot.soldier.rank
+        })
+    return jsonify(shots_history)
 
 # API để kích hoạt xạ thủ đang bắn >>>
 @training_bp.route('/api/activate_shooter', methods=['POST'])
@@ -120,10 +150,12 @@ def activate_shooter():
     if not session_id or not soldier_id:
         return jsonify({'error': 'Thiếu thông tin'}), 400
 
-    # Lưu vào session phía server, gắn liền với trình duyệt của người đội trưởng
     session['active_session_id'] = session_id
     session['active_soldier_id'] = soldier_id
     
     soldier = db.session.get(Soldier, soldier_id)
-    print(f"🔫 Đã kích hoạt xạ thủ: {soldier.name} cho phiên {session_id}")
-    return jsonify({'status': 'success', 'message': f'Đã kích hoạt xạ thủ {soldier.name}'})
+    if soldier:
+        print(f"🔫 Đã kích hoạt xạ thủ: {soldier.rank} {soldier.name} cho phiên {session_id}")
+        return jsonify({'status': 'success', 'message': f'Đã kích hoạt xạ thủ {soldier.name}'})
+    else:
+        return jsonify({'error': 'Không tìm thấy chiến sĩ'}), 404
