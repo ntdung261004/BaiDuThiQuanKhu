@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify, session
 from models import db, Exercise, TrainingSession, Soldier, Shot, SessionStatus
 from controllers.pi_controller import ACTIVE_SHOOTER_STATE, latest_processed_data
+import time
 
 training_bp = Blueprint('training_bp', __name__)
 
@@ -159,6 +160,7 @@ def activate_shooter():
     # Thay vì lưu vào session, hãy cập nhật vào biến trạng thái toàn cục
     ACTIVE_SHOOTER_STATE['session_id'] = session_id
     ACTIVE_SHOOTER_STATE['soldier_id'] = soldier_id
+    ACTIVE_SHOOTER_STATE['heartbeat'] = time.time()
     
     # Reset lại dữ liệu của phát bắn cuối cùng trên server
     # để tránh client lấy phải dữ liệu cũ
@@ -237,3 +239,17 @@ def finish_training_session(session_id):
         print(f"❌ Lỗi khi kết thúc phiên: {e}")
         return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
  
+@training_bp.route('/api/deactivate_shooter', methods=['POST'])
+def deactivate_shooter():
+    """
+    API để hủy kích hoạt xạ thủ, reset trạng thái về mặc định.
+    Được gọi khi người dùng rời khỏi trang chi tiết phiên tập.
+    """
+    global ACTIVE_SHOOTER_STATE
+    ACTIVE_SHOOTER_STATE = {
+        'session_id': None,
+        'soldier_id': None,
+        'heartbeat': 0
+    }
+    print("🔴 Xạ thủ đã được hủy kích hoạt.")
+    return jsonify({'status': 'deactivated'}), 200

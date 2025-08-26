@@ -16,11 +16,9 @@ pi_bp = Blueprint('pi_bp', __name__)
 # Đây sẽ là nơi lưu trữ xạ thủ đang hoạt động, thay vì dùng session
 ACTIVE_SHOOTER_STATE = {
     'session_id': None,
-    'soldier_id': None
+    'soldier_id': None,
+    'heartbeat': 0
 }
-
-# Lưu lại timestamp của lần cuối cùng trang chi tiết phiên tập hoạt động
-SESSION_PAGE_ACTIVE_TIMESTAMP = 0
 
 # --- Các biến trạng thái sẽ được quản lý trong blueprint này ---
 COMMAND_QUEUE = queue.Queue(maxsize=10)
@@ -70,7 +68,7 @@ def video_upload():
 # <<< SỬA ĐỔI HOÀN TOÀN HÀM NÀY >>>
 @pi_bp.route('/processed_data_upload', methods=['POST'])
 def processed_data_upload():
-    global latest_processed_data
+    global latest_processed_data, ACTIVE_SHOOTER_STATE
     data = request.get_json()
     
     if not data:
@@ -82,9 +80,10 @@ def processed_data_upload():
     # Lấy ID phiên và xạ thủ từ TRẠNG THÁI TOÀN CỤC
     active_session_id = ACTIVE_SHOOTER_STATE.get('session_id')
     active_soldier_id = ACTIVE_SHOOTER_STATE.get('soldier_id')
+    last_heartbeat = ACTIVE_SHOOTER_STATE.get('heartbeat', 0)
 
     # Grace period (thời gian chờ) là 10 giây
-    is_session_page_active = (time.time() - SESSION_PAGE_ACTIVE_TIMESTAMP) < 10
+    is_session_page_active = (time.time() - last_heartbeat) < 10
     
     # Logic lưu vào database, kiểm tra dựa trên biến toàn cục
     if active_session_id and active_soldier_id and is_session_page_active:
@@ -213,10 +212,12 @@ def get_command():
 
 @pi_bp.route('/api/session/heartbeat', methods=['POST'])
 def session_heartbeat():
-    """
-    API nhận tín hiệu heartbeat từ trang chi tiết phiên tập
-    để xác nhận trang đang hoạt động.
-    """
-    global SESSION_PAGE_ACTIVE_TIMESTAMP
-    SESSION_PAGE_ACTIVE_TIMESTAMP = time.time()
-    return jsonify({'status': 'ok'}), 200   
+    global ACTIVE_SHOOTER_STATE
+    data = request.get_json()
+    session_id_from_client = data.get('session_id')
+
+    # Chỉ cập nhật heartbeat nếu client đang xem đúng phiên đang hoạt động
+    if ACTIVE_SHOOTER_STATE.get('session_id') == str(session_id_from_client):
+        ACTIVE_SHOOTER_STATE['heartbeat'] = time.time()
+        
+    return jsonify({'status': 'ok'}), 200 

@@ -2,6 +2,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     const pathParts = window.location.pathname.split('/');
     const sessionId = pathParts.length > 1 ? pathParts.pop() : null;
 
+    if (!sessionId || isNaN(sessionId)) {
+        console.log("Không phải trang chi tiết phiên, script sẽ không chạy.");
+        return;
+    }
+
     const sessionNameHeader = document.getElementById('session-name-header');
     const exerciseNameDisplay = document.getElementById('exercise-name-display');
     const soldiersList = document.getElementById('soldiers-list');
@@ -29,38 +34,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     let dataFeedInterval;
     let shotHistory = []; // Lưu trữ lịch sử bắn
 
-    // --- Logic gửi Heartbeat ---
+// --- LOGIC HEARTBEAT ĐÃ SỬA LỖI ---
     let heartbeatInterval = null;
-
     async function sendHeartbeat() {
+        // Chỉ gửi nếu có session ID
+        if (!sessionId) return;
         try {
-            await fetch('/api/session/heartbeat', { method: 'POST' });
+            await fetch('/api/session/heartbeat', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId }) // Gửi kèm session_id
+            });
         } catch (error) {
             console.error("Heartbeat failed:", error);
         }
     }
 
-    // Chỉ gửi heartbeat khi tab đang được focus
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            // Gửi ngay 1 lần khi quay lại tab
-            sendHeartbeat(); 
-            // Bắt đầu lại vòng lặp
-            if (!heartbeatInterval) {
-                heartbeatInterval = setInterval(sendHeartbeat, 5000); // Gửi mỗi 5 giây
-            }
-        } else {
-            // Dừng gửi khi rời khỏi tab
-            clearInterval(heartbeatInterval);
-            heartbeatInterval = null;
-        }
+    // --- LOGIC HỦY KÍCH HOẠT KHI RỜI TRANG ---
+    window.addEventListener('beforeunload', function(event) {
+        // Gửi yêu cầu hủy kích hoạt mà không cần đợi phản hồi
+        navigator.sendBeacon('/api/deactivate_shooter', JSON.stringify({}));
     });
-
-    // Kích hoạt lần đầu khi tải trang
-    sendHeartbeat();
-    heartbeatInterval = setInterval(sendHeartbeat, 5000);
-    // --- Kết thúc khối Heartbeat ---
-
 
     function updateConnectionStatus(isConnected) {
         if (isConnected) {
@@ -128,17 +122,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     // THAY THẾ HOÀN TOÀN HÀM CŨ BẰNG HÀM NÀY
     async function updateProcessedData() {
         try {
-            const response = await fetch('/data_feed');
+            const response = await fetch('/data_feed', { cache: 'no-store' });
             if (!response.ok) return;
 
             const data = await response.json();
             
-            // Cập nhật thẻ "Kết quả Bắn Mới nhất" (luôn hiển thị)
-            shotTime.textContent = data.time;
-            targetName.textContent = data.target;
-            shotScore.textContent = data.score;
-            if (data.image_data) {
-                targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
+            // Chỉ cập nhật nếu phát bắn thuộc về xạ thủ đang được chọn
+            if (activeShooterId && String(ACTIVE_SHOOTER_STATE.soldier_id) === String(activeShooterId)) {
+                shotTime.textContent = data.time;
+                targetName.textContent = data.target;
+                shotScore.textContent = data.score;
+                if (data.image_data) {
+                    targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
+                }
             }
 
             // Thay thế toàn bộ khối if cũ bằng khối lệnh này
@@ -483,18 +479,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Lỗi khi gửi yêu cầu bắt đầu phiên:', error);
         }
     }
-    // Thiết lập interval để kiểm tra kết nối và cập nhật dữ liệu
-    connectionInterval = setInterval(checkConnectionStatus, 3000);
-    dataFeedInterval = setInterval(updateProcessedData, 1000);
 
-    // Tải thông tin phiên tập và danh sách xạ thủ
-    let soldiers = [];
-    // Gọi loadSessionDetails và đợi kết quả trạng thái
+    // 1. Tải thông tin chính của phiên
     const sessionStatus = await loadSessionDetails();
 
-    // Chỉ gọi "start" nếu phiên chưa hoàn thành
+    // 2. Chỉ khởi chạy các chức năng real-time nếu phiên chưa kết thúc
     if (sessionStatus !== 'COMPLETED') {
-        startTrainingSession();
+        await initializeLatestShotId();
+        await startTrainingSession();
+        
+        // Bắt đầu các vòng lặp
+        setInterval(checkConnectionStatus, 3000);
+        setInterval(updateProcessedData, 1000);
+        
+        // Bắt đầu heartbeat
+        sendHeartbeat();
+        heartbeatInterval = setInterval(sendHeartbeat, 5000);
     }
 
     // Gán sự kiện cho danh sách xạ thủ
