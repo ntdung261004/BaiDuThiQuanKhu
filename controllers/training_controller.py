@@ -1,7 +1,7 @@
 # controllers/training_controller.py
 
 from flask import Blueprint, request, jsonify, session
-from models import db, Exercise, TrainingSession, Soldier, Shot
+from models import db, Exercise, TrainingSession, Soldier, Shot, SessionStatus
 from controllers.pi_controller import ACTIVE_SHOOTER_STATE, latest_processed_data
 
 training_bp = Blueprint('training_bp', __name__)
@@ -58,7 +58,10 @@ def get_training_sessions():
     for session in sessions:
         exercise_name = session.exercise.exercise_name if session.exercise else 'Không xác định'
         session_list.append({
-            'id': session.id, 'session_name': session.session_name, 'exercise_name': exercise_name
+            'id': session.id, 
+            'session_name': session.session_name, 
+            'exercise_name': exercise_name,
+            'status': session.status.name # .name sẽ trả về 'NOT_STARTED', 'IN_PROGRESS'...
         })
     return jsonify(session_list)
 
@@ -115,7 +118,8 @@ def get_session_details(session_id):
         'id': session_obj.id,
         'session_name': session_obj.session_name,
         'exercise_name': session_obj.exercise.exercise_name,
-        'soldiers': soldiers_in_session
+        'soldiers': soldiers_in_session,
+        'status': session_obj.status.name 
     }
     return jsonify(session_details)
 
@@ -186,3 +190,50 @@ def get_active_shooter_for_session(session_id):
         return jsonify({'active_soldier_id': active_soldier_id})
     
     return jsonify({'active_soldier_id': None})
+
+# API để kích hoạt 1 phiên huấn luyện mới >>>
+@training_bp.route('/api/training_sessions/<int:session_id>/start', methods=['POST'])
+def start_training_session(session_id):
+    """
+    API để cập nhật trạng thái của một phiên thành IN_PROGRESS.
+    """
+    try:
+        session_to_start = db.session.get(TrainingSession, session_id)
+        if not session_to_start:
+            return jsonify({'message': 'Không tìm thấy phiên tập.'}), 404
+
+        # Chỉ đổi trạng thái nếu phiên chưa bắt đầu để tránh các xử lý không cần thiết
+        if session_to_start.status == SessionStatus.NOT_STARTED:
+            session_to_start.status = SessionStatus.IN_PROGRESS
+            db.session.commit()
+            print(f"✅ Trạng thái phiên #{session_id} đã chuyển thành IN_PROGRESS.")
+        
+        return jsonify({'message': 'Phiên đã được bắt đầu.', 'status': 'IN_PROGRESS'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Lỗi khi bắt đầu phiên: {e}")
+        return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
+
+# API để kết thúc 1 phiên huấn luyện>>>  
+@training_bp.route('/api/training_sessions/<int:session_id>/finish', methods=['POST'])
+def finish_training_session(session_id):
+    """
+    API để cập nhật trạng thái của một phiên thành COMPLETED.
+    """
+    try:
+        session_to_finish = db.session.get(TrainingSession, session_id)
+        if not session_to_finish:
+            return jsonify({'message': 'Không tìm thấy phiên tập.'}), 404
+
+        session_to_finish.status = SessionStatus.COMPLETED
+        db.session.commit()
+        print(f"✅ Trạng thái phiên #{session_id} đã chuyển thành COMPLETED.")
+        
+        return jsonify({'message': 'Phiên đã được kết thúc.', 'status': 'COMPLETED'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Lỗi khi kết thúc phiên: {e}")
+        return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
+ 

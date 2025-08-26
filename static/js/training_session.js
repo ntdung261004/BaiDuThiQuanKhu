@@ -70,14 +70,44 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/api/training_sessions');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
             const sessions = await response.json();
             sessionsList.innerHTML = '';
 
             if (sessions.length > 0) {
                 sessions.forEach(session => {
+                    let topBorderColor, statusText, actionMenuItemHtml, statusBgColor;
+
+                    switch (session.status) {
+                        case 'IN_PROGRESS':
+                            topBorderColor = 'var(--bs-success)';
+                            statusText = 'Đang huấn luyện';
+                            statusBgColor = 'bg-success-subtle text-success-emphasis';
+                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-arrow-right fa-fw me-2"></i> Tiếp tục</a></li>`;
+                            break;
+                        case 'COMPLETED':
+                            topBorderColor = 'var(--bs-primary)';
+                            statusText = 'Đã huấn luyện';
+                            statusBgColor = 'bg-primary-subtle text-primary-emphasis';
+                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/report"><i class="fas fa-chart-bar fa-fw me-2"></i> Xem báo cáo</a></li>`;
+                            break;
+                        case 'NOT_STARTED':
+                        default:
+                            topBorderColor = 'var(--bs-danger)';
+                            statusText = 'Chưa huấn luyện';
+                            statusBgColor = 'bg-danger-subtle text-danger-emphasis';
+                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
+                            break;
+                    }
+
                     const cardHtml = `
                         <div class="col">
-                            <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid var(--bs-danger);">
+                            <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid ${topBorderColor};">
+                                
+                                <div class="card-header ${statusBgColor} py-2 text-center small fw-bold">
+                                    ${statusText}
+                                </div>
+
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
@@ -92,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <i class="fas fa-ellipsis-v text-muted"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>
+                                                ${actionMenuItemHtml}
                                                 <li><a class="dropdown-item edit-session-btn" href="#" data-session-id="${session.id}" data-session-name="${session.session_name || `Phiên Tập #${session.id}`}"><i class="fas fa-edit fa-fw me-2"></i> Sửa tên</a></li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item text-danger delete-session-btn" href="#" data-session-id="${session.id}"><i class="fas fa-trash-alt fa-fw me-2"></i> Xóa phiên</a></li>
@@ -100,7 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </div>
                                     </div>
                                 </div>
-                                <a href="/session/${session.id}" class="stretched-link"></a>
                             </div>
                         </div>
                     `;

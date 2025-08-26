@@ -2,6 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import enum # <<< THÊM DÒNG NÀY Ở ĐẦU FILE
+from sqlalchemy import Enum
 
 db = SQLAlchemy()
 
@@ -12,6 +14,13 @@ session_soldiers = db.Table('session_soldiers',
     db.Column('session_id', db.Integer, db.ForeignKey('training_sessions.id'), primary_key=True),
     db.Column('soldier_id', db.Integer, db.ForeignKey('soldiers.id'), primary_key=True)
 )
+
+# <<< THÊM KHỐI NÀY ĐỂ ĐỊNH NGHĨA CÁC TRẠNG THÁI >>>
+class SessionStatus(enum.Enum):
+    NOT_STARTED = 'Chưa huấn luyện'
+    IN_PROGRESS = 'Đang huấn luyện'
+    COMPLETED = 'Đã huấn luyện'
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -56,7 +65,12 @@ class TrainingSession(db.Model):
     
     # <<< SỬA ĐỔI: Quan hệ nhiều-nhiều với Soldier >>>
     soldiers = db.relationship('Soldier', secondary=session_soldiers, back_populates='training_sessions', lazy='dynamic')
-
+    status = db.Column(
+        Enum(SessionStatus), 
+        nullable=False, 
+        default=SessionStatus.NOT_STARTED
+    )
+    
 class Shot(db.Model):
     __tablename__ = 'shots'
     id = db.Column(db.Integer, primary_key=True)

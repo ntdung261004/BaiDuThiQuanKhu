@@ -29,6 +29,39 @@ document.addEventListener('DOMContentLoaded', async function() {
     let dataFeedInterval;
     let shotHistory = []; // Lưu trữ lịch sử bắn
 
+    // --- Logic gửi Heartbeat ---
+    let heartbeatInterval = null;
+
+    async function sendHeartbeat() {
+        try {
+            await fetch('/api/session/heartbeat', { method: 'POST' });
+        } catch (error) {
+            console.error("Heartbeat failed:", error);
+        }
+    }
+
+    // Chỉ gửi heartbeat khi tab đang được focus
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            // Gửi ngay 1 lần khi quay lại tab
+            sendHeartbeat(); 
+            // Bắt đầu lại vòng lặp
+            if (!heartbeatInterval) {
+                heartbeatInterval = setInterval(sendHeartbeat, 5000); // Gửi mỗi 5 giây
+            }
+        } else {
+            // Dừng gửi khi rời khỏi tab
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+    });
+
+    // Kích hoạt lần đầu khi tải trang
+    sendHeartbeat();
+    heartbeatInterval = setInterval(sendHeartbeat, 5000);
+    // --- Kết thúc khối Heartbeat ---
+
+
     function updateConnectionStatus(isConnected) {
         if (isConnected) {
             connectionStatusBanner.className = 'mb-2 fw-bold alert alert-success';
@@ -109,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             // Thay thế toàn bộ khối if cũ bằng khối lệnh này
-            if (data.shot_id && data.shot_id !== lastProcessedShotId) {
+            if (data.shot_id && data.shot_id !== lastProcessedShotId && data.saved_to_db) {
                 // Nếu không có xạ thủ nào đang hoạt động, không làm gì cả
                 if (!activeShooterId) {
                     console.log("Bỏ qua phát bắn vì chưa chọn xạ thủ.");
@@ -188,6 +221,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // Thay thế hoàn toàn hàm loadSessionDetails cũ bằng hàm này
     async function loadSessionDetails() {
         if (!sessionId) return;
         try {
@@ -195,9 +229,27 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!response.ok) throw new Error('Không thể tải dữ liệu phiên tập.');
             const data = await response.json();
 
+            // Cập nhật tên phiên ở header (luôn hiển thị)
             sessionNameHeader.textContent = data.session_name || `Phiên Tập #${data.id}`;
-            exerciseNameDisplay.textContent = `Bài tập: ${data.exercise_name}`;
 
+            // <<< LOGIC MỚI: KIỂM TRA VÀ THAY THẾ TOÀN BỘ NỘI DUNG >>>
+            if (data.status === 'COMPLETED') {
+                const mainContainer = document.querySelector('.container-fluid.px-4.mt-4');
+                
+                // Xóa nội dung cũ và chèn vào thông báo kết thúc
+                mainContainer.innerHTML = `
+                    <div class="text-center p-5">
+                        <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
+                        <h2 class="display-6">Phiên tập này đã kết thúc.</h2>
+                        <p class="lead text-muted">Mọi thao tác đã được vô hiệu hóa.</p>
+                    </div>
+                `;
+                // Dừng hàm tại đây
+                return 'COMPLETED';
+            }
+
+            // --- Nếu phiên chưa kết thúc, code sẽ tiếp tục chạy như bình thường ---
+            exerciseNameDisplay.textContent = `Bài tập: ${data.exercise_name}`;
             soldiersList.innerHTML = '';
             soldiers = data.soldiers || [];
             shooterCountBadge.textContent = soldiers.length;
@@ -225,11 +277,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 soldiersList.innerHTML = '<div class="list-group-item">Không có xạ thủ nào trong phiên này.</div>';
             }
-
-            // Đồng bộ trạng thái và lưu kết quả
+            
             const shooterWasSynced = await syncActiveShooterState();
 
-            // Chỉ ẩn khung kết quả nếu KHÔNG có xạ thủ nào được đồng bộ
             if (!shooterWasSynced) {
                 toggleResultPanel('hide');
             }
@@ -238,9 +288,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Lỗi khi tải chi tiết phiên tập:', error);
             sessionNameHeader.textContent = 'Lỗi tải dữ liệu';
         }
-        updateSessionOverview();
-        loadShotHistory();
-        initializeLatestShotId();
     }
 
     async function handleSelectShooter(event) {
@@ -294,7 +341,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 totalShotsEl.textContent = '0';
                 hitRateEl.textContent = '0%';
                 averageScoreEl.textContent = '0.0';
-                return;
+                return 0;
             }
 
             // 1. Tính tổng điểm
@@ -423,14 +470,58 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error("Không thể khởi tạo ID phát bắn mới nhất:", error);
         }
     }
+
+    async function startTrainingSession() {
+        if (!sessionId) return;
+        try {
+            await fetch(`/api/training_sessions/${sessionId}/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            console.log(`Đã gửi yêu cầu bắt đầu cho phiên #${sessionId}`);
+        } catch (error) {
+            console.error('Lỗi khi gửi yêu cầu bắt đầu phiên:', error);
+        }
+    }
     // Thiết lập interval để kiểm tra kết nối và cập nhật dữ liệu
     connectionInterval = setInterval(checkConnectionStatus, 3000);
     dataFeedInterval = setInterval(updateProcessedData, 1000);
 
     // Tải thông tin phiên tập và danh sách xạ thủ
     let soldiers = [];
-    loadSessionDetails();
+    // Gọi loadSessionDetails và đợi kết quả trạng thái
+    const sessionStatus = await loadSessionDetails();
+
+    // Chỉ gọi "start" nếu phiên chưa hoàn thành
+    if (sessionStatus !== 'COMPLETED') {
+        startTrainingSession();
+    }
 
     // Gán sự kiện cho danh sách xạ thủ
     soldiersList.addEventListener('click', handleSelectShooter);
+    // <<< THÊM TOÀN BỘ KHỐI CODE NÀY VÀO >>>
+    const finishSessionBtn = document.getElementById('end-session-btn');
+    if (finishSessionBtn) {
+        finishSessionBtn.addEventListener('click', async () => {
+            if (confirm('Bạn có chắc chắn muốn kết thúc phiên huấn luyện này không?')) {
+                try {
+                    const response = await fetch(`/api/training_sessions/${sessionId}/finish`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (response.ok) {
+                        alert('Đã kết thúc phiên huấn luyện!');
+                        // Chuyển hướng người dùng về trang chủ (hoặc trang quản lý phiên tập)
+                        window.location.href = '/training'; 
+                    } else {
+                        alert('Có lỗi xảy ra, không thể kết thúc phiên.');
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi kết thúc phiên:', error);
+                    alert('Lỗi kết nối. Vui lòng thử lại.');
+                }
+            }
+        });
+    }
 });

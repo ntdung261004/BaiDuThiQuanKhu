@@ -18,6 +18,10 @@ ACTIVE_SHOOTER_STATE = {
     'session_id': None,
     'soldier_id': None
 }
+
+# Lưu lại timestamp của lần cuối cùng trang chi tiết phiên tập hoạt động
+SESSION_PAGE_ACTIVE_TIMESTAMP = 0
+
 # --- Các biến trạng thái sẽ được quản lý trong blueprint này ---
 COMMAND_QUEUE = queue.Queue(maxsize=10)
 pi_connected = False
@@ -25,7 +29,8 @@ last_heartbeat = 0
 CURRENT_PI_CONFIG = {'zoom': 1.0, 'center': None}
 latest_processed_data = {
     'time': '--:--:--', 'target': 'Chưa có kết quả', 'score': '--.-',
-    'image_data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+    'image_data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    'saved_to_db': False # <<< THÊM DÒNG NÀY VÀO
 }
 
 # --- Lớp quản lý Livestream ---
@@ -72,15 +77,17 @@ def processed_data_upload():
         return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
         
     data['shot_id'] = time.time() 
-    # Cập nhật dữ liệu tạm thời để hiển thị ngay lập tức trên giao diện
-    latest_processed_data.update(data)
+    data['saved_to_db'] = False # <<< Mặc định là KHÔNG được lưu
     
     # Lấy ID phiên và xạ thủ từ TRẠNG THÁI TOÀN CỤC
     active_session_id = ACTIVE_SHOOTER_STATE.get('session_id')
     active_soldier_id = ACTIVE_SHOOTER_STATE.get('soldier_id')
 
+    # Grace period (thời gian chờ) là 10 giây
+    is_session_page_active = (time.time() - SESSION_PAGE_ACTIVE_TIMESTAMP) < 10
+    
     # Logic lưu vào database, kiểm tra dựa trên biến toàn cục
-    if active_session_id and active_soldier_id:
+    if active_session_id and active_soldier_id and is_session_page_active:
         try:
             # -- Bước 1: Xử lý và lưu file ảnh kết quả --
             image_data = data.get('image_data')
@@ -113,6 +120,7 @@ def processed_data_upload():
             db.session.add(new_shot)
             db.session.commit()
             print(f"💾 Đã lưu lần bắn vào database cho session {active_session_id}")
+            data['saved_to_db'] = True # <<< CẬP NHẬT TRẠNG THÁI THÀNH CÔNG
 
         except Exception as e:
             db.session.rollback()
@@ -120,8 +128,12 @@ def processed_data_upload():
 
     # Thêm một else để debug nếu chưa chọn xạ thủ
     else:
-        print("⚠️ Nhận được dữ liệu bắn nhưng chưa có xạ thủ nào được kích hoạt.")
+        # Thêm lý do không lưu để dễ debug
+        reason = "chưa có xạ thủ" if not active_soldier_id else "trang chi tiết không hoạt động"
+        print(f"⚠️ Nhận được dữ liệu bắn nhưng không lưu vì {reason}.")
 
+    # Cập nhật dữ liệu tạm thời với thông tin đầy đủ
+    latest_processed_data.update(data)
     return jsonify({'status': 'success'})
 
 # <<< THÊM LẠI: Route để trình duyệt lấy dữ liệu mới nhất >>>
@@ -198,3 +210,13 @@ def get_command():
         pass
     
     return jsonify(response_data)
+
+@pi_bp.route('/api/session/heartbeat', methods=['POST'])
+def session_heartbeat():
+    """
+    API nhận tín hiệu heartbeat từ trang chi tiết phiên tập
+    để xác nhận trang đang hoạt động.
+    """
+    global SESSION_PAGE_ACTIVE_TIMESTAMP
+    SESSION_PAGE_ACTIVE_TIMESTAMP = time.time()
+    return jsonify({'status': 'ok'}), 200   
