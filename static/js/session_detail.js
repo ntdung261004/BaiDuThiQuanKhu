@@ -2,11 +2,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const pathParts = window.location.pathname.split('/');
     const sessionId = pathParts.length > 1 ? pathParts.pop() : null;
 
-    if (!sessionId || isNaN(sessionId)) {
-        console.log("Không phải trang chi tiết phiên, script sẽ không chạy.");
-        return;
-    }
-
     const sessionNameHeader = document.getElementById('session-name-header');
     const exerciseNameDisplay = document.getElementById('exercise-name-display');
     const soldiersList = document.getElementById('soldiers-list');
@@ -33,28 +28,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     let connectionInterval;
     let dataFeedInterval;
     let shotHistory = []; // Lưu trữ lịch sử bắn
-
-// --- LOGIC HEARTBEAT ĐÃ SỬA LỖI ---
-    let heartbeatInterval = null;
-    async function sendHeartbeat() {
-        // Chỉ gửi nếu có session ID
-        if (!sessionId) return;
-        try {
-            await fetch('/api/session/heartbeat', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: sessionId }) // Gửi kèm session_id
-            });
-        } catch (error) {
-            console.error("Heartbeat failed:", error);
-        }
-    }
-
-    // --- LOGIC HỦY KÍCH HOẠT KHI RỜI TRANG ---
-    window.addEventListener('beforeunload', function(event) {
-        // Gửi yêu cầu hủy kích hoạt mà không cần đợi phản hồi
-        navigator.sendBeacon('/api/deactivate_shooter', JSON.stringify({}));
-    });
 
     function updateConnectionStatus(isConnected) {
         if (isConnected) {
@@ -122,23 +95,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     // THAY THẾ HOÀN TOÀN HÀM CŨ BẰNG HÀM NÀY
     async function updateProcessedData() {
         try {
-            const response = await fetch('/data_feed', { cache: 'no-store' });
+            const response = await fetch('/data_feed');
             if (!response.ok) return;
 
             const data = await response.json();
             
-            // Chỉ cập nhật nếu phát bắn thuộc về xạ thủ đang được chọn
-            if (activeShooterId && String(ACTIVE_SHOOTER_STATE.soldier_id) === String(activeShooterId)) {
-                shotTime.textContent = data.time;
-                targetName.textContent = data.target;
-                shotScore.textContent = data.score;
-                if (data.image_data) {
-                    targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
-                }
+            // Cập nhật thẻ "Kết quả Bắn Mới nhất" (luôn hiển thị)
+            shotTime.textContent = data.time;
+            targetName.textContent = data.target;
+            shotScore.textContent = data.score;
+            if (data.image_data) {
+                targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
             }
 
             // Thay thế toàn bộ khối if cũ bằng khối lệnh này
-            if (data.shot_id && data.shot_id !== lastProcessedShotId && data.saved_to_db) {
+            if (data.shot_id && data.shot_id !== lastProcessedShotId) {
                 // Nếu không có xạ thủ nào đang hoạt động, không làm gì cả
                 if (!activeShooterId) {
                     console.log("Bỏ qua phát bắn vì chưa chọn xạ thủ.");
@@ -337,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 totalShotsEl.textContent = '0';
                 hitRateEl.textContent = '0%';
                 averageScoreEl.textContent = '0.0';
-                return 0;
+                return;
             }
 
             // 1. Tính tổng điểm
@@ -479,22 +450,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Lỗi khi gửi yêu cầu bắt đầu phiên:', error);
         }
     }
+    // Thiết lập interval để kiểm tra kết nối và cập nhật dữ liệu
+    connectionInterval = setInterval(checkConnectionStatus, 3000);
+    dataFeedInterval = setInterval(updateProcessedData, 1000);
 
-    // 1. Tải thông tin chính của phiên
+    // Tải thông tin phiên tập và danh sách xạ thủ
+    let soldiers = [];
+    // Gọi loadSessionDetails và đợi kết quả trạng thái
     const sessionStatus = await loadSessionDetails();
 
-    // 2. Chỉ khởi chạy các chức năng real-time nếu phiên chưa kết thúc
+    // Chỉ gọi "start" nếu phiên chưa hoàn thành
     if (sessionStatus !== 'COMPLETED') {
-        await initializeLatestShotId();
-        await startTrainingSession();
-        
-        // Bắt đầu các vòng lặp
-        setInterval(checkConnectionStatus, 3000);
-        setInterval(updateProcessedData, 1000);
-        
-        // Bắt đầu heartbeat
-        sendHeartbeat();
-        heartbeatInterval = setInterval(sendHeartbeat, 5000);
+        startTrainingSession();
     }
 
     // Gán sự kiện cho danh sách xạ thủ
