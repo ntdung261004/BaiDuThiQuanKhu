@@ -2,20 +2,26 @@
 venv/
 .venv/
 
-# File tạm
-*.pyc
+# Cache và file tạm Python
 __pycache__/
+*.pyc
 
-# Các file hệ thống
+# File hệ thống
 .DS_Store
 
-# Các file logs
+# File logs
 *.log
-*.jpg
+
+# File cơ sở dữ liệu & uploads runtime
 *.db
+*.sqlite3
+uploads/
+instance/
+
 # Các file cấu hình nhạy cảm
-# (ví dụ: file chứa mật khẩu, khóa API, vv.)
 *.env
 .env.production
 .env.development
-config.pyc
+
+# Không ignore toàn bộ *.jpg, trừ khi bạn chắc chắn không muốn giữ ảnh nào
+*.jpg
