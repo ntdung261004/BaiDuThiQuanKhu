@@ -91,3 +91,39 @@
     border-bottom: none;
     margin-bottom: 0;
 }
+
+/* --- SỬA LỖI KHUNG ẢNH KẾT QUẢ BẮN (V2) --- */
+
+/* 1. Bắt buộc card-body phải tuân thủ layout flex và không bị tràn */
+.card-body.d-flex.flex-column {
+    overflow: hidden;
+    height: 100%; /* Đảm bảo card-body có chiều cao xác định */
+}
+
+/* 2. Thiết lập hành vi cho KHUNG CHỨA ẢNH */
+.target-img-container-session {
+    /* Ra lệnh cho khung này chiếm hết không gian dọc còn lại */
+    flex-grow: 1;
+
+    /* QUAN TRỌNG: Đây là "thủ thuật" để khắc phục lỗi.
+       Nó ngăn nội dung (ảnh) có kích thước lớn tự ý kéo dãn khung chứa nó. */
+    min-height: 0;
+
+    /* Dùng flexbox để căn giữa ảnh bên trong */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #212529; /* Nền tối để ảnh nổi bật hơn */
+    border-radius: .25rem;
+    padding: 0.25rem;
+}
+
+/* 3. Ra lệnh cho ẢNH phải nằm gọn bên trong khung chứa */
+#target-image {
+    /* Đặt kích thước tối đa là 100% của khung chứa */
+    max-width: 100%;
+    max-height: 100%;
+
+    /* QUAN TRỌNG NHẤT: Giữ nguyên tỷ lệ ảnh và thu nhỏ cho vừa khung */
+    object-fit: contain;
+}

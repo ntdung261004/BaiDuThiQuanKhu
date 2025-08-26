@@ -6,12 +6,18 @@ import threading
 import time
 import base64
 import os
+from datetime import datetime
 
 from models import db, Shot
 
 # Tạo một Blueprint mới cho các chức năng liên quan đến Pi
 pi_bp = Blueprint('pi_bp', __name__)
 
+# Đây sẽ là nơi lưu trữ xạ thủ đang hoạt động, thay vì dùng session
+ACTIVE_SHOOTER_STATE = {
+    'session_id': None,
+    'soldier_id': None
+}
 # --- Các biến trạng thái sẽ được quản lý trong blueprint này ---
 COMMAND_QUEUE = queue.Queue(maxsize=10)
 pi_connected = False
@@ -64,55 +70,57 @@ def processed_data_upload():
     
     if not data:
         return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
-
+        
+    data['shot_id'] = time.time() 
     # Cập nhật dữ liệu tạm thời để hiển thị ngay lập tức trên giao diện
     latest_processed_data.update(data)
     
-    # Logic lưu vào database
-    if 'active_session_id' in session and 'active_soldier_id' in session:
+    # Lấy ID phiên và xạ thủ từ TRẠNG THÁI TOÀN CỤC
+    active_session_id = ACTIVE_SHOOTER_STATE.get('session_id')
+    active_soldier_id = ACTIVE_SHOOTER_STATE.get('soldier_id')
+
+    # Logic lưu vào database, kiểm tra dựa trên biến toàn cục
+    if active_session_id and active_soldier_id:
         try:
             # -- Bước 1: Xử lý và lưu file ảnh kết quả --
             image_data = data.get('image_data')
             image_path = None
             if image_data:
-                # Tạo thư mục lưu trữ nếu chưa có
                 output_dir = os.path.join('static', 'shot_results')
                 os.makedirs(output_dir, exist_ok=True)
                 
-                # Tạo tên file duy nhất
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                filename = f"session_{session['active_session_id']}_soldier_{session['active_soldier_id']}_{timestamp}.jpg"
+                filename = f"session_{active_session_id}_soldier_{active_soldier_id}_{timestamp}.jpg"
                 image_path = os.path.join(output_dir, filename)
                 
-                # Giải mã base64 và lưu file
                 with open(image_path, "wb") as f:
                     f.write(base64.b64decode(image_data))
                 
-                # Cập nhật lại đường dẫn để client có thể truy cập
-                # Ví dụ: static/shot_results/file.jpg -> /static/shot_results/file.jpg
                 image_path = image_path.replace(os.path.sep, '/')
 
-
-            # -- Bước 2: Tạo đối tượng Shot mới với đầy đủ thông tin --
+            # -- Bước 2: Tạo đối tượng Shot mới --
             new_shot = Shot(
-                session_id=session['active_session_id'],
-                soldier_id=session['active_soldier_id'],
+                session_id=active_session_id,
+                soldier_id=active_soldier_id,
                 score=data.get('score', 0),
                 target_name=data.get('target', 'Không xác định'),
-                # Giả sử Pi sẽ gửi về tọa độ điểm chạm trong tương lai
                 hit_location_x=data.get('hit_location_x'),
                 hit_location_y=data.get('hit_location_y'),
-                result_image_path=image_path # Lưu đường dẫn file ảnh
+                result_image_path=image_path
             )
             
             # -- Bước 3: Lưu vào database --
             db.session.add(new_shot)
             db.session.commit()
-            print(f"💾 Đã lưu lần bắn vào database cho session {session['active_session_id']}")
+            print(f"💾 Đã lưu lần bắn vào database cho session {active_session_id}")
 
         except Exception as e:
             db.session.rollback()
             print(f"❌ Lỗi khi lưu lần bắn vào database: {e}")
+
+    # Thêm một else để debug nếu chưa chọn xạ thủ
+    else:
+        print("⚠️ Nhận được dữ liệu bắn nhưng chưa có xạ thủ nào được kích hoạt.")
 
     return jsonify({'status': 'success'})
 

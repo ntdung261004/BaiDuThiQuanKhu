@@ -19,8 +19,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     const targetImage = document.getElementById('target-image');
 
     const shotStatusList = document.getElementById('shot-status-list');
+    const totalShotsEl = document.getElementById('total-shots');
+    const hitRateEl = document.getElementById('hit-rate');
+    const averageScoreEl = document.getElementById('average-score');
 
     let activeShooterId = null;
+    let lastProcessedShotId = null;
     let connectionInterval;
     let dataFeedInterval;
     let shotHistory = []; // Lưu trữ lịch sử bắn
@@ -31,14 +35,49 @@ document.addEventListener('DOMContentLoaded', async function() {
             connectionText.textContent = 'Thiết bị đã kết nối';
             videoFeed.style.display = 'block';
             statusMessage.style.display = 'none';
+
+            videoFeed.src = '/video_feed';
         } else {
             connectionStatusBanner.className = 'mb-2 fw-bold alert alert-danger';
             connectionText.textContent = 'Thiết bị ngắt kết nối';
             videoFeed.style.display = 'none';
             statusMessage.style.display = 'flex';
+            // Xóa nguồn video khi ngắt kết nối để dừng việc tải và tránh lỗi console
+            videoFeed.src = ''; 
         }
     }
 
+    // Thêm hàm này vào sau hàm updateConnectionStatus
+    function toggleResultPanel(state, message = 'Vui lòng chọn một xạ thủ để bắt đầu!') {
+        const resultList = document.querySelector('#current-shooter-name').closest('.list-group');
+        const targetImageContainer = document.getElementById('target-image-container');
+        
+        if (state === 'show') {
+            resultList.style.display = 'block';
+            targetImageContainer.style.display = 'block';
+            // Xóa thông báo nếu có
+            const notice = document.getElementById('shooter-notice');
+            if (notice) notice.remove();
+        } else { // 'hide' or any other state
+            resultList.style.display = 'none';
+            targetImageContainer.style.display = 'none';
+            // Thêm thông báo nếu chưa có
+            if (!document.getElementById('shooter-notice')) {
+                const noticeElement = document.createElement('div');
+                noticeElement.id = 'shooter-notice';
+                noticeElement.className = 'd-flex flex-column justify-content-center align-items-center text-center h-100 text-muted';
+                noticeElement.innerHTML = `<i class="fas fa-hand-pointer fa-2x mb-3"></i><p>${message}</p>`;
+                targetImageContainer.parentNode.insertBefore(noticeElement, targetImageContainer);
+            }
+        }
+    }
+
+    function resetLatestResultPanel() {
+    shotTime.textContent = '--:--:--';
+    targetName.textContent = '--';
+    shotScore.textContent = '--.-';
+    targetImage.src = 'https://i.imgur.com/G5T5j92.png'; // Link ảnh bia mặc định
+    }
     async function checkConnectionStatus() {
         try {
             const response = await fetch('/connection-status');
@@ -53,29 +92,96 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    // THAY THẾ HOÀN TOÀN HÀM CŨ BẰNG HÀM NÀY
     async function updateProcessedData() {
         try {
             const response = await fetch('/data_feed');
-            if (response.ok) {
-                const data = await response.json();
-                shotTime.textContent = data.time;
-                targetName.textContent = data.target;
-                shotScore.textContent = data.score;
-                if (data.image_data) {
-                    targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
+            if (!response.ok) return;
+
+            const data = await response.json();
+            
+            // Cập nhật thẻ "Kết quả Bắn Mới nhất" (luôn hiển thị)
+            shotTime.textContent = data.time;
+            targetName.textContent = data.target;
+            shotScore.textContent = data.score;
+            if (data.image_data) {
+                targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
+            }
+
+            // Thay thế toàn bộ khối if cũ bằng khối lệnh này
+            if (data.shot_id && data.shot_id !== lastProcessedShotId) {
+                // Nếu không có xạ thủ nào đang hoạt động, không làm gì cả
+                if (!activeShooterId) {
+                    console.log("Bỏ qua phát bắn vì chưa chọn xạ thủ.");
+                    lastProcessedShotId = data.shot_id; // Vẫn cập nhật ID để không xử lý lại
+                    return; 
                 }
 
-                // Thêm trạng thái bắn mới vào danh sách
-                if (data.score !== '--.-') {
-                    const statusItem = document.createElement('p');
-                    const shooter = soldiers.find(s => s.id === activeShooterId);
-                    const shooterName = shooter ? `${shooter.rank} ${shooter.name}` : 'Không xác định';
-                    statusItem.textContent = `${data.time} - ${shooterName}: Điểm ${data.score}, Mục tiêu ${data.target}`;
-                    shotStatusList.prepend(statusItem); // Thêm lên đầu
-                    if (shotStatusList.children.length > 10) {
-                        shotStatusList.removeChild(shotStatusList.lastChild); // Giữ tối đa 10 dòng
+                lastProcessedShotId = data.shot_id;
+
+                const emptyMessage = document.getElementById('no-shots-message');
+                if (emptyMessage) {
+                    emptyMessage.remove(); // Hoặc shotStatusList.innerHTML = '';
+                }
+                
+                // Lấy số thứ tự của phát bắn mới nhất
+                const newShotNumber = await updateSessionOverview();
+
+                const shooter = soldiers.find(s => s.id === activeShooterId);
+                const shooterName = shooter ? `${shooter.rank} ${shooter.name}` : 'Không xác định';
+                const statusItem = document.createElement('div');
+                statusItem.innerHTML = `
+                    <div class="flex-grow-1 d-flex align-items-center">
+                        <span class="badge bg-primary me-3">${newShotNumber}</span>
+
+                        <span class="me-4" style="line-height: 1.2;">
+                            ${data.time} - <strong>${shooterName}</strong>
+                        </span>
+                        <div class="d-flex">
+                            <span class="text-muted me-2">Mục tiêu:</span>
+                            <strong>${data.target}</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-baseline" style="min-width: 80px;">
+                        <span class="text-muted me-2">Điểm:</span>
+                        <strong class="text-danger">${data.score}</strong>
+                    </div>
+                `;
+
+                // GIẢM PADDING TỪ py-2 THÀNH py-1
+                statusItem.className = 'd-flex justify-content-between align-items-center small py-1 border-bottom';
+                shotStatusList.prepend(statusItem);
+
+                // ----- Cập nhật số phát bắn cho xạ thủ đang hoạt động -----
+                if (activeShooterId) {
+                    // 1. Tìm đúng thẻ <a> chứa thông tin của xạ thủ
+                    const shooterListItem = soldiersList.querySelector(`[data-soldier-item-id="${activeShooterId}"]`);
+                    
+                    if (shooterListItem) {
+                        // 2. Tìm huy hiệu (badge) bên trong thẻ đó
+                        const shotCountBadge = shooterListItem.querySelector('.badge');
+                        
+                        if (shotCountBadge) {
+                            // 3. Lấy số hiện tại, +1, và cập nhật lại giao diện
+                            const currentCountText = shotCountBadge.innerText.trim();
+                            const currentCount = parseInt(currentCountText) || 0;
+                            const newCount = currentCount + 1;
+                            
+                            // Cập nhật lại nội dung của badge, giữ nguyên icon
+                            shotCountBadge.innerHTML = `<i class="fas fa-bullseye me-1"></i>${newCount}`;
+                        }
                     }
                 }
+
+                if (shotStatusList.children.length > 15) {
+                    shotStatusList.removeChild(shotStatusList.lastChild);
+                }
+
+                // Cập nhật lại các thông số khác khi có bắn mới
+                //updateSessionOverview();
+                // Bạn cũng có thể gọi lại hàm loadSessionDetails() để cập nhật số phát bắn của từng xạ thủ,
+                // nhưng để tối ưu, chúng ta sẽ xử lý sau nếu cần.
             }
         } catch (error) {
             console.error("Lỗi khi cập nhật dữ liệu:", error);
@@ -100,10 +206,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                 soldiers.forEach(soldier => {
                     const soldierItem = document.createElement('a');
                     soldierItem.href = "#";
+                    soldierItem.dataset.soldierItemId = soldier.id;
                     soldierItem.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
                     soldierItem.innerHTML = `
-                        <span><i class="fas fa-user me-2"></i>${soldier.rank} ${soldier.name}</span>
-                        <button class="btn btn-sm btn-outline-primary select-shooter-btn" data-soldier-id="${soldier.id}">Chọn</button>
+                        <span>
+                            <i class="fas fa-user me-2"></i>
+                            ${soldier.rank} ${soldier.name}
+                        </span>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-secondary me-2" title="Số phát bắn">
+                                <i class="fas fa-bullseye me-1"></i>${soldier.shot_count}
+                            </span>
+                            <button class="btn btn-sm btn-outline-primary select-shooter-btn" data-soldier-id="${soldier.id}">Chọn</button>
+                        </div>
                     `;
                     soldiersList.appendChild(soldierItem);
                 });
@@ -111,10 +226,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                 soldiersList.innerHTML = '<div class="list-group-item">Không có xạ thủ nào trong phiên này.</div>';
             }
 
+            // Đồng bộ trạng thái và lưu kết quả
+            const shooterWasSynced = await syncActiveShooterState();
+
+            // Chỉ ẩn khung kết quả nếu KHÔNG có xạ thủ nào được đồng bộ
+            if (!shooterWasSynced) {
+                toggleResultPanel('hide');
+            }
+
         } catch (error) {
             console.error('Lỗi khi tải chi tiết phiên tập:', error);
             sessionNameHeader.textContent = 'Lỗi tải dữ liệu';
         }
+        updateSessionOverview();
+        loadShotHistory();
+        initializeLatestShotId();
     }
 
     async function handleSelectShooter(event) {
@@ -123,6 +249,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!button) return;
 
         activeShooterId = parseInt(button.dataset.soldierId);
+
+        toggleResultPanel('show');
+
+        resetLatestResultPanel();
+        
         const selectedSoldier = soldiers.find(s => s.id === activeShooterId);
         currentShooterName.textContent = selectedSoldier ? `${selectedSoldier.rank} ${selectedSoldier.name}` : 'Không xác định';
 
@@ -145,6 +276,153 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    async function updateSessionOverview() {
+        if (!sessionId) return; // Đảm bảo sessionId đã tồn tại
+
+        try {
+            const response = await fetch(`/api/sessions/${sessionId}/shots`);
+            if (!response.ok) {
+                console.error("Lỗi khi tải lịch sử bắn của phiên.");
+                return;
+            }
+            const shots = await response.json();
+
+            const totalShots = shots.length;
+            
+            if (totalShots === 0) {
+                // Nếu chưa có phát bắn nào, trả về giá trị mặc định
+                totalShotsEl.textContent = '0';
+                hitRateEl.textContent = '0%';
+                averageScoreEl.textContent = '0.0';
+                return;
+            }
+
+            // 1. Tính tổng điểm
+            const totalScore = shots.reduce((sum, shot) => sum + parseFloat(shot.score || 0), 0);
+            
+            // 2. Đếm số lần bắn trúng (điểm > 0)
+            const hitCount = shots.filter(shot => parseFloat(shot.score || 0) > 0).length;
+
+            // 3. Tính điểm trung bình
+            const averageScore = totalScore / totalShots;
+
+            // 4. Tính tỷ lệ trúng mục tiêu
+            const hitRate = (hitCount / totalShots) * 100;
+            
+            // 5. Cập nhật lên giao diện
+            totalShotsEl.textContent = totalShots;
+            hitRateEl.textContent = `${hitCount}/${totalShots} - ${hitRate.toFixed(1)}%`; // Làm tròn 1 chữ số thập phân
+            averageScoreEl.textContent = averageScore.toFixed(1); // Làm tròn 1 chữ số thập phân
+            
+            return totalShots;
+        } catch (error) {
+            console.error("Lỗi khi cập nhật tổng quan phiên:", error);
+            return 0;
+        }
+    }
+
+    // Thêm hàm này vào cuối file session_detail.js
+    async function loadShotHistory() {
+        if (!sessionId) return;
+        try {
+            const response = await fetch(`/api/sessions/${sessionId}/shots`);
+            const shots = await response.json();
+
+            shotStatusList.innerHTML = ''; // Xóa thông báo mặc định
+
+            if (shots.length === 0) {
+                shotStatusList.innerHTML = '<p id="no-shots-message" class="text-muted mb-0">Chưa có phát bắn nào được ghi nhận.</p>';
+                return;
+            }
+
+        // Thay thế vòng lặp forEach cũ bằng đoạn mã này
+            let shotCounter = shots.length; // Bắt đầu đếm từ tổng số phát bắn
+
+            shots.forEach(shot => {
+                const statusItem = document.createElement('div');
+
+                statusItem.innerHTML = `
+                    <div class="flex-grow-1 d-flex align-items-center">
+                        <span class="badge bg-secondary me-3">${shotCounter}</span>
+                        
+                        <span class="me-4" style="line-height: 1.2;">
+                            ${shot.shot_time} - <strong>${shot.soldier_rank} ${shot.soldier_name}</strong>
+                        </span>
+                        <div class="d-flex">
+                            <span class="text-muted me-2">Mục tiêu:</span>
+                            <strong>${shot.target_name}</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-baseline" style="min-width: 80px;">
+                        <span class="text-muted me-2">Điểm:</span>
+                        <strong class="text-danger">${shot.score}</strong>
+                    </div>
+                `;
+
+                // GIẢM PADDING TỪ py-2 THÀNH py-1
+                statusItem.className = 'd-flex justify-content-between align-items-center small py-1 border-bottom';
+                shotStatusList.appendChild(statusItem);
+
+                shotCounter--; // Giảm bộ đếm cho phát bắn cũ hơn
+            });
+        } catch (error) {
+            console.error("Lỗi khi tải lịch sử bắn:", error);
+        }
+    }
+
+    // Thêm hàm này vào sau hàm loadShotHistory
+    async function syncActiveShooterState() {
+        if (!sessionId) return;
+        try {
+            const response = await fetch(`/api/session/${sessionId}/active_shooter`, { cache: 'no-store' });
+            const data = await response.json();
+
+            if (data.active_soldier_id) {
+                console.log(`Đồng bộ trạng thái: Xạ thủ #${data.active_soldier_id} đang hoạt động.`);
+                
+                // 1. Cập nhật biến activeShooterId
+                activeShooterId = data.active_soldier_id;
+
+                // 2. Tìm và hiển thị tên xạ thủ
+                const selectedSoldier = soldiers.find(s => s.id === activeShooterId);
+                if (selectedSoldier) {
+                    currentShooterName.textContent = `${selectedSoldier.rank} ${selectedSoldier.name}`;
+                }
+
+                // 3. Highlight xạ thủ trong danh sách
+                // Bỏ highlight cũ
+                document.querySelectorAll('#soldiers-list .list-group-item').forEach(item => item.classList.remove('active'));
+                // Highlight xạ thủ mới
+                const shooterListItem = soldiersList.querySelector(`[data-soldier-item-id="${activeShooterId}"]`);
+                if (shooterListItem) {
+                    shooterListItem.classList.add('active');
+                }
+
+                // 4. Hiển thị lại khung kết quả
+                toggleResultPanel('show');
+                return true;
+            }
+        } catch (error) {
+            console.error("Lỗi khi đồng bộ trạng thái xạ thủ:", error);
+        }
+        return false;
+    }
+
+    // Thêm hàm này vào file
+    async function initializeLatestShotId() {
+        try {
+            const response = await fetch('/data_feed', { cache: 'no-store' });
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.shot_id) {
+                    lastProcessedShotId = data.shot_id;
+                }
+            }
+        } catch (error) {
+            console.error("Không thể khởi tạo ID phát bắn mới nhất:", error);
+        }
+    }
     // Thiết lập interval để kiểm tra kết nối và cập nhật dữ liệu
     connectionInterval = setInterval(checkConnectionStatus, 3000);
     dataFeedInterval = setInterval(updateProcessedData, 1000);

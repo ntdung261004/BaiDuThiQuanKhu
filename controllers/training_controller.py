@@ -2,6 +2,7 @@
 
 from flask import Blueprint, request, jsonify, session
 from models import db, Exercise, TrainingSession, Soldier, Shot
+from controllers.pi_controller import ACTIVE_SHOOTER_STATE, latest_processed_data
 
 training_bp = Blueprint('training_bp', __name__)
 
@@ -150,8 +151,20 @@ def activate_shooter():
     if not session_id or not soldier_id:
         return jsonify({'error': 'Thiếu thông tin'}), 400
 
-    session['active_session_id'] = session_id
-    session['active_soldier_id'] = soldier_id
+    # <<< SỬA ĐỔI LOGIC TẠI ĐÂY >>>
+    # Thay vì lưu vào session, hãy cập nhật vào biến trạng thái toàn cục
+    ACTIVE_SHOOTER_STATE['session_id'] = session_id
+    ACTIVE_SHOOTER_STATE['soldier_id'] = soldier_id
+    
+    # Reset lại dữ liệu của phát bắn cuối cùng trên server
+    # để tránh client lấy phải dữ liệu cũ
+    latest_processed_data.update({
+        'time': '--:--:--',
+        'target': '--',
+        'score': '--.-',
+        'image_data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+        'shot_id': None # Rất quan trọng để tránh race condition ở frontend
+    })
     
     soldier = db.session.get(Soldier, soldier_id)
     if soldier:
@@ -159,3 +172,17 @@ def activate_shooter():
         return jsonify({'status': 'success', 'message': f'Đã kích hoạt xạ thủ {soldier.name}'})
     else:
         return jsonify({'error': 'Không tìm thấy chiến sĩ'}), 404
+    
+@training_bp.route('/api/session/<int:session_id>/active_shooter', methods=['GET'])
+def get_active_shooter_for_session(session_id):
+    """
+    API để kiểm tra xem có xạ thủ nào đang hoạt động cho phiên này không.
+    """
+    active_session_id = ACTIVE_SHOOTER_STATE.get('session_id')
+    active_soldier_id = ACTIVE_SHOOTER_STATE.get('soldier_id')
+
+    # Chỉ trả về ID xạ thủ nếu phiên đang hoạt động khớp với phiên đang xem
+    if active_session_id and int(active_session_id) == session_id:
+        return jsonify({'active_soldier_id': active_soldier_id})
+    
+    return jsonify({'active_soldier_id': None})
