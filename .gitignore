@@ -11,7 +11,8 @@ __pycache__/
 
 # Các file logs
 *.log
-
+*.jpg
+*.db
 # Các file cấu hình nhạy cảm
 # (ví dụ: file chứa mật khẩu, khóa API, vv.)
 *.env
