@@ -7,11 +7,13 @@ import time
 import base64
 import os
 from datetime import datetime
-
-from models import db, Shot
+from threading import Lock
+from models import db, Shot, TrainingSession, SessionStatus
 
 # Tạo một Blueprint mới cho các chức năng liên quan đến Pi
 pi_bp = Blueprint('pi_bp', __name__)
+
+STATE_LOCK = Lock()
 
 # Đây sẽ là nơi lưu trữ xạ thủ đang hoạt động, thay vì dùng session
 ACTIVE_SHOOTER_STATE = {
@@ -62,66 +64,73 @@ def video_upload():
     pi_connected = True
     return ('', 204)
 
-# <<< SỬA ĐỔI HOÀN TOÀN HÀM NÀY >>>
 @pi_bp.route('/processed_data_upload', methods=['POST'])
 def processed_data_upload():
     global latest_processed_data
     data = request.get_json()
-    
     if not data:
         return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
-        
-    data['shot_id'] = time.time() 
-    # Cập nhật dữ liệu tạm thời để hiển thị ngay lập tức trên giao diện
-    latest_processed_data.update(data)
-    
-    # Lấy ID phiên và xạ thủ từ TRẠNG THÁI TOÀN CỤC
-    active_session_id = ACTIVE_SHOOTER_STATE.get('session_id')
-    active_soldier_id = ACTIVE_SHOOTER_STATE.get('soldier_id')
 
-    # Logic lưu vào database, kiểm tra dựa trên biến toàn cục
+    # Gán các giá trị mặc định vào dữ liệu nhận được
+    data['shot_id'] = time.time()
+    data['saved_to_db'] = False
+
+    active_session_id = None
+    active_soldier_id = None
+
+    # Bước 1: Khóa và đọc trạng thái hiện tại một cách an toàn
+    with STATE_LOCK:
+        active_session_id = ACTIVE_SHOOTER_STATE.get('session_id')
+        active_soldier_id = ACTIVE_SHOOTER_STATE.get('soldier_id')
+    
+    # Bước 2: Chỉ xử lý nếu có xạ thủ đang được kích hoạt
     if active_session_id and active_soldier_id:
         try:
-            # -- Bước 1: Xử lý và lưu file ảnh kết quả --
-            image_data = data.get('image_data')
-            image_path = None
-            if image_data:
-                output_dir = os.path.join('static', 'shot_results')
-                os.makedirs(output_dir, exist_ok=True)
-                
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                filename = f"session_{active_session_id}_soldier_{active_soldier_id}_{timestamp}.jpg"
-                image_path = os.path.join(output_dir, filename)
-                
-                with open(image_path, "wb") as f:
-                    f.write(base64.b64decode(image_data))
-                
-                image_path = image_path.replace(os.path.sep, '/')
-
-            # -- Bước 2: Tạo đối tượng Shot mới --
-            new_shot = Shot(
-                session_id=active_session_id,
-                soldier_id=active_soldier_id,
-                score=data.get('score', 0),
-                target_name=data.get('target', 'Không xác định'),
-                hit_location_x=data.get('hit_location_x'),
-                hit_location_y=data.get('hit_location_y'),
-                result_image_path=image_path
-            )
+            # Bước 3: Lấy phiên từ DB và kiểm tra trạng thái lần cuối (lớp bảo vệ)
+            current_session = db.session.get(TrainingSession, int(active_session_id))
             
-            # -- Bước 3: Lưu vào database --
-            db.session.add(new_shot)
-            db.session.commit()
-            print(f"💾 Đã lưu lần bắn vào database cho session {active_session_id}")
+            if current_session and current_session.status != SessionStatus.COMPLETED:
+                # Nếu mọi thứ hợp lệ, tiến hành tạo và lưu đối tượng Shot
+                image_data = data.get('image_data')
+                image_path = None
+                if image_data:
+                    output_dir = os.path.join('static', 'shot_results')
+                    os.makedirs(output_dir, exist_ok=True)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    filename = f"session_{active_session_id}_soldier_{active_soldier_id}_{timestamp}.jpg"
+                    image_path = os.path.join(output_dir, filename)
+                    with open(image_path, "wb") as f:
+                        f.write(base64.b64decode(image_data))
+                    image_path = image_path.replace(os.path.sep, '/')
+
+                new_shot = Shot(
+                    session_id=active_session_id,
+                    soldier_id=active_soldier_id,
+                    score=data.get('score', 0),
+                    target_name=data.get('target', 'Không xác định'),
+                    hit_location_x=data.get('hit_location_x'),
+                    hit_location_y=data.get('hit_location_y'),
+                    result_image_path=image_path
+                )
+                
+                db.session.add(new_shot)
+                db.session.commit()
+                
+                print(f"💾 Đã lưu lần bắn vào database cho session {active_session_id}")
+                data['saved_to_db'] = True # Cập nhật cờ báo hiệu đã lưu thành công
+            else:
+                status_str = "không tồn tại" if not current_session else "đã kết thúc"
+                print(f"⚠️ Từ chối lưu vì phiên #{active_session_id} {status_str}.")
 
         except Exception as e:
             db.session.rollback()
             print(f"❌ Lỗi khi lưu lần bắn vào database: {e}")
-
-    # Thêm một else để debug nếu chưa chọn xạ thủ
     else:
-        print("⚠️ Nhận được dữ liệu bắn nhưng chưa có xạ thủ nào được kích hoạt.")
+        print("⚠️ Nhận được dữ liệu bắn nhưng không lưu vì không có xạ thủ được kích hoạt.")
 
+    # Cập nhật dữ liệu tạm thời để gửi về cho giao diện
+    latest_processed_data.update(data)
+    
     return jsonify({'status': 'success'})
 
 # <<< THÊM LẠI: Route để trình duyệt lấy dữ liệu mới nhất >>>

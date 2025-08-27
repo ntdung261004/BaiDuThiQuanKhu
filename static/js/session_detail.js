@@ -30,6 +30,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     let dataFeedInterval;
     let shotHistory = []; // Lưu trữ lịch sử bắn
 
+// <<< THÊM TOÀN BỘ KHỐI CODE NÀY VÀO ĐÂY >>>
+    // --- LOGIC HỦY KÍCH HOẠT KHI RỜI TRANG ---
+    window.addEventListener('beforeunload', function(event) {
+        // navigator.sendBeacon đảm bảo yêu cầu được gửi đi một cách đáng tin cậy
+        // ngay cả khi trang đang trong quá trình đóng lại.
+        if (navigator.sendBeacon) {
+            // Gửi một request trống đến API hủy kích hoạt
+            navigator.sendBeacon('/api/deactivate_shooter', new Blob());
+            console.log("Đã gửi yêu cầu hủy kích hoạt đến server.");
+        }
+        
+        // Phần này để hiển thị cảnh báo cho người dùng (tùy chọn)
+        // Lưu ý: Các trình duyệt hiện đại sẽ hiển thị thông báo mặc định của riêng chúng
+        if (activeShooterId) {
+            const confirmationMessage = 'Các thay đổi có thể không được lưu nếu bạn rời đi.';
+            event.returnValue = confirmationMessage;
+            return confirmationMessage;
+        }
+    });
+
     function updateConnectionStatus(isConnected) {
         if (isConnected) {
             connectionStatusBanner.className = 'mb-2 fw-bold alert alert-success';

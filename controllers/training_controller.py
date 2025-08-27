@@ -2,7 +2,7 @@
 
 from flask import Blueprint, request, jsonify, session
 from models import db, Exercise, TrainingSession, Soldier, Shot, SessionStatus
-from controllers.pi_controller import ACTIVE_SHOOTER_STATE, latest_processed_data
+from controllers.pi_controller import ACTIVE_SHOOTER_STATE, latest_processed_data, STATE_LOCK
 
 training_bp = Blueprint('training_bp', __name__)
 
@@ -155,19 +155,22 @@ def activate_shooter():
     if not session_id or not soldier_id:
         return jsonify({'error': 'Thiếu thông tin'}), 400
 
-    # <<< SỬA ĐỔI LOGIC TẠI ĐÂY >>>
-    # Thay vì lưu vào session, hãy cập nhật vào biến trạng thái toàn cục
-    ACTIVE_SHOOTER_STATE['session_id'] = session_id
-    ACTIVE_SHOOTER_STATE['soldier_id'] = soldier_id
+    # Kiểm tra xem phiên có được phép bắt đầu không
+    session_to_activate = db.session.get(TrainingSession, session_id)
+    if not session_to_activate:
+         return jsonify({'error': 'Phiên tập không tồn tại'}), 404
+    if session_to_activate.status == SessionStatus.COMPLETED:
+        return jsonify({'error': 'Phiên tập đã kết thúc, không thể kích hoạt lại.'}), 403
+
+    # Kích hoạt phiên mới
+    with STATE_LOCK:
+        ACTIVE_SHOOTER_STATE['session_id'] = session_id
+        ACTIVE_SHOOTER_STATE['soldier_id'] = soldier_id
     
-    # Reset lại dữ liệu của phát bắn cuối cùng trên server
-    # để tránh client lấy phải dữ liệu cũ
+    # Reset dữ liệu tạm thời
     latest_processed_data.update({
-        'time': '--:--:--',
-        'target': '--',
-        'score': '--.-',
-        'image_data': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-        'shot_id': None # Rất quan trọng để tránh race condition ở frontend
+        'time': '--:--:--', 'target': '--', 'score': '--.-',
+        'shot_id': None, 'saved_to_db': False
     })
     
     soldier = db.session.get(Soldier, soldier_id)
@@ -218,22 +221,34 @@ def start_training_session(session_id):
 # API để kết thúc 1 phiên huấn luyện>>>  
 @training_bp.route('/api/training_sessions/<int:session_id>/finish', methods=['POST'])
 def finish_training_session(session_id):
-    """
-    API để cập nhật trạng thái của một phiên thành COMPLETED.
-    """
     try:
         session_to_finish = db.session.get(TrainingSession, session_id)
         if not session_to_finish:
             return jsonify({'message': 'Không tìm thấy phiên tập.'}), 404
 
         session_to_finish.status = SessionStatus.COMPLETED
+        
+        # Hủy kích hoạt phiên này khi kết thúc
+        with STATE_LOCK:
+            # Chỉ hủy nếu đúng phiên này đang hoạt động
+            if ACTIVE_SHOOTER_STATE.get('session_id') == str(session_id):
+                ACTIVE_SHOOTER_STATE['session_id'] = None
+                ACTIVE_SHOOTER_STATE['soldier_id'] = None
+                print(f"🔴 Phiên #{session_id} đã được hủy kích hoạt do kết thúc.")
+        
         db.session.commit()
         print(f"✅ Trạng thái phiên #{session_id} đã chuyển thành COMPLETED.")
-        
         return jsonify({'message': 'Phiên đã được kết thúc.', 'status': 'COMPLETED'}), 200
 
     except Exception as e:
         db.session.rollback()
         print(f"❌ Lỗi khi kết thúc phiên: {e}")
         return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
-    
+
+@training_bp.route('/api/deactivate_shooter', methods=['POST'])
+def deactivate_shooter():
+    with STATE_LOCK:
+        ACTIVE_SHOOTER_STATE['session_id'] = None
+        ACTIVE_SHOOTER_STATE['soldier_id'] = None
+    print("🔴 Xạ thủ đã được hủy kích hoạt do người dùng rời trang.")
+    return jsonify({'status': 'deactivated'}), 200
