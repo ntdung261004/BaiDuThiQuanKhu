@@ -1,124 +1,108 @@
-{% extends "base.html" %}
+{% extends "base_fullscreen.html" %}
 
 {% block title %}Chi tiết Phiên tập{% endblock %}
 
 {% block content %}
-<div class="d-flex" id="wrapper">
-    {% include 'sidebar.html' %}
-    <div id="page-content-wrapper" style="width: 85%;">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
-            <h2 class="fs-2 m-0">
-                <a href="{{ url_for('training') }}" class="btn btn-light me-3" title="Quay lại"><i class="fas fa-arrow-left"></i></a>
-                <span id="session-name-header">Đang tải phiên tập...</span>
-            </h2>
-        </nav>
+<div id="page-content-wrapper">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light py-3 px-4">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('training') }}" class="btn btn-light me-3 fs-4" title="Quay lại"><i class="fas fa-arrow-left"></i></a>
+            <div>
+                <h2 id="session-name-header" class="fs-4 m-0">Đang tải...</h2>
+                <p id="exercise-name-display" class="text-muted small m-0">Bài tập: Đang tải...</p>
+            </div>
+        </div>
+        <div id="connection-status-banner" class="ms-auto fw-bold">
+             <i class="fas fa-plug"></i> <span id="connection-text">Kiểm tra kết nối...</span>
+        </div>
+    </nav>
 
-        <div class="container-fluid px-4 mt-4">
-            <div class="row g-4 align-items-stretch">
-                <div class="col-lg-8 d-flex flex-column">
-                        <div class="row g-4">
-                            <div class="col-md-7">
-                                <div id="connection-status-banner" class="mb-2 fw-bold">
-                                    <i class="fas fa-plug"></i> <span id="connection-text">Đang kiểm tra kết nối...</span>
-                                </div>
-                                <div class="video-container-session">
-                                    <div id="status-message" class="text-white text-center d-flex flex-column justify-content-center align-items-center">
-                                        <i class="fas fa-video-slash mb-3"></i>
-                                        <p>Đang chờ kết nối từ thiết bị...</p>
-                                    </div>
-                                    <img src="" id="video-feed" class="img-fluid rounded bg-dark" alt="Luồng video trực tiếp">
-                                </div>
-                            </div>
-
-                            <div class="col-md-5">
-                                <div class="card h-100 d-flex flex-column">
-                                    <div class="card-header fw-bold">
-                                        Kết quả Bắn Mới nhất
-                                    </div>
-                                    <div class="card-body d-flex flex-column">
-                                        <ul class="list-group list-group-flush mb-3">
-                                            <li class="list-group-item d-flex justify-content-between"><span><i class="fas fa-user-shield me-2 text-muted"></i>Xạ thủ:</span><strong id="current-shooter-name" class="text-primary">Chưa chọn</strong></li>
-                                            <li class="list-group-item d-flex justify-content-between"><span><i class="far fa-clock me-2 text-muted"></i>Thời gian:</span><strong id="shot-time">--:--:--</strong></li>
-                                            <li class="list-group-item d-flex justify-content-between"><span><i class="fas fa-crosshairs me-2 text-muted"></i>Mục tiêu:</span><strong id="target-name">--</strong></li>
-                                            <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fas fa-star me-2 text-muted"></i>Điểm:</span><strong id="shot-score" class="text-danger fs-4">--</strong></li>
-                                        </ul>
-                                        <div id="target-image-container" class="target-img-container-session flex-grow-1">
-                                            <img id="target-image" src="https://i.imgur.com/G5T5j92.png" alt="Mô hình bia">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-4 mb-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header fw-bold">
-                                        <i class="fas fa-history me-2"></i>Lịch sử Bắn (Real-time)
-                                    </div>
-                                    <div id="shot-status-list" class="card-body shot-status-scroll">
-                                        <p class="text-muted mb-0">Chưa có phát bắn nào được ghi nhận.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                </div>
-
-                <div class="col-lg-4 d-flex flex-column">
-                        <div class="card mb-3">
-                            <div class="card-header fw-bold">
-                                Thông tin Phiên
-                            </div>
-                            <div class="card-body">
-                                <p id="exercise-name-display" class="card-text text-muted mb-0">Bài tập: Đang tải...</p>
-                            </div>
-                        </div>
-                        <div class="card mb-3 d-flex flex-column flex-grow-1">
-                            <div class="card-header fw-bold d-flex justify-content-between align-items-center">
-                                <span>Danh sách Xạ thủ</span>
-                                <span id="shooter-count-badge" class="badge bg-secondary">0</span>
-                            </div>
-                            <div id="soldiers-list" class="list-group list-group-flush shooter-list-scroll flex-grow-1">
-                                <div class="list-group-item text-center p-5">
-                                    <div class="spinner-border spinner-border-sm" role="status"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card mb-3">
-                            <div class="card-header fw-bold">
-                                <i class="fas fa-clipboard-list me-2"></i>Tổng quan Phiên tập
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span>Tổng phát bắn:</span>
-                                        <strong id="total-shots">0</strong>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span>Tỷ lệ trúng mục tiêu:</span>
-                                        <strong id="hit-rate">0%</strong>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        <span>Điểm trung bình:</span>
-                                        <strong id="average-score">0.0</strong>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="d-grid mb-4">
-                            <button id="end-session-btn" class="btn btn-danger">
-                                <i class="fas fa-stop-circle me-2"></i>Kết thúc Phiên tập
-                            </button>
-                        </div>
+    <div id="session-dashboard-grid" class="container-fluid p-3">
+        
+        <div id="grid-livestream" class="grid-item">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold"><i class="fas fa-video me-2"></i>Livestream</div>
+                <div class="card-body p-1 d-flex align-items-center justify-content-center bg-dark">
+                    <img src="" id="video-feed" style="display: none;">
+                    <div id="status-message" class="text-dark text-center">
+                        <i class="fas fa-video-slash fa-2x mb-2"></i>
+                        <p class="m-0">Chờ kết nối từ thiết bị...</p>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div id="grid-results" class="grid-item">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold"><i class="fas fa-crosshairs me-2"></i>Kết quả Mới nhất</div>
+                <div class="card-body d-flex flex-column p-2">
+                    <ul class="list-group list-group-flush mb-2">
+                        <li class="list-group-item d-flex justify-content-between"><span>Xạ thủ:</span><strong id="current-shooter-name" class="text-primary">Chưa chọn</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span>Thời gian:</span><strong id="shot-time">--:--:--</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span>Mục tiêu:</span><strong id="target-name">--</strong></li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center"><span>Điểm:</span><strong id="shot-score" class="text-danger fs-4">--</strong></li>
+                    </ul>
+                    <div id="target-image-container" class="target-img-container-session flex-grow-1">
+                        <img id="target-image" src="" style="display: none;" alt="Mô hình bia">
+                        <div id="target-image-notice" class="text-muted text-center">
+                            <i class="fas fa-camera fa-2x mb-2"></i>
+                            <p class="m-0">Đang đợi kết quả gửi về...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-shooters" class="grid-item">
+             <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-users me-2"></i>Danh sách Xạ thủ</span>
+                    <span id="shooter-count-badge" class="badge bg-success rounded-pill">0</span>
+                </div>
+                <div id="soldiers-list" class="list-group list-group-flush shooter-list-scroll flex-grow-1 p-2">
+                    <div class="list-group-item text-center p-5"><div class="spinner-border spinner-border-sm" role="status"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-history" class="grid-item">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold"><i class="fas fa-history me-2"></i>Lịch sử Bắn</div>
+                <div id="shot-status-list" class="card-body shot-status-scroll p-2">
+                    <p class="text-muted mb-0">Chưa có phát bắn nào được ghi nhận.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-new-frame" class="grid-item">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold"><i class="fas fa-info-circle me-2"></i>Thông tin chi tiết (Khung mới)</div>
+                <div class="card-body d-flex flex-column p-2">
+                    <p class="text-muted mb-0">Nội dung cho khung mới sẽ được thêm vào sau.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-overview" class="grid-item">
+             <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-clipboard-list me-2"></i>Tổng quan</span>
+                    <button id="end-session-btn" class="btn btn-danger btn-sm"><i class="fas fa-stop-circle me-1"></i>Kết thúc</button>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between"><span>Tổng phát bắn:</span><strong id="total-shots">0</strong></li>
+                    <li class="list-group-item d-flex justify-content-between"><span>Tỷ lệ trúng:</span><strong id="hit-rate">0%</strong></li>
+                    <li class="list-group-item d-flex justify-content-between"><span>Điểm TB:</span><strong id="average-score">0.0</strong></li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
 
+
 {% block scripts %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/session_detail.css') }}">
 <script src="{{ url_for('static', filename='js/session_detail.js') }}"></script>
 {% endblock %}

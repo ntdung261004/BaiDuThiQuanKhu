@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const targetName = document.getElementById('target-name');
     const shotScore = document.getElementById('shot-score');
     const targetImage = document.getElementById('target-image');
+    const targetImageNotice = document.getElementById('target-image-notice');
 
     const shotStatusList = document.getElementById('shot-status-list');
     const totalShotsEl = document.getElementById('total-shots');
@@ -76,7 +77,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     shotTime.textContent = '--:--:--';
     targetName.textContent = '--';
     shotScore.textContent = '--.-';
-    targetImage.src = 'https://i.imgur.com/G5T5j92.png'; // Link ảnh bia mặc định
+    // Ẩn ảnh và hiện lại thông báo
+    targetImage.style.display = 'none';
+    targetImageNotice.style.display = 'block';
     }
     async function checkConnectionStatus() {
         try {
@@ -104,9 +107,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             shotTime.textContent = data.time;
             targetName.textContent = data.target;
             shotScore.textContent = data.score;
-            if (data.image_data) {
-                targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
-            }
+            
 
             // Thay thế toàn bộ khối if cũ bằng khối lệnh này
             if (data.shot_id && data.shot_id !== lastProcessedShotId) {
@@ -118,7 +119,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
 
                 lastProcessedShotId = data.shot_id;
-
+                if (data.image_data) {
+                    targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
+                    // Hiện ảnh và ẩn thông báo đi
+                    targetImage.style.display = 'block';
+                    targetImageNotice.style.display = 'none';
+                }
                 const emptyMessage = document.getElementById('no-shots-message');
                 if (emptyMessage) {
                     emptyMessage.remove(); // Hoặc shotStatusList.innerHTML = '';

@@ -1,129 +1,137 @@
-/* static/css/session_details.css */
+/* === CSS HOÀN CHỈNH CHO LAYOUT DASHBOARD === */
 
-/* Định dạng chung */
-#page-content-wrapper .card-header.fw-bold {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-}
-#page-content-wrapper .card-body {
-    padding: 0.8rem;
-}
-#page-content-wrapper .list-group-item {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.85rem;
-    background-color: transparent;
-    border: none;
-}
-#page-content-wrapper .fs-4 {
-    font-size: 1.15rem !important;
-}
-
-/* Khung video livestream */
-.video-container-session {
-    position: relative;
-    width: 100%;
-    padding-top: 133.33%; /* Tỷ lệ 4:3 dọc */
-    background-color: #000;
-    border-radius: 0.25rem;
-    overflow: hidden;
-}
-.video-container-session #video-feed,
-.video-container-session #status-message {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-.video-container-session #status-message {
+/* --- 1. THIẾT LẬP KHUNG CHÍNH CỦA TRANG --- */
+#page-content-wrapper {
+    height: 100vh;
+    overflow: hidden; /* Cấm toàn bộ trang cuộn */
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(0,0,0,0.7);
-    color: #fff;
+    background-color: #f4f7f6; /* Thêm màu nền nhẹ cho toàn trang */
 }
+
+/* --- 2. THIẾT LẬP CONTAINER GRID CHÍNH --- */
+#session-dashboard-grid {
+    flex-grow: 1; /* Lấp đầy không gian còn lại */
+    min-height: 0; /* Bắt buộc để layout co dãn đúng */
+
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr;
+    /* Tỷ lệ hàng: Hàng trên cao gấp 3 lần hàng dưới (~75% - 25%) */
+    grid-template-rows: 3fr 1fr;
+    
+    gap: 1rem; /* Khoảng cách giữa các khung */
+    
+    /* Bản đồ layout */
+    grid-template-areas:
+        "results    livestream shooters"
+        "history    new_frame  overview";
+}
+
+/* --- 3. QUY TẮC AN TOÀN & GÁN VỊ TRÍ --- */
+/* Quy tắc này ngăn nội dung lớn phá vỡ layout của lưới */
+.grid-item {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden; /* Đảm bảo nội dung không tràn ra khỏi ô lưới */
+}
+
+/* Gán mỗi div container vào đúng khu vực */
+#grid-livestream { grid-area: livestream; }
+#grid-results   { grid-area: results; }
+#grid-shooters  { grid-area: shooters; }
+#grid-history   { grid-area: history; }
+#grid-new-frame { grid-area: new_frame; }
+#grid-overview  { grid-area: overview; }
+
+/* --- 4. STYLE CHUNG CHO CÁC KHUNG (CARD) --- */
+.grid-item .card {
+    height: 100%;
+    width: 100%;
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.grid-item .card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+}
+
+.grid-item .card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden; /* Sửa lại lỗi cuộn */
+    padding: 0.75rem;
+}
+
+/* --- 5. STYLE CHI TIẾT CHO CÁC THÀNH PHẦN --- */
 
 /* Khung ảnh kết quả */
 .target-img-container-session {
-    position: relative;
-    width: auto;
-    border: 1px solid #dee2e6;
-    background-color: #f8f9fa;
-    border-radius: 0.25rem;
-    overflow: hidden;
-}
-
-.target-img-container-session img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-/* <<< SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY >>> */
-
-/* Danh sách xạ thủ - Cố định chiều cao và cho phép cuộn */
-.shooter-list-scroll {
-    /* (font-size * line-height + padding-top + padding-bottom) * 5 items */
-    height: 10rem; 
-    overflow-y: auto; /* Tự động hiện thanh cuộn khi cần */
-}
-
-#page-content-wrapper .shooter-list-scroll .list-group-item.active {
-    background-color: var(--bs-primary);
-    color: white !important;
-    border-color: var(--bs-primary);
-}
-
-/* Khung lịch sử bắn - Cố định chiều cao và cho phép cuộn */
-.shot-status-scroll {
-    height: 120px; /* Chiều cao cố định */
-    overflow-y: auto;
-    font-size: 0.8rem;
-}
-.shot-status-scroll p {
-    margin-bottom: 0.3rem;
-    padding-bottom: 0.3rem;
-    border-bottom: 1px solid #eee;
-}
-.shot-status-scroll p:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-/* --- SỬA LỖI KHUNG ẢNH KẾT QUẢ BẮN (V2) --- */
-
-/* 1. Bắt buộc card-body phải tuân thủ layout flex và không bị tràn */
-.card-body.d-flex.flex-column {
-    overflow: hidden;
-    height: 100%; /* Đảm bảo card-body có chiều cao xác định */
-}
-
-/* 2. Thiết lập hành vi cho KHUNG CHỨA ẢNH */
-.target-img-container-session {
-    /* Ra lệnh cho khung này chiếm hết không gian dọc còn lại */
     flex-grow: 1;
-
-    /* QUAN TRỌNG: Đây là "thủ thuật" để khắc phục lỗi.
-       Nó ngăn nội dung (ảnh) có kích thước lớn tự ý kéo dãn khung chứa nó. */
-    min-height: 0;
-
-    /* Dùng flexbox để căn giữa ảnh bên trong */
+    min-height: 0; 
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #212529; /* Nền tối để ảnh nổi bật hơn */
-    border-radius: .25rem;
-    padding: 0.25rem;
 }
-
-/* 3. Ra lệnh cho ẢNH phải nằm gọn bên trong khung chứa */
-#target-image {
-    /* Đặt kích thước tối đa là 100% của khung chứa */
+#target-image, #video-feed {
     max-width: 100%;
     max-height: 100%;
-
-    /* QUAN TRỌNG NHẤT: Giữ nguyên tỷ lệ ảnh và thu nhỏ cho vừa khung */
     object-fit: contain;
+    /* --- BỔ SUNG CÁC THUỘC TÍNH NÀY --- */
+    width: auto;  /* Cho phép ảnh có chiều rộng tự nhiên */
+    height: auto; /* Cho phép ảnh có chiều cao tự nhiên */
+    display: block; /* Biến ảnh thành block-level để margin auto có tác dụng */
+    margin: auto; /* <<< DÒNG NÀY SẼ CĂN GIỮA NỘI DUNG ẢNH/VIDEO >>> */
+    /* --- KẾT THÚC BỔ SUNG --- */
 }
+
+/* Thanh cuộn nội bộ */
+.grid-item .card-body.shooter-list-scroll,
+.grid-item .card-body.shot-status-scroll {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* Tùy chỉnh thanh cuộn cho đẹp mắt hơn */
+.shooter-list-scroll::-webkit-scrollbar,
+.shot-status-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.shooter-list-scroll::-webkit-scrollbar-thumb,
+.shot-status-scroll::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 3px;
+}
+
+/* Cỡ chữ và khoảng cách */
+#session-dashboard-grid {
+    font-size: 0.85rem;
+}
+#shot-score {
+    font-size: 1.75rem !important;
+}
+#soldiers-list .list-group-item {
+    font-size: 0.8rem;
+    padding: 0.6rem 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#soldiers-list .list-group-item.active {
+    font-weight: bold;
+}
+
+/* Ghi đè lên nền đen của khung livestream */
+#grid-livestream .card-body.bg-dark {
+    background-color: transparent !important;
+    border: none;
+    padding: 0; /* Bỏ padding để video/ảnh có thể chiếm toàn bộ không gian */
+}
+
