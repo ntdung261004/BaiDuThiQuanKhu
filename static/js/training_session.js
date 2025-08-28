@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             topBorderColor = 'var(--bs-primary)';
                             statusText = 'Đã huấn luyện';
                             statusBgColor = 'bg-primary-subtle text-primary-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/report/${session.id}"><i class="fas fa-chart-bar fa-fw me-2"></i> Xem báo cáo</a></li>`;
+                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/report/session/${session.id}"><i class="fas fa-chart-bar fa-fw me-2"></i> Xem báo cáo</a></li>`;
                             break;
                         case 'NOT_STARTED':
                         default:

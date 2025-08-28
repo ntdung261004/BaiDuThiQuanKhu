@@ -1,0 +1,23 @@
+/* static/css/report.css */
+
+.stat-card {
+    border-left: 5px solid var(--bs-primary);
+    border-radius: 0.5rem;
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stat-card .stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+#chart-container {
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}

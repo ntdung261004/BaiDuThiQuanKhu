@@ -10,6 +10,7 @@ from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db
 from controllers.soldier_controller import soldier_bp
 from controllers.pi_controller import pi_bp
 from controllers.training_controller import training_bp
+from controllers.report_controller import report_bp #
 
 app = Flask(__name__)
 
@@ -49,7 +50,7 @@ def load_user(user_id):
 app.register_blueprint(soldier_bp)
 app.register_blueprint(pi_bp)
 app.register_blueprint(training_bp)
-
+app.register_blueprint(report_bp)
 # --- Các trang (Pages) ---
 @app.route('/')
 @login_required
@@ -83,11 +84,25 @@ def logout():
 def livestream():
     return render_template('livestream.html')
 
-@app.route('/report', endpoint='report')
+# báo cáo tổng quan
+@app.route('/report') # Đường dẫn chung cho trang báo cáo
 @login_required
-def reports():
-    return render_template('reports.html')
+def report():
+    # Render template report.html, không cần truyền tham số ở đây
+    return render_template('report.html')
 
+#báo cáo chi tiết
+@app.route('/report/<string:report_type>/<int:report_id>')
+@login_required
+def report_page(report_type, report_id):
+    """
+    Hiển thị trang báo cáo chi tiết cho một phiên hoặc một chiến sĩ.
+    """
+    # Chỉ render template, logic xử lý dữ liệu sẽ nằm ở JavaScript
+    return render_template('report.html', 
+                           report_type=report_type, 
+                           report_id=report_id)
+    
 @app.route('/setting', endpoint='setting')
 @login_required
 def setting():
