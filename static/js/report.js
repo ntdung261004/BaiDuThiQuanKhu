@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const reportContainer = document.getElementById('report-container');
     const mainContainer = document.querySelector('.container-fluid[data-report-type]');
     
+    Chart.register(ChartDataLabels);
+
     // Biến để lưu trữ biểu đồ, giúp hủy biểu đồ cũ trước khi vẽ cái mới
     let mainChart = null;
 
@@ -18,7 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderReportTitle(data, reportType) {
         const reportTitle = document.getElementById('report-title');
         if (reportType === 'session') {
-            reportTitle.innerHTML = `Báo cáo Phiên tập: <span class="text-primary">${data.session_name}</span>`;
+            reportTitle.innerHTML = `Báo cáo Phiên tập: <span class="text-primary">${data.session_name}</span>
+                             <p class="text-muted fs-6 mb-0">${data.exercise_name}</p>`;
         } else {
             reportTitle.innerHTML = `Báo cáo Xạ thủ: <span class="text-primary">${data.soldier_rank} ${data.soldier_name}</span>`;
         }
@@ -70,7 +73,12 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Hiển thị bảng dữ liệu chi tiết
      */
-    function renderDetailsTable(data, reportType) {
+    // Thay thế hoàn toàn hàm renderDetailsTable hiện tại của bạn bằng hàm này
+
+    /**
+     * Hiển thị bảng dữ liệu chi tiết, có khả năng lọc theo bài tập
+     */
+    function renderDetailsTable(data, reportType, exerciseFilter = 'all') {
         const tableContainer = document.getElementById('details-table-container');
         const tableTitle = document.getElementById('table-title');
         let tableHtml = '<table class="table table-striped table-hover"><thead><tr>';
@@ -78,28 +86,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (reportType === 'session') {
             tableTitle.textContent = 'Thành tích Xạ thủ';
-            tableHtml += '<th>#</th><th>Tên Xạ thủ</th><th>Điểm TB</th><th>Số phát bắn</th></tr></thead><tbody>';
+            tableHtml += '<th>#</th><th>Tên Xạ thủ</th><th>Điểm TB</th><th>Số phát bắn</th><th>Tỷ lệ trúng</th><th>Phân tích</th></tr></thead><tbody>';
+            
             items = data.soldiers_performance;
             items.forEach((item, index) => {
-                tableHtml += `<tr><td>${index + 1}</td><td>${item.rank} ${item.name}</td><td>${item.avg_score}</td><td>${item.total_shots}</td></tr>`;
+                const hitRate = item.total_shots > 0 ? ((item.hit_shots / item.total_shots) * 100).toFixed(0) : 0;
+                tableHtml += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.rank} ${item.name}</td>
+                        <td>${item.avg_score}</td>
+                        <td>${item.total_shots}</td>
+                        <td>${item.hit_shots}/${item.total_shots} - <strong>${hitRate}%</strong></td>
+                        <td><a href="#" class="view-process-btn" data-soldier-id="${item.id}" data-session-id="${data.session_id}">Xem quá trình</a></td>
+                    </tr>
+                `;
             });
-        } else {
-            tableTitle.textContent = 'Lịch sử Phiên tập';
-            tableHtml += '<th>#</th><th>Tên Phiên</th><th>Điểm TB</th><th>Số phát bắn</th></tr></thead><tbody>';
-            items = data.sessions_performance;
-            items.forEach((item, index) => {
-                tableHtml += `<tr><td>${index + 1}</td><td>${item.session_name}</td><td>${item.avg_score}</td><td>${item.total_shots}</td></tr>`;
-            });
+        } else { // reportType === 'soldier'
+            const filterText = exerciseFilter === 'all' ? 'Tất cả bài tập' : exerciseFilter;
+            tableTitle.textContent = `Lịch sử Phiên tập - ${filterText}`;
+            
+            // <<< SỬA LẠI TIÊU ĐỀ BẢNG: Bỏ cột "Bài tập", thêm cột "Phân tích" >>>
+            tableHtml += '<th>#</th><th>Tên Phiên</th><th>Điểm TB</th><th>Số phát bắn</th><th>Tỷ lệ trúng</th><th>Phân tích</th></tr></thead><tbody>';
+            
+            items = (exerciseFilter === 'all')
+                ? data.sessions_performance
+                : data.sessions_performance.filter(s => s.exercise_name === exerciseFilter);
+
+            if (items.length === 0) {
+                tableHtml += '<tr><td colspan="5" class="text-center text-muted p-3">Không có dữ liệu cho lựa chọn này.</td></tr>';
+            } else {
+                items.forEach((item, index) => {
+                    const hitRate = item.total_shots > 0 ? ((item.hit_shots / item.total_shots) * 100).toFixed(0) : 0;
+                
+                    // <<< SỬA LẠI NỘI DUNG HÀNG: Bỏ tên bài tập, thêm link "Xem quá trình" >>>
+                    tableHtml += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.session_name}</td>
+                            <td>${item.avg_score}</td>
+                            <td>${item.total_shots}</td>
+                            <td>${item.hit_shots}/${item.total_shots} - <strong>${hitRate}%</strong></td>
+                            <td><a href="#" class="view-process-btn" data-session-id="${item.session_id}" data-soldier-id="${data.soldier_id}">Xem quá trình</a></td>
+                        </tr>
+                    `;
+                });
+            }
         }
 
         tableHtml += '</tbody></table>';
         tableContainer.innerHTML = tableHtml;
     }
-
     /**
      * Vẽ biểu đồ chính
      */
-    function renderMainChart(data, reportType) {
+    // Thay thế hoàn toàn hàm renderMainChart cũ
+    /**
+     * Vẽ biểu đồ chính, có khả năng thay đổi dựa vào bộ lọc
+     */
+    function renderMainChart(data, reportType, exerciseFilter = 'all') {
         const ctx = document.getElementById('main-chart').getContext('2d');
         let chartConfig = {};
 
@@ -108,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (reportType === 'session') {
+            // --- Vẽ biểu đồ cho Báo cáo Phiên tập (giữ nguyên) ---
             chartConfig = {
                 type: 'bar',
                 data: {
@@ -123,30 +169,107 @@ document.addEventListener('DOMContentLoaded', function() {
                 options: {
                     scales: { y: { beginAtZero: true, max: 10 } },
                     responsive: true,
-                    plugins: { legend: { display: false }, title: { display: true, text: 'So sánh Điểm trung bình các Xạ thủ' } }
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'So sánh Điểm trung bình các Xạ thủ' },
+                        datalabels: {
+                            anchor: 'end', align: 'top', color: '#495057',
+                            font: { weight: 'bold' },
+                            formatter: (value) => Math.round(value * 10) / 10
+                        }
+                    }
                 }
             };
-        } else {
-            chartConfig = {
-                type: 'line',
-                data: {
-                    labels: data.sessions_performance.map(s => s.session_name).reverse(),
-                    datasets: [{
-                        label: 'Điểm trung bình',
-                        data: data.sessions_performance.map(s => s.avg_score).reverse(),
-                        fill: false,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    scales: { y: { beginAtZero: true, max: 10 } },
-                    responsive: true,
-                    plugins: { legend: { display: false }, title: { display: true, text: 'Biểu đồ Tiến bộ qua các Phiên tập' } }
-                }
-            };
+        } else { // reportType === 'soldier'
+            // --- LOGIC MỚI: Vẽ biểu đồ cho Báo cáo Chiến sĩ dựa vào bộ lọc ---
+            if (exerciseFilter === 'all') {
+                // Nếu chọn "Tất cả", vẽ biểu đồ cột so sánh các bài tập
+                chartConfig = {
+                    type: 'bar',
+                    data: {
+                        labels: data.performance_by_exercise.map(e => e.exercise_name),
+                        datasets: [{
+                            label: 'Điểm trung bình',
+                            data: data.performance_by_exercise.map(e => e.avg_score),
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true, max: 10 } },
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'So sánh Điểm trung bình theo Bài tập' }
+                        }
+                    }
+                };
+            } else {
+                // Nếu chọn 1 bài tập cụ thể, vẽ biểu đồ đường thể hiện tiến độ
+                const filteredSessions = data.sessions_performance.filter(s => s.exercise_name === exerciseFilter);
+                chartConfig = {
+                    type: 'line',
+                    data: {
+                        labels: filteredSessions.map(s => s.session_name).reverse(),
+                        datasets: [{
+                            label: 'Điểm trung bình',
+                            data: filteredSessions.map(s => s.avg_score).reverse(),
+                            fill: false,
+                            borderColor: 'rgb(255, 99, 132)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true, max: 10 } },
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: `Tiến độ bài tập "${exerciseFilter}"` }
+                        }
+                    }
+                };
+            }
         }
         mainChart = new Chart(ctx, chartConfig);
+    }
+    /**
+     * Vẽ bộ lọc bài tập cho báo cáo chiến sĩ
+     */
+    function renderExerciseFilter(data) {
+        // Tìm đến vị trí sẽ đặt bộ lọc (chúng ta sẽ tạo vị trí này ở dưới)
+        const filterContainer = document.getElementById('chart-filter-container');
+        if (!filterContainer) return;
+
+        // Lấy ra danh sách các bài tập mà chiến sĩ đã thực hiện
+        const exercises = data.performance_by_exercise || [];
+
+        // Tạo HTML cho bộ lọc
+        let filterHtml = `
+            <div class="d-flex justify-content-end align-items-center">
+                <label for="exercise-filter-select" class="form-label me-2 mb-0 small">Lọc theo bài tập:</label>
+                <select class="form-select form-select-sm w-auto" id="exercise-filter-select">
+                    <option value="all">Tất cả bài tập</option>
+        `;
+
+        exercises.forEach(ex => {
+            filterHtml += `<option value="${ex.exercise_name}">${ex.exercise_name}</option>`;
+        });
+
+        filterHtml += `</select></div>`;
+
+        // Đưa bộ lọc vào giao diện
+        filterContainer.innerHTML = filterHtml;
+        // <<< THÊM KHỐI CODE NÀY ĐỂ GÁN SỰ KIỆN >>>
+        const exerciseFilterSelect = document.getElementById('exercise-filter-select');
+        if (exerciseFilterSelect) {
+            exerciseFilterSelect.addEventListener('change', () => {
+                const selectedExercise = exerciseFilterSelect.value;
+                // Gọi lại hàm vẽ biểu đồ với giá trị bộ lọc mới
+                renderMainChart(data, 'soldier', selectedExercise);
+                renderDetailsTable(data, 'soldier', selectedExercise); 
+            });
+        }
     }
 
     // --- CÁC HÀM LOGIC CHÍNH ---
@@ -164,7 +287,12 @@ document.addEventListener('DOMContentLoaded', function() {
             items.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.id;
-                option.textContent = (reportType === 'session') ? (item.session_name || `Phiên tập #${item.id}`) : `${item.rank} ${item.name}`;
+                
+                // <<< DÒNG NÀY ĐÃ ĐƯỢC SỬA LẠI ĐỂ THÊM TÊN BÀI TẬP >>>
+                option.textContent = (reportType === 'session') 
+                    ? `${item.session_name || `Phiên tập #${item.id}`} (${item.exercise_name})` 
+                    : `${item.rank} ${item.name}`;
+
                 itemSelect.appendChild(option);
             });
         } catch (error) {
@@ -175,6 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Thay thế hoàn toàn hàm generateReport cũ
     async function generateReport(reportType, reportId) {
         if (!reportType || !reportId) return;
 
@@ -193,11 +322,19 @@ document.addEventListener('DOMContentLoaded', function() {
             reportContainer.innerHTML = `
                 <h3 id="report-title" class="mb-3"></h3>
                 <div class="row g-3 mb-4" id="kpi-cards-container"></div>
-                <div class="row g-3">
-                    <div class="col-lg-8">
-                        <div id="chart-container"><canvas id="main-chart"></canvas></div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div id="chart-filter-container" class="mb-3"></div>
+                        
+                        <div id="chart-container">
+                            <canvas id="main-chart"></canvas>
+                        </div>
                     </div>
-                    <div class="col-lg-4">
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
                         <div class="card shadow-sm h-100">
                             <div class="card-header fw-bold" id="table-title"></div>
                             <div class="card-body" id="details-table-container"></div>
@@ -211,13 +348,17 @@ document.addEventListener('DOMContentLoaded', function() {
             renderKpiCards(data, reportType);
             renderDetailsTable(data, reportType);
             renderMainChart(data, reportType);
+            
+            // <<< GỌI HÀM RENDER BỘ LỌC (CHỈ KHI XEM THEO CHIẾN SĨ) >>>
+            if (reportType === 'soldier') {
+                renderExerciseFilter(data);
+            }
 
         } catch (error) {
             console.error('Lỗi khi tạo báo cáo:', error);
             reportContainer.innerHTML = `<p class="text-center text-danger p-5">Không thể tải dữ liệu báo cáo.</p>`;
         }
     }
-
     // --- GÁN SỰ KIỆN ---
 
     reportTypeSelect.addEventListener('change', () => {
