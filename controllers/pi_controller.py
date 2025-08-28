@@ -6,6 +6,9 @@ import threading
 import time
 import base64
 import os
+import cloudinary
+import cloudinary.uploader
+
 from datetime import datetime
 from threading import Lock
 from models import db, Shot, TrainingSession, SessionStatus
@@ -92,25 +95,28 @@ def processed_data_upload():
             if current_session and current_session.status != SessionStatus.COMPLETED:
                 # Nếu mọi thứ hợp lệ, tiến hành tạo và lưu đối tượng Shot
                 image_data = data.get('image_data')
-                image_path = None
+                image_url = None # Sẽ lưu URL từ Cloudinary
+
+                # <<< LOGIC UPLOAD ẢNH MỚI >>>
                 if image_data:
-                    output_dir = os.path.join('static', 'shot_results')
-                    os.makedirs(output_dir, exist_ok=True)
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    filename = f"session_{active_session_id}_soldier_{active_soldier_id}_{timestamp}.jpg"
-                    image_path = os.path.join(output_dir, filename)
-                    with open(image_path, "wb") as f:
-                        f.write(base64.b64decode(image_data))
-                    image_path = image_path.replace(os.path.sep, '/')
+                    try:
+                        # Tải ảnh lên Cloudinary
+                        upload_result = cloudinary.uploader.upload(
+                            base64.b64decode(image_data),
+                            folder="shot_results" # Tạo một thư mục trên Cloudinary
+                        )
+                        image_url = upload_result.get('secure_url')
+                        print(f"✅ Đã tải ảnh lên Cloudinary: {image_url}")
+                    except Exception as e:
+                        print(f"❌ Lỗi khi tải ảnh lên Cloudinary: {e}")
+                    
 
                 new_shot = Shot(
                     session_id=active_session_id,
                     soldier_id=active_soldier_id,
                     score=data.get('score', 0),
                     target_name=data.get('target', 'Không xác định'),
-                    hit_location_x=data.get('hit_location_x'),
-                    hit_location_y=data.get('hit_location_y'),
-                    result_image_path=image_path
+                    result_image_path=image_url
                 )
                 
                 db.session.add(new_shot)

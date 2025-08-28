@@ -1,6 +1,6 @@
 # controllers/report_controller.py
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from sqlalchemy import func, case
 from models import db, TrainingSession, Soldier, Shot, Exercise
 
@@ -63,6 +63,7 @@ def get_session_report(session_id):
         'session_id': session.id,
         'session_name': session.session_name,
         'exercise_name': session.exercise.exercise_name,
+        'status': session.status.name,
         'total_shots': total_shots,
         'avg_score': round(avg_score, 2),
         'hit_rate': round(hit_rate, 2),
@@ -153,3 +154,43 @@ def get_soldier_report(soldier_id):
     }
 
     return jsonify(report_data)
+
+# Thêm hàm này vào cuối file controllers/report_controller.py
+
+@report_bp.route('/shot_details', methods=['GET'])
+def get_shot_details():
+    """
+    API trả về danh sách chi tiết các phát bắn của một xạ thủ
+    trong một phiên tập cụ thể.
+    Nhận session_id và soldier_id từ query parameters.
+    """
+    session_id = request.args.get('session_id', type=int)
+    soldier_id = request.args.get('soldier_id', type=int)
+
+    # Kiểm tra xem có đủ tham số không
+    if not session_id or not soldier_id:
+        return jsonify({'error': 'Thiếu session_id hoặc soldier_id'}), 400
+
+    try:
+        # Truy vấn tất cả các phát bắn khớp với cả session và soldier,
+        # sắp xếp theo thời gian để xem đúng thứ tự.
+        shots = Shot.query.filter_by(
+            session_id=session_id,
+            soldier_id=soldier_id
+        ).order_by(Shot.shot_time.asc()).all()
+
+        # Định dạng lại dữ liệu trả về
+        shot_list = [
+            {
+                'score': shot.score,
+                'target_name': shot.target_name,
+                'shot_time': shot.shot_time.strftime('%H:%M:%S %d/%m/%Y'),
+                'result_image_path': shot.result_image_path
+            } for shot in shots
+        ]
+        
+        return jsonify(shot_list)
+
+    except Exception as e:
+        print(f"❌ Lỗi khi lấy chi tiết các phát bắn: {e}")
+        return jsonify({'error': 'Lỗi server khi truy vấn dữ liệu.'}), 500

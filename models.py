@@ -81,8 +81,6 @@ class Shot(db.Model):
     
     # <<< THÊM MỚI: Các trường để lưu trữ dữ liệu phong phú hơn >>>
     target_name = db.Column(db.String(50)) # Ví dụ: 'bia_so_4', 'bia_so_7_8'
-    hit_location_x = db.Column(db.Float)   # Tọa độ X trên bia gốc
-    hit_location_y = db.Column(db.Float)   # Tọa độ Y trên bia gốc
     result_image_path = db.Column(db.String(255)) # Đường dẫn tới file ảnh kết quả
 
 def init_db(app):

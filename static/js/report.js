@@ -6,7 +6,115 @@ document.addEventListener('DOMContentLoaded', function() {
     const itemSelect = document.getElementById('item-select');
     const reportContainer = document.getElementById('report-container');
     const mainContainer = document.querySelector('.container-fluid[data-report-type]');
-    
+// --- LOGIC CHO POPUP XEM CHI TIẾT QUÁ TRÌNH BẮN ---
+
+    // Biến toàn cục để lưu trữ dữ liệu và trạng thái của popup
+    let shotDetailModal = new bootstrap.Modal(document.getElementById('shotDetailModal'));
+    let currentShots = [];
+    let currentIndex = 0;
+
+    // Các phần tử trong popup
+    const shotDetailImage = document.getElementById('shot-detail-image');
+    const shotDetailLoading = document.getElementById('shot-detail-loading');
+    const shotDetailTime = document.getElementById('shot-detail-time');
+    const shotDetailTarget = document.getElementById('shot-detail-target');
+    const shotDetailScore = document.getElementById('shot-detail-score');
+    const shotCounter = document.getElementById('shot-counter');
+    const prevShotBtn = document.getElementById('prev-shot-btn');
+    const nextShotBtn = document.getElementById('next-shot-btn');
+
+    /**
+     * Hàm hiển thị thông tin của một phát bắn cụ thể lên popup
+     * @param {number} index - Vị trí của phát bắn trong danh sách currentShots
+     */
+    function displayShot(index) {
+        if (!currentShots || currentShots.length === 0) return;
+        
+        // Lấy ra thông tin của phát bắn hiện tại
+        const shot = currentShots[index];
+        
+        // Hiển thị trạng thái đang tải ảnh
+        shotDetailImage.style.display = 'none';
+        shotDetailLoading.style.display = 'block';
+
+        // Xử lý khi ảnh tải xong
+        shotDetailImage.onload = function() {
+            shotDetailLoading.style.display = 'none';
+            shotDetailImage.style.display = 'block';
+        }
+        // Xử lý khi ảnh tải lỗi
+        shotDetailImage.onerror = function() {
+            shotDetailLoading.innerHTML = '<p class="text-danger">Lỗi tải ảnh.</p>';
+        }
+        
+        // Gán các giá trị vào popup
+        shotDetailImage.src = shot.result_image_path || ''; // Lấy URL ảnh từ Cloudinary
+        shotDetailTime.textContent = shot.shot_time;
+        shotDetailTarget.textContent = shot.target_name;
+        shotDetailScore.textContent = shot.score;
+
+        // Cập nhật bộ đếm
+        shotCounter.textContent = `Phát ${index + 1} / ${currentShots.length}`;
+
+        // Vô hiệu hóa nút "Previous" nếu là phát bắn đầu tiên
+        prevShotBtn.disabled = (index === 0);
+        // Vô hiệu hóa nút "Next" nếu là phát bắn cuối cùng
+        nextShotBtn.disabled = (index === currentShots.length - 1);
+    }
+
+    // Bắt sự kiện click trên toàn bộ container báo cáo
+    reportContainer.addEventListener('click', async function(event) {
+        const viewProcessBtn = event.target.closest('.view-process-btn');
+        
+        // Nếu người dùng bấm vào nút "Xem quá trình"
+        if (viewProcessBtn) {
+            event.preventDefault(); // Ngăn hành vi mặc định của thẻ <a>
+            
+            const sessionId = viewProcessBtn.dataset.sessionId;
+            const soldierId = viewProcessBtn.dataset.soldierId;
+
+            if (!sessionId || !soldierId) return;
+
+            // Mở popup và hiển thị trạng thái loading
+            shotDetailModal.show();
+            shotDetailImage.style.display = 'none';
+            shotDetailLoading.style.display = 'block';
+            shotDetailLoading.innerHTML = '<div class="spinner-border mb-3" role="status"></div><p>Đang tải dữ liệu...</p>';
+            
+            try {
+                // Gọi API để lấy danh sách chi tiết các phát bắn
+                const response = await fetch(`/api/report/shot_details?session_id=${sessionId}&soldier_id=${soldierId}`);
+                currentShots = await response.json();
+                
+                if (currentShots.length > 0) {
+                    currentIndex = 0; // Bắt đầu từ phát bắn đầu tiên
+                    displayShot(currentIndex);
+                } else {
+                    shotDetailLoading.innerHTML = '<p class="text-warning">Không có dữ liệu chi tiết cho lựa chọn này.</p>';
+                }
+
+            } catch (error) {
+                console.error("Lỗi khi tải chi tiết phát bắn:", error);
+                shotDetailLoading.innerHTML = '<p class="text-danger">Lỗi khi tải dữ liệu.</p>';
+            }
+        }
+    });
+
+    // Gán sự kiện cho nút "Next"
+    nextShotBtn.addEventListener('click', () => {
+        if (currentIndex < currentShots.length - 1) {
+            currentIndex++;
+            displayShot(currentIndex);
+        }
+    });
+
+    // Gán sự kiện cho nút "Previous"
+    prevShotBtn.addEventListener('click', () => {
+        if (currentIndex > 0) {
+            currentIndex--;
+            displayShot(currentIndex);
+        }
+    });
     Chart.register(ChartDataLabels);
 
     // Biến để lưu trữ biểu đồ, giúp hủy biểu đồ cũ trước khi vẽ cái mới
@@ -304,8 +412,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Thay thế hoàn toàn hàm generateReport cũ
-    async function generateReport(reportType, reportId) {
+    async function generateReport(reportType, reportId, updateHistory = true) {
         if (!reportType || !reportId) return;
+
+        // <<< THÊM DÒNG NÀY ĐỂ CẬP NHẬT URL >>>
+        if (updateHistory) {
+            updateUrl(reportType, reportId);
+        }
 
         console.log(`Yêu cầu tạo báo cáo: Loại=${reportType}, ID=${reportId}`);
         reportContainer.innerHTML = `
@@ -317,6 +430,25 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(`/api/report/${reportType}/${reportId}`);
             const data = await response.json();
+
+        // <<< THÊM KHỐI LOGIC KIỂM TRA TRẠNG THÁI NÀY VÀO >>>
+            if (reportType === 'session' && data.status !== 'COMPLETED') {
+                // Xác định thông báo dựa trên trạng thái
+                const statusText = data.status === 'IN_PROGRESS' 
+                    ? 'đang huấn luyện' 
+                    : 'chưa bắt đầu';
+                
+                // Hiển thị thông báo và dừng hàm tại đây
+                reportContainer.innerHTML = `
+                    <div class="text-center p-5">
+                        <i class="fas fa-info-circle fa-4x text-info mb-4"></i>
+                        <h3 class="mb-3">Phiên tập này chưa kết thúc</h3>
+                        <p class="lead text-muted">Báo cáo chi tiết sẽ có sẵn sau khi phiên tập được đánh dấu là "Đã huấn luyện".</p>
+                        <p class="text-muted">Trạng thái hiện tại: <strong>${statusText}</strong></p>
+                    </div>
+                `;
+                return; // Dừng, không hiển thị báo cáo
+            }
 
             // Xóa spinner và render giao diện báo cáo
             reportContainer.innerHTML = `
@@ -346,8 +478,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Gọi các hàm render chi tiết
             renderReportTitle(data, reportType);
             renderKpiCards(data, reportType);
-            renderDetailsTable(data, reportType);
-            renderMainChart(data, reportType);
+            renderDetailsTable(data, reportType, 'all');
+            renderMainChart(data, reportType, 'all');
             
             // <<< GỌI HÀM RENDER BỘ LỌC (CHỈ KHI XEM THEO CHIẾN SĨ) >>>
             if (reportType === 'soldier') {
@@ -358,6 +490,16 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Lỗi khi tạo báo cáo:', error);
             reportContainer.innerHTML = `<p class="text-center text-danger p-5">Không thể tải dữ liệu báo cáo.</p>`;
         }
+    }
+
+    /**
+     * Cập nhật URL trên thanh địa chỉ mà không cần tải lại trang.
+     */
+    function updateUrl(reportType, reportId) {
+        const newUrl = `/report/${reportType}/${reportId}`;
+        const state = { reportType, reportId };
+        // Sử dụng pushState để thêm một mục mới vào lịch sử duyệt web
+        window.history.pushState(state, '', newUrl);
     }
     // --- GÁN SỰ KIỆN ---
 
@@ -374,16 +516,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- KHỞI CHẠY LẦN ĐẦU ---
 
+    // Thay thế hoàn toàn hàm initializePage cũ
+    /**
+     * Khởi tạo trang: Đọc URL để tải đúng báo cáo khi người dùng tải lại trang.
+     */
     async function initializePage() {
-        const initialReportType = mainContainer.dataset.reportType;
-        const initialReportId = mainContainer.dataset.reportId;
+        const pathParts = window.location.pathname.split('/');
+        // URL có dạng: ["", "report", "session", "3"]
+        const pageType = pathParts[1];
+        const initialReportType = pathParts[2];
+        const initialReportId = pathParts[3];
         
-        if (initialReportType && initialReportType !== 'none' && initialReportId !== '0') {
+        if (pageType === 'report' && initialReportType && initialReportId) {
+            // --- TRƯỜNG HỢP 1: Người dùng tải lại một báo cáo cụ thể ---
+            console.log(`Tải lại báo cáo: ${initialReportType} #${initialReportId}`);
+            
+            // 1. Cập nhật ô chọn loại báo cáo
             reportTypeSelect.value = initialReportType;
+            
+            // 2. Tải danh sách tương ứng
             await populateItemSelect(initialReportType);
+            
+            // 3. Chọn đúng mục trong danh sách
             itemSelect.value = initialReportId;
-            await generateReport(initialReportType, initialReportId);
+            
+            // 4. Tạo báo cáo (không cần cập nhật URL nữa)
+            await generateReport(initialReportType, initialReportId, false);
         } else {
+            // --- TRƯỜNG HỢP 2: Người dùng vào trang /report chung ---
             await populateItemSelect(reportTypeSelect.value);
         }
     }

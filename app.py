@@ -5,6 +5,7 @@ from datetime import datetime
 import queue
 from waitress import serve
 import socket # <<< THÊM MỚI
+import cloudinary
 
 from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db
 from controllers.soldier_controller import soldier_bp
@@ -37,6 +38,13 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 init_db(app)
 
+# CẤU HÌNH CLOUDINARY>>>
+cloudinary.config( 
+    cloud_name = "dmeho8uqs", 
+    api_key = "274359684344333", 
+    api_secret = "YTVCyDi_WIJXvKOfp6lc4nlGsks",
+    secure=True
+)
 # --- Quản lý Login ---
 login_manager = LoginManager()
 login_manager.init_app(app)
