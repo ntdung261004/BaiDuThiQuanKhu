@@ -17,14 +17,14 @@
     display: grid;
     grid-template-columns: 2fr 2fr 1.5fr;
     /* Tỷ lệ hàng: Hàng trên cao gấp 3 lần hàng dưới (~75% - 25%) */
-    grid-template-rows: 3fr 1fr;
+    grid-template-rows:  2fr 1fr;
     
     gap: 1rem; /* Khoảng cách giữa các khung */
     
     /* Bản đồ layout */
     grid-template-areas:
         "results    livestream shooters"
-        "history    new_frame  overview";
+        "history    livestream  overview";
 }
 
 /* --- 3. QUY TẮC AN TOÀN & GÁN VỊ TRÍ --- */
@@ -40,7 +40,6 @@
 #grid-results   { grid-area: results; }
 #grid-shooters  { grid-area: shooters; }
 #grid-history   { grid-area: history; }
-#grid-new-frame { grid-area: new_frame; }
 #grid-overview  { grid-area: overview; }
 
 /* --- 4. STYLE CHUNG CHO CÁC KHUNG (CARD) --- */
@@ -135,3 +134,29 @@
     padding: 0; /* Bỏ padding để video/ảnh có thể chiếm toàn bộ không gian */
 }
 
+/* --- 6. TINH CHỈNH RIÊNG CHO KHUNG TỔNG QUAN --- */
+
+#grid-overview .list-group-item {
+    /* Thu nhỏ cỡ chữ và khoảng cách của các dòng thông số */
+    font-size: 0.78rem;
+    padding: 0.5rem 0.8rem;
+}
+
+/* Tinh chỉnh riêng cho danh sách xạ thủ */
+#soldiers-list .list-group-item {
+    font-size: 0.7rem;      /* << Giảm cỡ chữ của tên xạ thủ */
+    padding: 0.4rem 0.75rem;  /* Giảm nhẹ padding cho gọn hơn */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* << THÊM KHỐI NÀY: Thu nhỏ nút "Chọn" bên trong danh sách */
+#soldiers-list .btn {
+    font-size: 0.7rem;          /* Đồng bộ cỡ chữ với tên */
+    padding: 0.1rem 0.4rem;     /* Giảm padding của nút cho nhỏ lại */
+}
+
+.livestream-controls {
+    flex-shrink: 0; /* Ngăn không cho khu vực này bị co lại */
+}

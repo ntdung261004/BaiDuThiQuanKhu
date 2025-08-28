@@ -249,21 +249,23 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (soldiers.length > 0) {
                 soldiers.forEach(soldier => {
-                    const soldierItem = document.createElement('a');
-                    soldierItem.href = "#";
+                    const soldierItem = document.createElement('div');
                     soldierItem.dataset.soldierItemId = soldier.id;
-                    soldierItem.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    soldierItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    
+                    // <<< THAY ĐỔI CẤU TRÚC innerHTML TẠI ĐÂY >>>
                     soldierItem.innerHTML = `
-                        <span>
-                            <i class="fas fa-user me-2"></i>
-                            ${soldier.rank} ${soldier.name}
-                        </span>
                         <div class="d-flex align-items-center">
-                            <span class="badge bg-secondary me-2" title="Số phát bắn">
-                                <i class="fas fa-bullseye me-1"></i>${soldier.shot_count}
+                            <button class="btn btn-sm btn-outline-primary select-shooter-btn me-3" data-soldier-id="${soldier.id}">Chọn</button>
+                            
+                            <span>
+                                ${soldier.rank} ${soldier.name}
                             </span>
-                            <button class="btn btn-sm btn-outline-primary select-shooter-btn" data-soldier-id="${soldier.id}">Chọn</button>
                         </div>
+                        
+                        <span class="badge bg-secondary" title="Số phát bắn">
+                            <i class="fas fa-bullseye me-1"></i>${soldier.shot_count}
+                        </span>
                     `;
                     soldiersList.appendChild(soldierItem);
                 });
@@ -517,4 +519,5 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     }
+    
 });
