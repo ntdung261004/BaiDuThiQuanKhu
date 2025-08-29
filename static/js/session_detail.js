@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     let lastProcessedShotId = null;
     let connectionInterval;
     let dataFeedInterval;
-    let shotHistory = []; // Lưu trữ lịch sử bắn
-
+    let shotHistory = []; // Lưu trữ lịch sử bắ
+    
 // <<< THÊM TOÀN BỘ KHỐI CODE NÀY VÀO ĐÂY >>>
     // --- LOGIC HỦY KÍCH HOẠT KHI RỜI TRANG ---
     window.addEventListener('beforeunload', function(event) {
@@ -200,10 +200,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     }
                 }
 
-                if (shotStatusList.children.length > 15) {
+                if (shotStatusList.children.length > 10) {
                     shotStatusList.removeChild(shotStatusList.lastChild);
                 }
-
+                loadShotHistory();
                 // Cập nhật lại các thông số khác khi có bắn mới
                 //updateSessionOverview();
                 // Bạn cũng có thể gọi lại hàm loadSessionDetails() để cập nhật số phát bắn của từng xạ thủ,
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!shooterWasSynced) {
                 toggleResultPanel('hide');
             }
-
+            loadShotHistory();
         } catch (error) {
             console.error('Lỗi khi tải chi tiết phiên tập:', error);
             sessionNameHeader.textContent = 'Lỗi tải dữ liệu';
@@ -388,7 +388,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <span class="badge bg-secondary me-3">${shotCounter}</span>
                         
                         <span class="me-4" style="line-height: 1.2;">
-                            ${shot.shot_time} - <strong>${shot.soldier_rank} ${shot.soldier_name}</strong>
+                            <strong>${shot.soldier_name}</strong>
                         </span>
                         <div class="d-flex">
                             <span class="text-muted me-2">Mục tiêu:</span>
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     let soldiers = [];
     // Gọi loadSessionDetails và đợi kết quả trạng thái
     const sessionStatus = await loadSessionDetails();
-
+    updateSessionOverview();
     // Chỉ gọi "start" nếu phiên chưa hoàn thành
     if (sessionStatus !== 'COMPLETED') {
         startTrainingSession();
@@ -519,5 +519,80 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     }
-    
+       // --- LOGIC CHO CÁC NÚT ĐIỀU KHIỂN LIVESTREAM ---
+    const recenterBtn = document.getElementById('recenter-btn');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const zoomValueDisplay = document.getElementById('zoom-value-display');
+    let isCenteringMode = false; // Biến trạng thái cho chế độ chọn tâm
+
+    // Hàm chung để gửi lệnh đến backend
+    async function sendPiCommand(endpoint, body) {
+        try {
+            await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        } catch (error) {
+            console.error(`Lỗi khi gửi lệnh đến ${endpoint}:`, error);
+        }
+    }
+
+    // Sự kiện cho nút Hiệu chỉnh tâm (hoạt động như công tắc bật/tắt)
+    if (recenterBtn) {
+        recenterBtn.addEventListener('click', () => {
+            isCenteringMode = !isCenteringMode;
+            if (isCenteringMode) {
+                recenterBtn.classList.add('btn-success');
+                recenterBtn.classList.remove('btn-secondary');
+                videoFeed.style.cursor = 'crosshair';
+                console.log("Chế độ chọn tâm: BẬT. Hãy bấm vào video để chọn tâm mới.");
+            } else {
+                recenterBtn.classList.remove('btn-success');
+                recenterBtn.classList.add('btn-secondary');
+                videoFeed.style.cursor = 'default';
+                console.log("Chế độ chọn tâm: TẮT.");
+            }
+        });
+    }
+
+    // Sự kiện click trên khung video để lấy tọa độ
+    if (videoFeed) {
+        videoFeed.addEventListener('click', (event) => {
+            if (!isCenteringMode) return; // Chỉ hoạt động khi đang ở chế độ chọn tâm
+
+            // Lấy tọa độ click và tính toán lại theo độ phân giải gốc của camera (vd: 640x480)
+            const rect = videoFeed.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const nativeWidth = 480;
+            const nativeHeight = 640;
+            const scaledX = Math.round((x / videoFeed.clientWidth) * nativeWidth);
+            const scaledY = Math.round((y / videoFeed.clientHeight) * nativeHeight);
+
+            const coords = { x: scaledX, y: scaledY };
+            
+            // Gửi lệnh set_center với tọa độ đã tính toán
+            sendPiCommand('/set_center', { center: coords });
+            console.log(`Đã gửi lệnh hiệu chỉnh tâm tới tọa độ:`, coords);
+
+            // Tự động tắt chế độ chọn tâm sau khi đã chọn xong
+            isCenteringMode = false;
+            recenterBtn.classList.remove('btn-success');
+            recenterBtn.classList.add('btn-secondary');
+            videoFeed.style.cursor = 'default';
+        });
+    }
+
+    // Sự kiện cho thanh trượt Zoom
+    if (zoomSlider) {
+        zoomSlider.addEventListener('input', () => {
+            const zoomValue = parseFloat(zoomSlider.value);
+            sendPiCommand('/set_zoom', { zoom: zoomValue });
+            zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
+        });
+        zoomSlider.addEventListener('change', () => {
+            console.log(`Đã chốt lệnh zoom: ${zoomSlider.value}`);
+        });
+    }
 });

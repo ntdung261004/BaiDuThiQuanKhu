@@ -187,15 +187,23 @@ def set_zoom():
 @pi_bp.route('/set_center', methods=['POST'])
 def set_center():
     data = request.get_json()
-    center_coords = data.get('center')
-    if center_coords and 'x' in center_coords and 'y' in center_coords:
-        command = {'type': 'center', 'value': center_coords}
-        try:
-            COMMAND_QUEUE.put_nowait(command)
-            return jsonify({'status': 'success'})
-        except queue.Full:
-            return jsonify({'status': 'error', 'message': 'Hàng đợi lệnh đang đầy.'}), 503
-    return jsonify({'status': 'error', 'message': 'Dữ liệu không hợp lệ.'}), 400
+    center_value = data.get('center')
+
+    # Nếu giá trị là một dictionary (chứa x, y) -> lệnh lấy từ click chuột
+    if isinstance(center_value, dict) and 'x' in center_value and 'y' in center_value:
+        command = {'type': 'center', 'value': center_value}
+    # Nếu giá trị là một chuỗi (vd: 'recenter') -> lệnh lấy từ nút bấm
+    elif isinstance(center_value, str):
+        command = {'type': 'center', 'value': center_value}
+    else:
+        # Nếu không khớp, trả về lỗi
+        return jsonify({'status': 'error', 'message': 'Dữ liệu không hợp lệ.'}), 400
+
+    try:
+        COMMAND_QUEUE.put_nowait(command)
+        return jsonify({'status': 'success'})
+    except queue.Full:
+        return jsonify({'status': 'error', 'message': 'Hàng đợi lệnh đang đầy.'}), 503
 
 # <<< SỬA ĐỔI HOÀN TOÀN HÀM NÀY >>>
 @pi_bp.route('/get_command')

@@ -17,7 +17,7 @@
     display: grid;
     grid-template-columns: 2fr 2fr 1.5fr;
     /* Tỷ lệ hàng: Hàng trên cao gấp 3 lần hàng dưới (~75% - 25%) */
-    grid-template-rows:  2fr 1fr;
+    grid-template-rows:  2.5fr 1fr;
     
     gap: 1rem; /* Khoảng cách giữa các khung */
     
@@ -160,3 +160,18 @@
 .livestream-controls {
     flex-shrink: 0; /* Ngăn không cho khu vực này bị co lại */
 }
+
+/* --- TINH CHỈNH RIÊNG CHO LỊCH SỬ BẮN --- */
+
+#shot-status-list .d-flex {
+    font-size: 0.5rem;      /* Cỡ chữ nhỏ hơn */
+    padding-top: 0.1rem;    /* Giảm khoảng cách dọc */
+    padding-bottom: 0.1rem;
+}
+
+/* Thu nhỏ huy hiệu số thứ tự một chút */
+#shot-status-list .badge {
+    font-size: 0.4rem;
+}
+
+
