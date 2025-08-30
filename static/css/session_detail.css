@@ -174,4 +174,11 @@
     font-size: 0.4rem;
 }
 
+/* --- TINH CHỈNH KHUNG KẾT QUẢ MỚI NHẤT --- */
+#grid-results .list-group-item {
+    font-size: 0.8rem; /* Thu nhỏ cỡ chữ */
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
+
 

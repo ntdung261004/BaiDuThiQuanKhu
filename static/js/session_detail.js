@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     let soldiers = [];
     // Gọi loadSessionDetails và đợi kết quả trạng thái
     const sessionStatus = await loadSessionDetails();
-    updateSessionOverview();
+    updateSessionOverview(); 
     // Chỉ gọi "start" nếu phiên chưa hoàn thành
     if (sessionStatus !== 'COMPLETED') {
         startTrainingSession();
