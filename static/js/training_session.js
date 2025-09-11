@@ -97,7 +97,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
                             break;
                     }
-
+                       // Logic để định dạng ngày tháng
+                    const date_created = new Date(session.date_created);
+                    const formattedDate = `${date_created.getDate().toString().padStart(2, '0')}/${(date_created.getMonth() + 1).toString().padStart(2, '0')}/${date_created.getFullYear()}`;
+                    // ===================================
                     const cardHtml = `
                         <div class="col">
                             <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid ${topBorderColor};">
@@ -106,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${statusText}
                                 </div>
 
-                                <div class="card-body">
+                                <div class="card-body" p-3>
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <h5 class="card-title mb-1">${session.session_name || `Phiên Tập #${session.id}`}</h5>
@@ -114,6 +117,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <p class="card-text text-muted small mb-0">
                                                 Bài tập: <strong>${session.exercise_name}</strong>
                                             </p>
+
+                                            <div class="d-flex justify-content-between small text-muted mb-3">
+                                                <span title="Ngày tạo">
+                                                    <i class="far fa-calendar-alt me-1"></i>
+                                                    ${formattedDate}
+                                                </span>
+                                                <span title="Số chiến sĩ đã tập">
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                    Đã tập: <strong>${session.completed_soldier_count}/${session.total_soldier_count}</strong>
+                                                </span>
+                                            </div>
+
                                         </div>
                                         <div class="dropdown" style="position: relative; z-index: 2;">
                                             <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">

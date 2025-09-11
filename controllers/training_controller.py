@@ -53,17 +53,39 @@ def create_training_session():
 
 @training_bp.route('/api/training_sessions', methods=['GET'])
 def get_training_sessions():
-    sessions = TrainingSession.query.order_by(TrainingSession.id.desc()).all()
-    session_list = []
-    for session in sessions:
-        exercise_name = session.exercise.exercise_name if session.exercise else 'Không xác định'
-        session_list.append({
-            'id': session.id, 
-            'session_name': session.session_name, 
-            'exercise_name': exercise_name,
-            'status': session.status.name # .name sẽ trả về 'NOT_STARTED', 'IN_PROGRESS'...
-        })
-    return jsonify(session_list)
+    """
+    API endpoint để lấy danh sách tất cả các phiên tập cùng thông tin chi tiết.
+    """
+    try:
+        # Sắp xếp các phiên tập theo ngày tạo mới nhất lên đầu
+        sessions = TrainingSession.query.order_by(TrainingSession.date_created.desc()).all()
+        
+        result = []
+        for session in sessions:
+            # Đếm số lượng chiến sĩ đã thực hiện ít nhất một phát bắn trong phiên
+            completed_soldier_count = db.session.query(Shot.soldier_id)\
+                                                .filter_by(session_id=session.id)\
+                                                .distinct()\
+                                                .count()
+                                                
+            total_soldier_count = session.soldiers.count()
+            
+            result.append({
+                'id': session.id,
+                'session_name': session.session_name,
+                'status': session.status.name,
+                'exercise_name': session.exercise.exercise_name if session.exercise else 'Không có',
+                'total_soldier_count': total_soldier_count,
+                'completed_soldier_count': completed_soldier_count,
+                'date_created': session.date_created.isoformat() # Chuyển đổi ngày giờ sang chuỗi ISO
+            })
+            
+        return jsonify(result)
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Lỗi khi lấy danh sách phiên tập: {e}")
+        return jsonify({"error": "Lỗi server khi truy vấn dữ liệu"}), 500
 
 @training_bp.route('/api/training_sessions/<int:session_id>', methods=['DELETE'])
 def delete_training_session(session_id):
@@ -144,6 +166,44 @@ def get_session_shots(session_id):
             'soldier_rank': shot.soldier.rank
         })
     return jsonify(shots_history)
+
+@training_bp.route('/api/sessions/<int:session_id>/soldier_stats/<int:soldier_id>', methods=['GET'])
+def get_soldier_stats_in_session(session_id, soldier_id):
+    """
+    API endpoint để lấy thống kê của một chiến sĩ trong một phiên tập cụ thể.
+    """
+    try:
+        shots = Shot.query.filter_by(session_id=session_id, soldier_id=soldier_id).all()
+
+        total_shots = len(shots)
+        total_score = 0.0
+        hit_count = 0
+
+        if total_shots > 0:
+            for shot in shots:
+                score = float(shot.score or 0)
+                if score > 0:
+                    hit_count += 1
+                total_score += score
+            
+            average_score = round(total_score / total_shots, 1)
+            hit_rate = round((hit_count / total_shots) * 100)
+        else:
+            average_score = 0.0
+            hit_rate = 0
+
+        stats = {
+            'total_shots': total_shots,
+            'hit_rate': f"{hit_count}/{total_shots} - {hit_rate}%",
+            'average_score': average_score
+        }
+        
+        return jsonify(stats)
+
+    except Exception as e:
+        print(f"❌ Lỗi khi lấy thống kê của chiến sĩ: {e}")
+        return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
+    
 
 # API để kích hoạt xạ thủ đang bắn >>>
 @training_bp.route('/api/activate_shooter', methods=['POST'])

@@ -293,7 +293,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         activeShooterId = parseInt(button.dataset.soldierId);
 
         toggleResultPanel('show');
-
         resetLatestResultPanel();
         
         const selectedSoldier = soldiers.find(s => s.id === activeShooterId);
@@ -316,49 +315,43 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) {
             console.error("Lỗi khi kích hoạt xạ thủ:", error);
         }
+
+        // <<< DÒNG MỚI ĐƯỢC THÊM VÀO ĐÂY >>>
+        // Cập nhật ngay bảng thành tích cho xạ thủ vừa được chọn.
+        updateSessionOverview(); 
     }
 
+
     async function updateSessionOverview() {
-        if (!sessionId) return; // Đảm bảo sessionId đã tồn tại
+        // Nếu không có xạ thủ nào được chọn, reset bảng thành tích và thoát
+        if (!activeShooterId) {
+            totalShotsEl.textContent = '0';
+            hitRateEl.textContent = '0%';
+            averageScoreEl.textContent = '0.0';
+            return;
+        }
 
         try {
-            const response = await fetch(`/api/sessions/${sessionId}/shots`);
+            // Gọi đến API mới để lấy thành tích của xạ thủ đang active
+            const response = await fetch(`/api/sessions/${sessionId}/soldier_stats/${activeShooterId}`);
             if (!response.ok) {
-                console.error("Lỗi khi tải lịch sử bắn của phiên.");
-                return;
+                throw new Error('Lỗi khi tải thành tích cá nhân.');
             }
-            const shots = await response.json();
+            const stats = await response.json();
 
-            const totalShots = shots.length;
+            // Cập nhật giao diện với dữ liệu nhận được
+            totalShotsEl.textContent = stats.total_shots;
+            hitRateEl.textContent = stats.hit_rate;
+            averageScoreEl.textContent = stats.average_score;
             
-            if (totalShots === 0) {
-                // Nếu chưa có phát bắn nào, trả về giá trị mặc định
-                totalShotsEl.textContent = '0';
-                hitRateEl.textContent = '0%';
-                averageScoreEl.textContent = '0.0';
-                return;
-            }
+            // Trả về số phát bắn để hàm updateProcessedData có thể sử dụng nếu cần
+            return stats.total_shots; 
 
-            // 1. Tính tổng điểm
-            const totalScore = shots.reduce((sum, shot) => sum + parseFloat(shot.score || 0), 0);
-            
-            // 2. Đếm số lần bắn trúng (điểm > 0)
-            const hitCount = shots.filter(shot => parseFloat(shot.score || 0) > 0).length;
-
-            // 3. Tính điểm trung bình
-            const averageScore = totalScore / totalShots;
-
-            // 4. Tính tỷ lệ trúng mục tiêu
-            const hitRate = (hitCount / totalShots) * 100;
-            
-            // 5. Cập nhật lên giao diện
-            totalShotsEl.textContent = totalShots;
-            hitRateEl.textContent = `${hitCount}/${totalShots} - ${hitRate.toFixed(1)}%`; // Làm tròn 1 chữ số thập phân
-            averageScoreEl.textContent = averageScore.toFixed(1); // Làm tròn 1 chữ số thập phân
-            
-            return totalShots;
         } catch (error) {
-            console.error("Lỗi khi cập nhật tổng quan phiên:", error);
+            console.error("Lỗi khi cập nhật thành tích:", error);
+            totalShotsEl.textContent = 'Lỗi';
+            hitRateEl.textContent = 'Lỗi';
+            averageScoreEl.textContent = 'Lỗi';
             return 0;
         }
     }
@@ -413,7 +406,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // Thêm hàm này vào sau hàm loadShotHistory
     async function syncActiveShooterState() {
         if (!sessionId) return;
         try {
@@ -423,26 +415,25 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (data.active_soldier_id) {
                 console.log(`Đồng bộ trạng thái: Xạ thủ #${data.active_soldier_id} đang hoạt động.`);
                 
-                // 1. Cập nhật biến activeShooterId
                 activeShooterId = data.active_soldier_id;
 
-                // 2. Tìm và hiển thị tên xạ thủ
                 const selectedSoldier = soldiers.find(s => s.id === activeShooterId);
                 if (selectedSoldier) {
                     currentShooterName.textContent = `${selectedSoldier.rank} ${selectedSoldier.name}`;
                 }
 
-                // 3. Highlight xạ thủ trong danh sách
-                // Bỏ highlight cũ
                 document.querySelectorAll('#soldiers-list .list-group-item').forEach(item => item.classList.remove('active'));
-                // Highlight xạ thủ mới
                 const shooterListItem = soldiersList.querySelector(`[data-soldier-item-id="${activeShooterId}"]`);
                 if (shooterListItem) {
                     shooterListItem.classList.add('active');
                 }
 
-                // 4. Hiển thị lại khung kết quả
                 toggleResultPanel('show');
+
+                // <<< DÒNG MỚI ĐƯỢC THÊM VÀO ĐÂY >>>
+                // Cập nhật bảng thành tích cho xạ thủ được đồng bộ.
+                updateSessionOverview(); 
+
                 return true;
             }
         } catch (error) {
