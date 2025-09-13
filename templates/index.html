@@ -25,7 +25,9 @@
             </div>
         </nav>
         
+
         <div class="container-fluid px-4">
+    
             <div class="row g-3 my-2">
                 <div class="col-12">
                     <div class="p-4 bg-white shadow-sm rounded">
@@ -39,31 +41,66 @@
                 </div>
             </div>
 
-            <div class="row g-3 my-4">
-                <h3 class="fs-4">
-                        Thiết bị đồng bộ                      
-                    </h3>
-                <div class="col-md-6">                
-                    <div class="p-3 bg-white shadow-sm d-flex justify-content-between align-items-center rounded">
+            <div class="row g-3 my-2">
+                <div class="col-md-4">
+                    <div class="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
                         <div>
-                            <h3 class="fs-4">Thiết bị bắn (Raspberry Pi)</h3>
-                            <p id="pi-status" class="fs-6 text-success fw-bold">Trạng thái: Đang hoạt động</p>
+                            <h3 class="fs-2">{{ total_soldiers }}</h3>
+                            <p class="fs-5">Chiến sĩ</p>
                         </div>
-                        <i class="fas fa-robot fs-1 text-primary"></i>
+                        <i class="fas fa-users fs-1 text-primary"></i>
                     </div>
                 </div>
-                
-                <div class="col-md-6">
-                    <div class="p-3 bg-white shadow-sm d-flex justify-content-between align-items-center rounded">
+
+                <div class="col-md-4">
+                    <div class="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
                         <div>
-                            <h3 class="fs-4">Kết nối âm thanh (Bluetooth)</h3>
-                            <p class="fs-6 text-danger fw-bold">Trạng thái: Ngắt kết nối</p>
+                            <h3 class="fs-2">{{ total_sessions }}</h3>
+                            <p class="fs-5">Phiên tập</p>
                         </div>
-                        <i class="fas fa-bluetooth-b fs-1 text-primary"></i>
+                        <i class="fas fa-bullseye fs-1 text-secondary"></i>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="p-3 {% if is_system_active %}bg-success text-white{% else %}bg-white{% endif %} shadow-sm d-flex justify-content-around align-items-center rounded">
+                        <div>
+                            <h3 class="fs-2">
+                                {% if is_system_active %}
+                                    Hoạt động
+                                {% else %}
+                                    Sẵn sàng
+                                {% endif %}
+                            </h3>
+                            <p class="fs-5">Hệ thống</p>
+                        </div>
+                        {% if is_system_active %}
+                            <span class="spinner-border text-white" role="status" aria-hidden="true" style="width: 3rem; height: 3rem;"></span>
+                        {% else %}
+                            <i class="fas fa-power-off fs-1 text-info"></i>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+            <div class="row g-3 my-2">
+                <div class="col-12">
+                    <div class="p-4 bg-white shadow-sm rounded">
+                        <h3 class="fs-4 mb-3">Hành động nhanh</h3>
+                        
+                        <a href="{{ url_for('training') }}" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-bullseye me-2"></i>Tạo & Quản lý Phiên tập
+                        </a>
 
+                        <button type="button" class="btn btn-success btn-lg me-2" data-bs-toggle="modal" data-bs-target="#addSoldierModal">
+                            <i class="fas fa-user-plus me-2"></i>Thêm Chiến sĩ Mới
+                        </button>
+                        
+                        <a href="{{ url_for('report') }}" class="btn btn-info btn-lg text-white">
+                            <i class="fas fa-chart-line me-2"></i>Xem Báo cáo Thành Tích
+                        </a>
+                    </div>
+                </div>
+            </div>
             <div class="row my-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="fs-4">
@@ -72,9 +109,43 @@
                             (Tổng số: 0)
                         </span>
                     </h3>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSoldierModal">
-                        <i class="fas fa-plus me-1"></i> Thêm chiến sĩ
-                    </button>
+
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sort-button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-sort-amount-down me-2"></i>Sắp xếp theo
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sort-button" id="sort-options">
+                            <li><a class="dropdown-item" href="#" data-sortby="created_at" data-order="desc">Mới nhất</a></li>
+                            <li><a class="dropdown-item" href="#" data-sortby="name" data-order="asc">Tên (A-Z)</a></li>
+                            <li><a class="dropdown-item" href="#" data-sortby="name" data-order="desc">Tên (Z-A)</a></li>
+                            <li><a class="dropdown-item" href="#" data-sortby="unit" data-order="asc">Đơn vị</a></li>
+                            <li><a class="dropdown-item" href="#" data-sortby="rank" data-order="asc">Cấp bậc</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="p-3 bg-white shadow-sm rounded mb-3">
+                    <form method="GET" action="{{ url_for('index') }}" class="row g-3 align-items-center " id="filter-form">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" name="search" placeholder="Tìm theo tên chiến sĩ..." value="{{ search_query }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-sitemap"></i></span>
+                                <select class="form-select" name="unit">
+                                    <option value="">-- Tất cả đơn vị --</option>
+                                    {% for unit in unit_list %}
+                                        <option value="{{ unit }}" {% if unit == unit_filter %}selected{% endif %}>{{ unit }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                        </div>
+                    </form>
                 </div>
                 <div class="table-responsive bg-white shadow-sm rounded p-3">
                     <table class="table table-hover align-middle" id="soldier-table">
@@ -91,6 +162,12 @@
                         <tbody id="soldier-tbody">
                             </tbody>
                     </table>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination" id="pagination-controls">
+                            </ul>
+                    </nav>
                 </div>
             </div>
 
@@ -129,7 +206,8 @@ window.SOLDIER_API = {
   create: "{{ url_for('soldier_bp.create_soldier') }}",
   update_template: "{{ url_for('soldier_bp.update_soldier', soldier_id=0) }}",
   delete_template: "{{ url_for('soldier_bp.delete_soldier', soldier_id=0) }}",
-  count: "{{ url_for('soldier_bp.get_soldier_count') }}"
+  count: "{{ url_for('soldier_bp.get_soldier_count') }}",
+  report_template: "{{ url_for('report_page', report_type='soldier', report_id=0) }}"
 };
 </script>
 

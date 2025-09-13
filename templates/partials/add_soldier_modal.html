@@ -1,34 +1,40 @@
 <div class="modal fade" id="addSoldierModal" tabindex="-1" aria-labelledby="addSoldierModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addSoldierModalLabel">Thêm chiến sĩ</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="add-soldier-form">
-          <div class="mb-3">
-            <label class="form-label">Họ và tên</label>
-            <input name="name" type="text" class="form-control" placeholder="Nhập tên chiến sĩ" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Đơn vị</label>
-            <input name="unit" type="text" class="form-control" placeholder="Nhập đơn vị">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Cấp bậc</label>
-            <input name="rank" type="text" class="form-control" placeholder="Nhập cấp bậc">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Ghi chú</label>
-            <textarea name="notes" class="form-control" rows="2" placeholder="Nhập ghi chú (nếu có)"></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button id="btn-add-cancel" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-        <button id="btn-add-save" type="button" class="btn btn-primary">Lưu</button>
-      </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSoldierModalLabel">Thêm Chiến sĩ Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-soldier-form" novalidate>
+                    
+                    <div id="add-error-alert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label for="add-name" class="form-label">Tên chiến sĩ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="add-name" name="name" required>
+                        <div class="invalid-feedback">Vui lòng nhập tên chiến sĩ.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-rank" class="form-label">Cấp bậc <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="add-rank" name="rank" required>
+                        <div class="invalid-feedback">Vui lòng nhập cấp bậc.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-unit" class="form-label">Đơn vị <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="add-unit" name="unit" required>
+                        <div class="invalid-feedback">Vui lòng nhập đơn vị.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-notes" class="form-label">Ghi chú (nếu có)</label>
+                        <textarea class="form-control" id="add-notes" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" id="btn-add-save">Lưu</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>

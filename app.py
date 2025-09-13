@@ -7,7 +7,7 @@ from waitress import serve
 import socket # <<< THÊM MỚI
 import cloudinary
 
-from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db
+from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db, SessionStatus
 from controllers.soldier_controller import soldier_bp
 from controllers.pi_controller import pi_bp
 from controllers.training_controller import training_bp
@@ -63,7 +63,41 @@ app.register_blueprint(report_bp)
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    # Lấy các tham số từ URL, ví dụ: /?search=Minh&unit=C1
+    search_query = request.args.get('search', '').strip()
+    unit_filter = request.args.get('unit', '').strip()
+
+    # --- Lọc và tìm kiếm chiến sĩ ---
+    query = Soldier.query
+    if search_query:
+        query = query.filter(Soldier.name.ilike(f'%{search_query}%'))
+    if unit_filter:
+        query = query.filter(Soldier.unit == unit_filter)
+    soldiers = query.order_by(Soldier.created_at.desc()).all()
+
+    # Lấy danh sách các đơn vị duy nhất để điền vào dropdown
+    all_units = db.session.query(Soldier.unit).distinct().order_by(Soldier.unit).all()
+    unit_list = [unit[0] for unit in all_units if unit[0]]
+    
+    # 1. Lấy tổng số chiến sĩ
+    total_soldiers = Soldier.query.count()
+
+    # 2. Lấy tổng số phiên tập
+    total_sessions = TrainingSession.query.count()
+
+    # 3. Kiểm tra xem có phiên nào đang diễn ra không
+    active_session = TrainingSession.query.filter_by(status=SessionStatus.IN_PROGRESS).first()
+    is_system_active = True if active_session else False
+    # === KẾT THÚC PHẦN THÊM MỚI ===
+    return render_template(
+        'index.html', 
+        total_soldiers=total_soldiers, 
+        total_sessions=total_sessions, 
+        is_system_active=is_system_active,
+        unit_list=unit_list,
+        search_query=search_query,
+        unit_filter=unit_filter
+        )
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

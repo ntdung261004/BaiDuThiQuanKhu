@@ -11,45 +11,74 @@ soldier_bp = Blueprint('soldier_bp', __name__, url_prefix="/api/soldiers")
 @login_required
 def get_soldiers():
     """
-    Trả về danh sách tất cả chiến sĩ dưới dạng JSON.
-    Endpoint: GET /api/soldiers/
+    Trả về danh sách chiến sĩ có phân trang, tìm kiếm, lọc và sắp xếp.
     """
-    soldiers = soldier_service.list_soldiers()
-    return jsonify([
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('search', '').strip()
+    unit_filter = request.args.get('unit', '').strip()
+    # === THÊM MỚI: Nhận tham số sắp xếp ===
+    sort_by = request.args.get('sort_by', 'created_at')
+    sort_order = request.args.get('sort_order', 'desc')
+
+    pagination = soldier_service.list_soldiers(
+        page=page, 
+        per_page=10,
+        search_query=search_query, 
+        unit_filter=unit_filter,
+        sort_by=sort_by, # << Truyền tham số
+        sort_order=sort_order # << Truyền tham số
+    )
+    
+    soldiers_data = [
         {
             'id': s.id,
             'name': s.name,
             'unit': s.unit or '',
             'rank': s.rank or '',
             'notes': s.notes or '',
-            'created_at': s.created_at.isoformat()
-        } for s in soldiers
-    ])
+        } for s in pagination.items
+    ]
 
+    return jsonify({
+        'soldiers': soldiers_data,
+        'pagination': {
+            'page': pagination.page,
+            'per_page': pagination.per_page,
+            'total_pages': pagination.pages,
+            'total_items': pagination.total,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+    })
 
 @soldier_bp.route("/", methods=['POST'])
 @login_required
 def create_soldier():
     """
     Tạo mới một chiến sĩ.
-    Endpoint: POST /api/soldiers/
-    Accepts: JSON or form data { name, unit, rank, notes }
+    Bắt buộc phải có: name, rank, unit.
     """
     try:
         data = request.get_json(silent=True) or request.form
         name = (data.get('name') or '').strip()
-        if not name:
-            return jsonify({'error': 'Tên chiến sĩ là bắt buộc'}), 400
+        rank = (data.get('rank') or '').strip()
+        unit = (data.get('unit') or '').strip()
+
+        # === BẮT ĐẦU PHẦN NÂNG CẤP LOGIC LỖI ===
+        if not all([name, rank, unit]):
+            return jsonify({'error': 'Vui lòng nhập đầy đủ Tên, Cấp bậc và Đơn vị.'}), 400
+        # === KẾT THÚC PHẦN NÂNG CẤP ===
+            
         soldier = soldier_service.create_soldier(
             name=name,
-            unit=data.get('unit'),
-            rank=data.get('rank'),
+            unit=unit,
+            rank=rank,
             notes=data.get('notes')
         )
-        return jsonify({'message': 'Tạo thành công', 'id': soldier.id})
+        return jsonify({'message': f'Đã thêm thành công chiến sĩ "{soldier.name}"', 'id': soldier.id})
+        
     except Exception as e:
-        # Trả lỗi chung để client biết
-        return jsonify({'error': 'Lỗi khi tạo chiến sĩ', 'detail': str(e)}), 500
+        return jsonify({'error': 'Lỗi server khi tạo chiến sĩ', 'detail': str(e)}), 500
 
 
 @soldier_bp.route("/<int:soldier_id>", methods=['PUT', 'PATCH'])
@@ -62,7 +91,7 @@ def update_soldier(soldier_id):
     try:
         data = request.get_json(silent=True) or {}
         soldier_service.update_soldier(soldier_id, data)
-        return jsonify({'message': 'Cập nhật thành công'})
+        return jsonify({'message': 'Cập nhật chiến sĩ thành công'})
     except Exception as e:
         return jsonify({'error': 'Lỗi khi cập nhật', 'detail': str(e)}), 500
 
