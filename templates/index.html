@@ -12,12 +12,19 @@
             <div class="ms-auto">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle second-text fw-bold" href="#" id="navbarDropdown"
-                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user me-2"></i>Chào, {{ current_user.username }}
+                        <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img id="navbar-avatar" 
+                                 src="{{ current_user.avatar_url + '?v=' + range(1, 99999) | random | string if current_user.avatar_url else url_for('static', filename='image/default_avatar.png') }}" 
+                                 class="rounded-circle me-2" 
+                                 width="30" height="30" 
+                                 style="object-fit: cover;">
+                            
+                            <span id="navbar-greeting">
+                                Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}
+                            </span>
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#">Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
                         </ul>
                     </li>
@@ -31,17 +38,51 @@
             <div class="row g-3 my-2">
                 <div class="col-12">
                     <div class="p-4 bg-white shadow-sm rounded">
-                        <h3 class="fs-3">Chào mừng đến với Hệ thống Mô Phỏng Đường Ngắm Súng Tiểu Liên</h3>
+                        <h3 class="fs-3">Chào mừng đến với <br>Hệ thống Quản lý Thiết bị Tập luyện bắn súng ứng dụng camera AI DA01</h3>
                         <p class="text-muted">
-                            Đây là hệ thống huấn luyện bắn súng thông minh, tích hợp AI và xử lý ảnh để đánh giá chính xác kết quả.
-                            Hệ thống theo dõi hiệu suất, cung cấp phân tích chuyên sâu và hỗ trợ bộ đội cải thiện đường ngắm,
+                            Đây là thiết bị huấn luyện bắn súng thông minh, tích hợp trí tuệ nhân tạo và thuật toán xử lý ảnh để đánh giá chính xác kết quả.
+                            Hệ thống quản lý theo dõi hiệu suất, thành tích cung cấp phân tích chuyên sâu và hỗ trợ người huấn luyện đưa ra phương pháp giúp bộ đội cải thiện đường ngắm dễ dàng,
                             đồng thời nâng cao tiêu chuẩn an toàn trong kiểm tra.
                         </p>
                     </div>
                 </div>
             </div>
-
+            <div class="row my-4">
+                <h3 class="fs-4 mb-3">Chức năng chính của hệ thống</h3>
+                <div class="col-12">
+                    <ul class="list-group list-group-flush bg-white rounded shadow-sm">
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="fas fa-video me-3 text-primary"></i>
+                            Phát Livestream đường ngắm từ AI camera thời gian thực
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="fas fa-crosshairs me-3 text-primary"></i>
+                            Phân tích, lưu trữ điểm số từng phát bắn tự động
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="fas fa-chart-bar me-3 text-primary"></i>
+                            Thống kê và báo cáo chi tiết kết quả bắn của từng buổi tập luyện, từng chiến sĩ
+                        </li>
+                    </ul>
+                </div>
+            </div>
             <div class="row g-3 my-2">
+                <h3 class="fs-4 mb-3">Thông tin tổng quan đơn vị</h3>
+                {% if current_user.is_profile_complete %}
+                <div class="col-12">
+                    <div class="p-3 bg-white shadow-sm d-flex justify-content-start align-items-center rounded">
+                        <i class="fas fa-user-shield fs-1 text-success me-4"></i>
+                        <div>
+                            <h4 class="fs-5 mb-1">
+                                <strong>Đơn vị:</strong> {{ current_user.unit }}
+                            </h4>
+                            <p class="fs-6 text-muted mb-0">
+                                <strong>{{ current_user.position }} :</strong> {{ current_user.full_name }} | <strong>Cấp bậc:</strong> {{ current_user.rank }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="col-md-4">
                     <div class="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
                         <div>
@@ -83,22 +124,32 @@
                 </div>
             </div>
             <div class="row g-3 my-2">
+                <h3 class="fs-4 mb-3">Thao tác nhanh</h3>
                 <div class="col-12">
-                    <div class="p-4 bg-white shadow-sm rounded">
-                        <h3 class="fs-4 mb-3">Hành động nhanh</h3>
-                        
-                        <a href="{{ url_for('training') }}" class="btn btn-primary btn-lg me-2">
-                            <i class="fas fa-bullseye me-2"></i>Tạo & Quản lý Phiên tập
-                        </a>
-
-                        <button type="button" class="btn btn-success btn-lg me-2" data-bs-toggle="modal" data-bs-target="#addSoldierModal">
-                            <i class="fas fa-user-plus me-2"></i>Thêm Chiến sĩ Mới
-                        </button>
-                        
-                        <a href="{{ url_for('report') }}" class="btn btn-info btn-lg text-white">
-                            <i class="fas fa-chart-line me-2"></i>Xem Báo cáo Thành Tích
-                        </a>
-                    </div>
+                    <div class="p-4 bg-white shadow-sm rounded text-center">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <a href="{{ url_for('training') }}" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-bullseye me-2"></i>Thêm phiên tập
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <button type="button" class="btn btn-success btn-lg w-100" data-bs-toggle="modal" data-bs-target="#addSoldierModal">
+                                    <i class="fas fa-user-plus me-2"></i>Thêm chiến sĩ
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <a href="{{ url_for('report') }}" class="btn btn-info btn-lg text-white w-100">
+                                    <i class="fas fa-chart-line me-2"></i>Xem báo cáo
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <a href="{{ url_for('profile_page') }}" class="btn btn-secondary btn-lg w-100">
+                                    <i class="fas fa-user-edit me-2"></i>Sửa hồ sơ
+                                </a>
+                            </div>
+                        </div>
+                        </div>
                 </div>
             </div>
             <div class="row my-4">
@@ -147,16 +198,16 @@
                         </div>
                     </form>
                 </div>
-                <div class="table-responsive bg-white shadow-sm rounded p-3">
-                    <table class="table table-hover align-middle" id="soldier-table">
-                        <thead class="table-light">
+                <div class="table-responsive">
+                    <table class="table bg-white rounded shadow-sm table-hover table-soldiers">
+                        <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Họ và tên</th>
-                                <th>Đơn vị</th>
-                                <th>Cấp bậc</th>
-                                <th>Ghi chú</th>
-                                <th>Thao tác</th>
+                                <th scope="col" class="col-stt">#</th>
+                                <th scope="col" class="col-name">Tên Chiến sĩ</th>
+                                <th scope="col" class="col-unit">Đơn vị</th>
+                                <th scope="col" class="col-rank">Cấp bậc</th>
+                                <th scope="col" class="col-notes">Ghi chú</th>
+                                <th scope="col" class="col-actions">Hành động</th>
                             </tr>
                         </thead>
                         <tbody id="soldier-tbody">
@@ -168,26 +219,6 @@
                         <ul class="pagination" id="pagination-controls">
                             </ul>
                     </nav>
-                </div>
-            </div>
-
-            <div class="row my-4">
-                <h3 class="fs-4 mb-3">Chức năng chính của hệ thống</h3>
-                <div class="col-12">
-                    <ul class="list-group list-group-flush bg-white rounded shadow-sm">
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-video me-3 text-primary"></i>
-                            Phát Livestream thời gian thực
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-crosshairs me-3 text-primary"></i>
-                            Phân tích điểm số tự động
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-chart-bar me-3 text-primary"></i>
-                            Thống kê và báo cáo chi tiết
-                        </li>
-                    </ul>
                 </div>
             </div>
         </div>

@@ -26,7 +26,18 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128)) # <<< SỬA ĐỔI: Lưu password hash thay vì password gốc để bảo mật
+    password_hash = db.Column(db.String(255)) 
+
+    # === BẮT ĐẦU PHẦN THÊM MỚI ===
+    full_name = db.Column(db.String(100), nullable=True) # Tên đầy đủ của người chỉ huy
+    rank = db.Column(db.String(50), nullable=True)      # Cấp bậc
+    position = db.Column(db.String(100), nullable=True) # Chức vụ
+    unit = db.Column(db.String(100), nullable=True)      # Đơn vị
+    avatar_url = db.Column(db.String(255), nullable=True) # Lưu URL ảnh đại diện
+    
+    # Cờ để kiểm tra xem người dùng đã hoàn thành thiết lập ban đầu chưa
+    is_profile_complete = db.Column(db.Boolean, default=False, nullable=False)
+    # === KẾT THÚC PHẦN THÊM MỚI ===
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -90,8 +101,9 @@ def init_db(app):
         
         # Khởi tạo người dùng admin nếu chưa có
         if not User.query.filter_by(username='admin').first():
-            admin_user = User(username='admin')
-            admin_user.set_password('123') # <<< SỬA ĐỔI: Mã hóa mật khẩu
+            # Thêm is_profile_complete=False khi tạo admin
+            admin_user = User(username='admin', is_profile_complete=False) 
+            admin_user.set_password('123')
             db.session.add(admin_user)
             db.session.commit()
             
@@ -99,7 +111,7 @@ def init_db(app):
         if not Exercise.query.all():
             ex1 = Exercise(exercise_name='Phân đoạn 1 - Bắn bia số 4')
             ex2 = Exercise(exercise_name='Phân đoạn 2 - Bắn bia số 7')
-            ex3 = Exercise(exercise_name='Phân đoạn 2 - Bắn bia số 8')
+            ex3 = Exercise(exercise_name='Phân đoạn 3 - Bắn bia số 8')
             ex4 = Exercise(exercise_name='Tổng hợp 3 bia')
             db.session.add_all([ex1, ex2, ex3, ex4])
             db.session.commit()

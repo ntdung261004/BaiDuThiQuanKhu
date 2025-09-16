@@ -41,3 +41,72 @@ function showToast(message, type = 'success') {
         newToastEl.remove();
     });
 }
+
+// === BẮT ĐẦU PHẦN TÁI CẤU TRÚC LOGIC POPUP ===
+
+// Hàm riêng để xử lý việc hiển thị modal
+function handleProfileUpdateModal() {
+    const body = document.body;
+    const profileIncomplete = body.dataset.profileIncomplete === 'True';
+    const updateProfileModalEl = document.getElementById('updateProfileModal');
+
+    if (profileIncomplete && updateProfileModalEl) {
+        const updateModal = new bootstrap.Modal(updateProfileModalEl, {
+            backdrop: 'static', // Đảm bảo không thể đóng khi click ra ngoài
+            keyboard: false // Đảm bảo không thể đóng bằng phím Esc
+        });
+        updateModal.show();
+    }
+}
+
+// Hàm riêng để xử lý sự kiện submit của form
+function handleProfileFormSubmit() {
+    const updateForm = document.getElementById('update-profile-form');
+    if (!updateForm) return;
+
+    const submitButton = updateForm.closest('.modal-content').querySelector('button[type="submit"]');
+    const alertContainer = document.getElementById('profile-update-alert-container');
+
+    updateForm.addEventListener('submit', async function(event) {
+        event.preventDefault(); // Ngăn form tự gửi đi
+
+        alertContainer.innerHTML = '';
+        alertContainer.classList.add('d-none');
+        
+        const originalButtonText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Đang xử lý...`;
+
+        const formData = new FormData(updateForm);
+
+        try {
+            const response = await fetch(updateForm.action, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Lỗi không xác định.');
+            }
+
+            showToast(result.message);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500); // Giảm thời gian chờ
+
+        } catch (error) {
+            alertContainer.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            alertContainer.classList.remove('d-none');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+        }
+    });
+}
+
+// Chạy các hàm khi trang đã tải xong
+document.addEventListener('DOMContentLoaded', function() {
+    handleProfileUpdateModal();
+    handleProfileFormSubmit();
+});

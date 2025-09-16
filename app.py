@@ -6,7 +6,11 @@ import queue
 from waitress import serve
 import socket # <<< THÊM MỚI
 import cloudinary
+import os
+from werkzeug.utils import secure_filename
+import uuid
 
+from flask import flash
 from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db, SessionStatus
 from controllers.soldier_controller import soldier_bp
 from controllers.pi_controller import pi_bp
@@ -33,6 +37,12 @@ def get_ip_address():
     return IP
 
 # --- Cấu hình ứng dụng ---
+# Thêm cấu hình cho thư mục upload, đặt gần các app.config khác
+UPLOAD_FOLDER = os.path.join(app.static_folder, 'uploads', 'avatars')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Tạo thư mục nếu chưa tồn tại
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 app.config['SECRET_KEY'] = 'a_very_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -49,6 +59,20 @@ cloudinary.config(
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# === BẮT ĐẦU PHẦN THÊM MỚI: KIỂM TRA PROFILE ===
+@app.context_processor
+def inject_profile_status():
+    """
+    Tự động kiểm tra và gửi trạng thái profile đến tất cả các template.
+    """
+    if current_user.is_authenticated and not current_user.is_profile_complete:
+        # Nếu người dùng đã đăng nhập nhưng chưa hoàn thành profile
+        # và họ không đang ở trang đăng xuất, thì gửi cờ TRUE
+        if request.endpoint and 'logout' not in request.endpoint and 'static' not in request.endpoint:
+             return dict(PROFILE_INCOMPLETE=True)
+    return dict(PROFILE_INCOMPLETE=False)
+# === KẾT THÚC PHẦN THÊM MỚI ===
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -155,12 +179,118 @@ def setting():
 def training():
     return render_template('training_session.html')
 
+# ROUTE CHO TRANG PROFILE ===
+@app.route('/profile')
+@login_required
+def profile_page():
+    """
+    Hiển thị trang chỉnh sửa thông tin cá nhân của người dùng.
+    """
+    return render_template('profile.html')
+
 #Route để hiển thị trang chi tiết phiên tập >>>
 @app.route('/session/<int:session_id>')
 @login_required
 def session_details(session_id):
     # Chúng ta chỉ cần render trang, JavaScript sẽ tự tải dữ liệu
     return render_template('session_details.html', session_id=session_id)
+
+# ROUTE XỬ LÝ CẬP NHẬT PROFILE ===
+@app.route('/profile/update', methods=['POST'])
+@login_required
+def api_update_profile():
+    try:
+        user = current_user
+        
+        # Lấy dữ liệu từ form
+        user.username = request.form.get('username', user.username).strip()
+        user.full_name = request.form.get('full_name', user.full_name).strip()
+        user.rank = request.form.get('rank', user.rank).strip()
+        user.position = request.form.get('position', user.position).strip()
+        user.unit = request.form.get('unit', user.unit).strip()
+
+        # Xử lý ảnh đại diện nếu có file được tải lên
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file and file.filename != '':
+                # Tạo tên file duy nhất để tránh trùng lặp
+                filename = secure_filename(file.filename)
+                unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                
+                # Lưu file vào thư mục static/uploads/avatars
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                file.save(file_path)
+                
+                # Lưu đường dẫn tương đối để có thể truy cập từ web
+                user.avatar_url = f"/static/uploads/avatars/{unique_filename}"
+
+        # Xử lý đổi mật khẩu
+        new_password = request.form.get('new_password')
+        if new_password:
+            confirm_password = request.form.get('confirm_password')
+            if new_password != confirm_password:
+                return jsonify({'error': 'Mật khẩu xác nhận không khớp.'}), 400
+            user.set_password(new_password)
+
+        db.session.commit()
+                # === BẮT ĐẦU PHẦN THÊM MỚI ĐỂ TEST ===
+        print("--- KIỂM TRA DỮ LIỆU SAU KHI LƯU ---")
+        print(f"Đã lưu avatar_url cho user '{user.username}' là: {user.avatar_url}")
+        print("------------------------------------")
+        return jsonify({
+            'message': 'Cập nhật thông tin thành công!',
+            'user': {
+                'full_name': user.full_name,
+                'position': user.position,
+                'avatar_url': user.avatar_url 
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Đã có lỗi xảy ra', 'detail': str(e)}), 500
+    
+#  modal CẬP NHẬT PROFILE ===
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    """
+    API endpoint để xử lý cập nhật profile. Trả về JSON.
+    """
+    data = request.form
+    new_username = data.get('username', '').strip()
+    full_name = data.get('full_name', '').strip()
+    rank = request.form.get('rank', '').strip()
+    position = request.form.get('position', '').strip()
+    unit = request.form.get('unit', '').strip()
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    # --- Kiểm tra lỗi ---
+    if not all([new_username, full_name, rank, position, unit]):
+        return jsonify({'error': 'Vui lòng điền đầy đủ các trường bắt buộc.'}), 400
+
+    if new_password != confirm_password:
+        return jsonify({'error': 'Mật khẩu xác nhận không khớp.'}), 400
+    
+    # Kiểm tra xem username mới có bị trùng không
+    existing_user = User.query.filter(User.username == new_username, User.id != current_user.id).first()
+    if existing_user:
+        return jsonify({'error': f'Tên đăng nhập "{new_username}" đã tồn tại.'}), 400
+
+    # --- Cập nhật vào database ---
+    user = current_user
+    user.username = new_username
+    user.full_name = full_name
+    user.rank = rank
+    user.position = position
+    user.unit = unit
+    if new_password:
+        user.set_password(new_password)
+    user.is_profile_complete = True
+    db.session.commit()
+
+    return jsonify({'message': 'Cập nhật thông tin thành công!'}), 200
 
 # --- Khởi chạy Server ---
 if __name__ == '__main__':

@@ -52,3 +52,10 @@ def delete_soldier(soldier_id):
     db.session.delete(soldier)
     db.session.commit()
     return True
+
+def get_all_soldiers():
+    """
+    Lấy toàn bộ danh sách chiến sĩ không phân trang, để dùng cho các dropdown.
+    """
+    return Soldier.query.order_by(Soldier.name.asc()).all()
+

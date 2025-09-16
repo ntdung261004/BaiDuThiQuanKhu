@@ -1,0 +1,47 @@
+/* static/css/custom.css */
+
+/* Áp dụng cho bảng danh sách chiến sĩ */
+.table-soldiers {
+    table-layout: fixed; /* Bắt buộc bảng phải tuân theo chiều rộng cột đã định */
+    width: 100%;
+}
+
+/* Định nghĩa chiều rộng cho từng cột */
+.table-soldiers th.col-stt,
+.table-soldiers td.col-stt {
+    width: 5%;
+}
+
+.table-soldiers th.col-name,
+.table-soldiers td.col-name {
+    width: 25%;
+}
+
+.table-soldiers th.col-unit,
+.table-soldiers td.col-unit {
+    width: 15%;
+}
+
+.table-soldiers th.col-rank,
+.table-soldiers td.col-rank {
+    width: 15%;
+}
+
+.table-soldiers th.col-notes,
+.table-soldiers td.col-notes {
+    width: 25%;
+}
+
+.table-soldiers th.col-actions,
+.table-soldiers td.col-actions {
+    width: 15%;
+}
+
+
+/* Xử lý cho cột Ghi chú bị dài */
+.notes-cell {
+    white-space: nowrap;      /* Ngăn không cho xuống dòng */
+    overflow: hidden;         /* Ẩn nội dung bị tràn */
+    text-overflow: ellipsis;  /* Hiển thị dấu "..." */
+    max-width: 0;             /* Cần thiết để text-overflow hoạt động đúng */
+}

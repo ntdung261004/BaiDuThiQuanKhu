@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!soldierChecklist) return;
         soldierChecklist.innerHTML = '<p class="text-muted text-center">Đang tải danh sách...</p>';
         try {
-            const response = await fetch('/api/soldiers'); // API này đã có sẵn
+            const response = await fetch('/api/soldiers/all'); // API này đã có sẵn
             if (!response.ok) throw new Error('Network response was not ok');
             const soldiers = await response.json();
             

@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- CÁC HÀM LOGIC CHÍNH ---
 
     async function populateItemSelect(reportType) {
-        let apiUrl = (reportType === 'session') ? '/api/training_sessions' : '/api/soldiers';
+        let apiUrl = (reportType === 'session') ? '/api/training_sessions' : '/api/soldiers/all';
         
         itemSelect.innerHTML = '<option>Đang tải danh sách...</option>';
         itemSelect.disabled = true;

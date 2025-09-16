@@ -103,28 +103,32 @@
 
   // Template 1 hàng
   function rowTemplate(index, s) {
-    // Tạo URL báo cáo cho chiến sĩ này
-    const reportUrl = window.SOLDIER_API.report_template.replace(/0$/, s.id);
-    return `
-      <tr data-id="${s.id}">
-        <td>${index}</td>
-        <td>${escapeHtml(s.name)}</td>
-        <td>${escapeHtml(s.unit || '-')}</td>
-        <td>${escapeHtml(s.rank || '-')}</td>
-        <td>${escapeHtml(s.notes || '-')}</td>
-        <td>
-          <button class="btn btn-sm btn-warning me-1 btn-edit">
-            <i class="fas fa-edit"></i>
-          </button>
-          <a href="${reportUrl}" class="btn btn-sm btn-info me-1 text-white" title="Xem báo cáo">
-            <i class="fas fa-chart-bar"></i>
-          </a>
-          <button class="btn btn-sm btn-danger btn-delete">
-            <i class="fas fa-trash"></i>
-          </button>
-        </td>
-      </tr>
-    `;
+      const reportUrl = window.SOLDIER_API.report_template.replace(/0$/, s.id);
+
+      return `
+        <tr data-id="${s.id}">
+          <td>${index}</td>
+          <td>${escapeHtml(s.name)}</td>
+          <td>${escapeHtml(s.unit || '-')}</td>
+          <td>${escapeHtml(s.rank || '-')}</td>
+          
+          <td class="notes-cell" title="${escapeHtml(s.notes || '')}">
+              ${escapeHtml(s.notes || '-')}
+          </td>
+          
+          <td>
+            <button class="btn btn-sm btn-warning me-1 btn-edit">
+              <i class="fas fa-edit"></i>
+            </button>
+            <a href="${reportUrl}" class="btn btn-sm btn-info me-1 text-white" title="Xem báo cáo">
+              <i class="fas fa-chart-bar"></i>
+            </a>
+            <button class="btn btn-sm btn-danger btn-delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
   }
 
   // --- HÀM TẢI DỮ LIỆU CHÍNH ---

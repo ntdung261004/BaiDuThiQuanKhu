@@ -136,3 +136,21 @@ def get_soldier(soldier_id):
         'notes': soldier.notes
     }
     return jsonify(soldier_info)
+
+# === BẮT ĐẦU PHẦN THÊM MỚI: API CHO DROPDOWN ===
+@soldier_bp.route("/all", methods=['GET'])
+@login_required
+def get_all_soldiers_for_selection():
+    """
+    API endpoint đơn giản, trả về toàn bộ danh sách chiến sĩ
+    chỉ với ID và Tên để điền vào các lựa chọn (select/modal).
+    """
+    try:
+        soldiers = soldier_service.get_all_soldiers()
+        return jsonify([
+            {'id': s.id, 'name': s.name, 'rank': s.rank} 
+            for s in soldiers
+        ])
+    except Exception as e:
+        return jsonify({'error': 'Lỗi khi tải danh sách', 'detail': str(e)}), 500
+# === KẾT THÚC PHẦN THÊM MỚI ===
