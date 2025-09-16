@@ -29,37 +29,51 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function displayShot(index) {
         if (!currentShots || currentShots.length === 0) return;
-        
-        // Lấy ra thông tin của phát bắn hiện tại
+
+        currentIndex = index;
         const shot = currentShots[index];
         
-        // Hiển thị trạng thái đang tải ảnh
+        // Ẩn ảnh cũ và hiển thị trạng thái đang tải
         shotDetailImage.style.display = 'none';
         shotDetailLoading.style.display = 'block';
 
-        // Xử lý khi ảnh tải xong
-        shotDetailImage.onload = function() {
-            shotDetailLoading.style.display = 'none';
-            shotDetailImage.style.display = 'block';
-        }
-        // Xử lý khi ảnh tải lỗi
-        shotDetailImage.onerror = function() {
-            shotDetailLoading.innerHTML = '<p class="text-danger">Lỗi tải ảnh.</p>';
-        }
-        
         // Gán các giá trị vào popup
-        shotDetailImage.src = shot.result_image_path || ''; // Lấy URL ảnh từ Cloudinary
         shotDetailTime.textContent = shot.shot_time;
         shotDetailTarget.textContent = shot.target_name;
         shotDetailScore.textContent = shot.score;
 
         // Cập nhật bộ đếm
         shotCounter.textContent = `Phát ${index + 1} / ${currentShots.length}`;
-
-        // Vô hiệu hóa nút "Previous" nếu là phát bắn đầu tiên
+        
+        // Vô hiệu hóa các nút
         prevShotBtn.disabled = (index === 0);
-        // Vô hiệu hóa nút "Next" nếu là phát bắn cuối cùng
         nextShotBtn.disabled = (index === currentShots.length - 1);
+
+        // <<< THAY ĐỔI TẠI ĐÂY: XỬ LÝ ĐƯỜNG DẪN ẢNH VÀ CÁC TRẠNG THÁI >>>
+        if (shot.result_image_path) {
+            // Thêm dấu '/' vào đầu để đảm bảo trình duyệt tìm đúng đường dẫn cục bộ
+            const imageUrl = '/' + shot.result_image_path;
+            
+            shotDetailImage.src = imageUrl;
+            
+            shotDetailImage.onload = () => {
+                shotDetailLoading.style.display = 'none';
+                shotDetailImage.style.display = 'block';
+            };
+            
+            shotDetailImage.onerror = () => {
+                // Hiển thị ảnh giữ chỗ khi ảnh gốc không tồn tại
+                shotDetailImage.src = '/static/image/placeholder_image.png';
+                shotDetailLoading.style.display = 'none';
+                shotDetailImage.style.display = 'block';
+                console.error('Lỗi khi tải ảnh từ đường dẫn:', shot.result_image_path);
+            };
+        } else {
+            // Hiển thị ảnh giữ chỗ nếu không có đường dẫn ảnh
+            shotDetailImage.src = '/static/image/placeholder_image.png';
+            shotDetailLoading.style.display = 'none';
+            shotDetailImage.style.display = 'block';
+        }
     }
 
     // Bắt sự kiện click trên toàn bộ container báo cáo

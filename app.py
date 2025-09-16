@@ -168,11 +168,7 @@ def report_page(report_type, report_id):
     return render_template('report.html', 
                            report_type=report_type, 
                            report_id=report_id)
-    
-@app.route('/setting', endpoint='setting')
-@login_required
-def setting():
-    return render_template('settings.html')
+
 
 @app.route('/training', endpoint='training')
 @login_required

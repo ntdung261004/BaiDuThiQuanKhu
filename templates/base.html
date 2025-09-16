@@ -27,11 +27,24 @@
                 const itemUrl = new URL(item.href).pathname;
                 item.classList.remove('active');
                 
-                // Logic mới để xử lý các chế độ
+                // Logic mới để xác định trạng thái active
                 if (currentPath === itemUrl) {
+                    // Trường hợp khớp hoàn toàn (vd: /report -> /report)
+                    item.classList.add('active');
+                } else if (itemUrl !== '/' && currentPath.startsWith(itemUrl)) {
+                    // Trường hợp URL hiện tại bắt đầu bằng URL của item (vd: /report/session/123 -> /report)
                     item.classList.add('active');
                 }
             });
+
+            // Xử lý logic cho "update profile modal"
+            const updateProfileModal = new bootstrap.Modal(document.getElementById('updateProfileModal'), {});
+            const body = document.body;
+            const isProfileIncomplete = body.getAttribute('data-profile-incomplete') === 'True';
+            
+            if (isProfileIncomplete) {
+                updateProfileModal.show();
+            }
         });
     </script>
     {% block scripts %}{% endblock %}

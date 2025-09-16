@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const createSessionModalEl = document.getElementById('createSessionModal');
     const soldierChecklist = document.getElementById('soldier-checklist');
 
+    // === KHAI BÁO BIẾN CHO BỘ LỌC VÀ SẮP XẾP MỚI ===
+    const filterStatusSelect = document.getElementById('filter-status');
+    const filterExerciseSelect = document.getElementById('filter-exercise');
+    const sortBySelect = document.getElementById('sort-by-select');
+    // ===============================================
+
     // --- CÁC HÀM TẢI DỮ LIỆU ---
 
     async function loadExercises() {
@@ -16,39 +22,59 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const exercises = await response.json();
             
+            // Cập nhật cả dropdown trong modal và dropdown lọc
             exerciseTypeSelect.innerHTML = '<option value="" disabled selected>Chọn một bài tập</option>';
+            filterExerciseSelect.innerHTML = '<option value="">Tất cả</option>';
+            
             if (exercises.length > 0) {
                 exercises.forEach(exercise => {
-                    const option = document.createElement('option');
-                    option.value = exercise.id;
-                    option.textContent = exercise.exercise_name;
-                    exerciseTypeSelect.appendChild(option);
+                    const optionModal = document.createElement('option');
+                    optionModal.value = exercise.id;
+                    optionModal.textContent = exercise.exercise_name;
+                    exerciseTypeSelect.appendChild(optionModal);
+
+                    const optionFilter = document.createElement('option');
+                    optionFilter.value = exercise.id;
+                    optionFilter.textContent = exercise.exercise_name;
+                    filterExerciseSelect.appendChild(optionFilter);
                 });
             } else {
                 exerciseTypeSelect.innerHTML = '<option disabled>Không có bài tập nào</option>';
+                filterExerciseSelect.innerHTML = '<option disabled>Không có</option>';
             }
         } catch (error) {
             console.error('Lỗi khi tải danh sách bài tập:', error);
             exerciseTypeSelect.innerHTML = '<option disabled>Không thể tải bài tập</option>';
+            filterExerciseSelect.innerHTML = '<option disabled>Lỗi tải</option>';
         }
     }
 
-    // <<< THÊM MỚI: Hàm tải danh sách chiến sĩ vào modal >>>
+    // <<< SỬA ĐỔI HOÀN TOÀN HÀM loadSoldiersIntoModal >>>
     async function loadSoldiersIntoModal() {
         if (!soldierChecklist) return;
+
+        // Lấy checkbox "Chọn tất cả"
+        const selectAllCheckbox = document.getElementById('select-all-soldiers');
+        
         soldierChecklist.innerHTML = '<p class="text-muted text-center">Đang tải danh sách...</p>';
+        // Ẩn checkbox "Chọn tất cả" trong lúc tải
+        if(selectAllCheckbox) selectAllCheckbox.style.display = 'none';
+
         try {
-            const response = await fetch('/api/soldiers/all'); // API này đã có sẵn
+            const response = await fetch('/api/soldiers/all');
             if (!response.ok) throw new Error('Network response was not ok');
             const soldiers = await response.json();
             
-            soldierChecklist.innerHTML = ''; // Xóa thông báo "Đang tải"
+            soldierChecklist.innerHTML = '';
             if (soldiers.length > 0) {
+                // Hiển thị checkbox "Chọn tất cả" khi có dữ liệu
+                if(selectAllCheckbox) selectAllCheckbox.style.display = 'block';
+
                 soldiers.forEach(soldier => {
                     const div = document.createElement('div');
                     div.classList.add('form-check');
                     div.innerHTML = `
-                        <input class="form-check-input" type="checkbox" value="${soldier.id}" id="soldier-${soldier.id}">
+                        <input class="form-check-input soldier-checkbox" type="checkbox" value="${soldier.id}" id="soldier-${soldier.id}">
                         <label class="form-check-label" for="soldier-${soldier.id}">
                             ${soldier.rank} ${soldier.name}
                         </label>
@@ -62,11 +88,50 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Lỗi khi tải danh sách chiến sĩ:', error);
             soldierChecklist.innerHTML = '<p class="text-danger text-center">Không thể tải danh sách chiến sĩ.</p>';
         }
+
+        // Gán sự kiện cho checkbox "Chọn tất cả"
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                const checkboxes = soldierChecklist.querySelectorAll('.soldier-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+            });
+
+            // Gán sự kiện để kiểm tra nếu tất cả được chọn thì tick vào checkbox "Chọn tất cả"
+            soldierChecklist.addEventListener('change', function(event) {
+                if (event.target.classList.contains('soldier-checkbox')) {
+                    const allCheckboxes = soldierChecklist.querySelectorAll('.soldier-checkbox');
+                    const allChecked = Array.from(allCheckboxes).every(checkbox => checkbox.checked);
+                    selectAllCheckbox.checked = allChecked;
+                }
+            });
+        }
     }
 
     async function loadSessions() {
+        // Lấy giá trị từ các bộ lọc và sắp xếp
+        const statusFilter = filterStatusSelect.value;
+        const exerciseFilter = filterExerciseSelect.value;
+        const sortByValue = sortBySelect.value; // Ví dụ: "date_created_desc"
+
+        // === PHẦN SỬA LỖI LOGIC ===
+        // Tìm vị trí của dấu gạch dưới cuối cùng để tách chuỗi cho chính xác
+        const lastUnderscoreIndex = sortByValue.lastIndexOf('_');
+        const sortBy = sortByValue.substring(0, lastUnderscoreIndex); // Kết quả: "date_created"
+        const sortOrder = sortByValue.substring(lastUnderscoreIndex + 1); // Kết quả: "desc"
+        // === KẾT THÚC PHẦN SỬA LỖI ===
+
+        // Tạo URL với các query parameters
+        const url = new URL('/api/training_sessions', window.location.origin);
+        if (statusFilter) url.searchParams.append('status_filter', statusFilter);
+        if (exerciseFilter) url.searchParams.append('exercise_filter', exerciseFilter);
+        url.searchParams.append('sort_by', sortBy);
+        url.searchParams.append('sort_order', sortOrder);
+
         try {
-            const response = await fetch('/api/training_sessions');
+            const response = await fetch(url.toString()); // Sử dụng URL mới
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
             const sessions = await response.json();
@@ -97,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
                             break;
                     }
-                       // Logic để định dạng ngày tháng
+                    // Logic để định dạng ngày tháng
                     const date_created = new Date(session.date_created);
                     const formattedDate = `${date_created.getDate().toString().padStart(2, '0')}/${(date_created.getMonth() + 1).toString().padStart(2, '0')}/${date_created.getFullYear()}`;
                     // ===================================
@@ -170,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
-
     saveSessionNameBtn.addEventListener('click', async function() {
         const sessionId = document.getElementById('edit-session-id').value;
         const newSessionName = document.getElementById('edit-session-name').value;
@@ -283,6 +347,12 @@ document.addEventListener('DOMContentLoaded', function() {
             createSessionForm.reset();
         });
     }
+
+    // === GÁN SỰ KIỆN CHO CÁC DROPDOWN LỌC VÀ SẮP XẾP ===
+    filterStatusSelect.addEventListener('change', loadSessions);
+    filterExerciseSelect.addEventListener('change', loadSessions);
+    sortBySelect.addEventListener('change', loadSessions);
+    // ==================================================
 
     // --- KHỞI CHẠY LẦN ĐẦU ---
     loadExercises();

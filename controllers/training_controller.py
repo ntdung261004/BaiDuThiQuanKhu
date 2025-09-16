@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify, session
 from models import db, Exercise, TrainingSession, Soldier, Shot, SessionStatus
 from controllers.pi_controller import ACTIVE_SHOOTER_STATE, latest_processed_data, STATE_LOCK
+import services.training_session_service as training_session_service
 
 training_bp = Blueprint('training_bp', __name__)
 
@@ -55,11 +56,23 @@ def create_training_session():
 def get_training_sessions():
     """
     API endpoint để lấy danh sách tất cả các phiên tập cùng thông tin chi tiết.
+    Đã thêm các tham số lọc và sắp xếp.
     """
     try:
-        # Sắp xếp các phiên tập theo ngày tạo mới nhất lên đầu
-        sessions = TrainingSession.query.order_by(TrainingSession.date_created.desc()).all()
+        # Lấy các tham số từ query string
+        status_filter = request.args.get('status_filter')
+        exercise_filter = request.args.get('exercise_filter')
+        sort_by = request.args.get('sort_by', 'date_created')
+        sort_order = request.args.get('sort_order', 'desc')
         
+        # Gọi service để lấy danh sách phiên tập
+        sessions = training_session_service.list_sessions(
+            status_filter=status_filter,
+            exercise_filter=exercise_filter,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+
         result = []
         for session in sessions:
             # Đếm số lượng chiến sĩ đã thực hiện ít nhất một phát bắn trong phiên

@@ -6,8 +6,7 @@ import threading
 import time
 import base64
 import os
-import cloudinary
-import cloudinary.uploader
+import io # Thêm thư viện này để làm việc với stream dữ liệu
 
 from datetime import datetime
 from threading import Lock
@@ -57,6 +56,11 @@ class LivestreamManager:
 
 livestream_manager = LivestreamManager()
 
+# --- Thêm định nghĩa thư mục lưu ảnh tĩnh ---
+UPLOAD_FOLDER = 'static/uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 # --- Các API giao tiếp với Pi và Frontend ---
 
 @pi_bp.route('/video_upload', methods=['POST'])
@@ -77,6 +81,9 @@ def processed_data_upload():
     # Gán các giá trị mặc định vào dữ liệu nhận được
     data['shot_id'] = time.time()
     data['saved_to_db'] = False
+    
+    # Thêm trường image_path để lát nữa có thể truy cập từ frontend
+    data['image_path'] = None 
 
     active_session_id = None
     active_soldier_id = None
@@ -95,28 +102,34 @@ def processed_data_upload():
             if current_session and current_session.status != SessionStatus.COMPLETED:
                 # Nếu mọi thứ hợp lệ, tiến hành tạo và lưu đối tượng Shot
                 image_data = data.get('image_data')
-                image_url = None # Sẽ lưu URL từ Cloudinary
-
-                # <<< LOGIC UPLOAD ẢNH MỚI >>>
+                
+                image_path = None # Sẽ lưu đường dẫn cục bộ
+                
+                # <<< LOGIC LƯU ẢNH CỤC BỘ MỚI >>>
                 if image_data:
                     try:
-                        # Tải ảnh lên Cloudinary
-                        upload_result = cloudinary.uploader.upload(
-                            base64.b64decode(image_data),
-                            folder="shot_results" # Tạo một thư mục trên Cloudinary
-                        )
-                        image_url = upload_result.get('secure_url')
-                        print(f"✅ Đã tải ảnh lên Cloudinary: {image_url}")
-                    except Exception as e:
-                        print(f"❌ Lỗi khi tải ảnh lên Cloudinary: {e}")
-                    
+                        decoded_image = base64.b64decode(image_data)
+                        
+                        # Tạo tên file duy nhất: session_id_soldier_id_timestamp.jpg
+                        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+                        filename = f'shot_{active_session_id}_{active_soldier_id}_{timestamp}.jpg'
+                        image_path = os.path.join(UPLOAD_FOLDER, filename)
 
+                        with open(image_path, 'wb') as f:
+                            f.write(decoded_image)
+                        
+                        print(f"✅ Đã lưu ảnh vào thư mục cục bộ: {image_path}")
+
+                    except Exception as e:
+                        print(f"❌ Lỗi khi lưu ảnh cục bộ: {e}")
+                        
+                # Tạo đối tượng Shot và lưu vào CSDL
                 new_shot = Shot(
                     session_id=active_session_id,
                     soldier_id=active_soldier_id,
                     score=data.get('score', 0),
                     target_name=data.get('target', 'Không xác định'),
-                    result_image_path=image_url
+                    result_image_path=image_path # Lưu đường dẫn cục bộ
                 )
                 
                 db.session.add(new_shot)
@@ -124,6 +137,7 @@ def processed_data_upload():
                 
                 print(f"💾 Đã lưu lần bắn vào database cho session {active_session_id}")
                 data['saved_to_db'] = True # Cập nhật cờ báo hiệu đã lưu thành công
+                data['image_path'] = image_path # Truyền đường dẫn ảnh mới vào dữ liệu
             else:
                 status_str = "không tồn tại" if not current_session else "đã kết thúc"
                 print(f"⚠️ Từ chối lưu vì phiên #{active_session_id} {status_str}.")
@@ -142,7 +156,9 @@ def processed_data_upload():
 # <<< THÊM LẠI: Route để trình duyệt lấy dữ liệu mới nhất >>>
 @pi_bp.route('/data_feed')
 def data_feed():
-    return jsonify(latest_processed_data)
+    # Thêm khóa để truy cập an toàn
+    with STATE_LOCK:
+        return jsonify(latest_processed_data)
 
 
 @pi_bp.route('/connection-status')

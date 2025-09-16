@@ -13,10 +13,17 @@ def list_sessions(status_filter=None, exercise_filter=None, sort_by='date_create
         query = query.filter(TrainingSession.exercise_id == exercise_filter)
 
     # Logic sắp xếp
-    sort_column = getattr(TrainingSession, sort_by, TrainingSession.date_created)
+    order_column = None
+    if sort_by == 'session_name':
+        order_column = TrainingSession.session_name
+    else: # Mặc định hoặc khi sort_by == 'date_created'
+        order_column = TrainingSession.date_created
+
+    # Áp dụng thứ tự sắp xếp (asc/desc)
     if sort_order == 'asc':
-        query = query.order_by(sort_column.asc())
+        query = query.order_by(order_column.asc())
     else:
-        query = query.order_by(sort_column.desc())
+        query = query.order_by(order_column.desc())
+    # --- KẾT THÚC PHẦN SỬA ĐỔI ---
 
     return query.all()
