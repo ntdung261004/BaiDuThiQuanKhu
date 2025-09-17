@@ -164,7 +164,21 @@
   function renderTable(soldiers, pagination) {
     const startIndex = (pagination.page - 1) * pagination.per_page;
     if (soldiers.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">Không tìm thấy kết quả phù hợp.</td></tr>';
+        // Thay thế dòng thông báo đơn giản bằng một giao diện hoàn chỉnh hơn
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="text-center p-5" style="min-height: 40vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
+                        <h4>Không tìm thấy chiến sĩ nào phù hợp</h4>
+                        <p class="text-muted">Hãy thử thay đổi bộ lọc hoặc thêm một chiến sĩ mới.</p>
+                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addSoldierModal">
+                            <i class="fas fa-user-plus me-2"></i> Thêm Chiến sĩ Mới
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
     } else {
       tbody.innerHTML = soldiers.map((s, i) => rowTemplate(startIndex + i + 1, s)).join('');
     }

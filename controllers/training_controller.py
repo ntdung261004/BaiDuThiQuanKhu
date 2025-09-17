@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify, session
 from models import db, Exercise, TrainingSession, Soldier, Shot, SessionStatus
 from controllers.pi_controller import ACTIVE_SHOOTER_STATE, latest_processed_data, STATE_LOCK
 import services.training_session_service as training_session_service
+from flask import current_app
 
 training_bp = Blueprint('training_bp', __name__)
 
@@ -72,7 +73,8 @@ def get_training_sessions():
             sort_by=sort_by,
             sort_order=sort_order
         )
-
+        # Lấy tổng số tất cả các phiên trong CSDL (không bị ảnh hưởng bởi bộ lọc)
+        total_count = TrainingSession.query.count()
         result = []
         for session in sessions:
             # Đếm số lượng chiến sĩ đã thực hiện ít nhất một phát bắn trong phiên
@@ -93,11 +95,14 @@ def get_training_sessions():
                 'date_created': session.date_created.isoformat() # Chuyển đổi ngày giờ sang chuỗi ISO
             })
             
-        return jsonify(result)
+        return jsonify({
+            'sessions': result,
+            'total_count': total_count
+        })
         
     except Exception as e:
         db.session.rollback()
-        print(f"❌ Lỗi khi lấy danh sách phiên tập: {e}")
+        current_app.logger.error(f"❌ Lỗi khi lấy danh sách phiên tập: {e}", exc_info=True)
         return jsonify({"error": "Lỗi server khi truy vấn dữ liệu"}), 500
 
 @training_bp.route('/api/training_sessions/<int:session_id>', methods=['DELETE'])
@@ -315,7 +320,7 @@ def finish_training_session(session_id):
 
     except Exception as e:
         db.session.rollback()
-        print(f"❌ Lỗi khi kết thúc phiên: {e}")
+        current_app.logger.error(f"❌ Lỗi khi kết thúc phiên #{session_id}: {e}", exc_info=True)
         return jsonify({'message': 'Lỗi server: ' + str(e)}), 500
 
 @training_bp.route('/api/deactivate_shooter', methods=['POST'])

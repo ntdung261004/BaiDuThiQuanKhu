@@ -27,6 +27,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255)) 
+    recovery_code_hash = db.Column(db.String(255), nullable=True)
 
     # === BẮT ĐẦU PHẦN THÊM MỚI ===
     full_name = db.Column(db.String(100), nullable=True) # Tên đầy đủ của người chỉ huy
@@ -100,12 +101,11 @@ def init_db(app):
         db.create_all()
         
         # Khởi tạo người dùng admin nếu chưa có
-        if not User.query.filter_by(username='admin').first():
-            # Thêm is_profile_complete=False khi tạo admin
-            admin_user = User(username='admin', is_profile_complete=False) 
-            admin_user.set_password('123')
-            db.session.add(admin_user)
-            db.session.commit()
+        #if not User.query.filter_by(username='admin').first():
+        #    admin_user = User(username='admin', is_profile_complete=False) 
+        #    admin_user.set_password('123')
+        #    db.session.add(admin_user)
+        #   db.session.commit()
             
         # Khởi tạo các bài tập mẫu nếu chưa có
         if not Exercise.query.all():

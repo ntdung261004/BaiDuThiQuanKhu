@@ -7,10 +7,15 @@ from waitress import serve
 import socket # <<< THÊM MỚI
 import cloudinary
 import os
+import logging
+from logging.handlers import RotatingFileHandler
+import secrets
+import string
 from werkzeug.utils import secure_filename
 import uuid
+from werkzeug.security import generate_password_hash,  check_password_hash
+from flask import flash, session
 
-from flask import flash
 from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db, SessionStatus
 from controllers.soldier_controller import soldier_bp
 from controllers.pi_controller import pi_bp
@@ -18,6 +23,27 @@ from controllers.training_controller import training_bp
 from controllers.report_controller import report_bp #
 
 app = Flask(__name__)
+# === BẮT ĐẦU PHẦN THÊM MỚI: CẤU HÌNH LOGGING ===
+# Đảm bảo thư mục 'instance' tồn tại
+if not os.path.exists('instance'):
+    os.makedirs('instance')
+
+# Thiết lập handler để ghi log vào file, có xoay vòng
+# (Tối đa 10MB mỗi file, giữ lại 5 file cũ)
+file_handler = RotatingFileHandler('instance/app.log', maxBytes=10240, backupCount=5)
+
+# Định dạng cho mỗi dòng log (Thời gian - Cấp độ - Nội dung - Vị trí lỗi)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+
+# Đặt cấp độ ghi log (INFO và cao hơn sẽ được ghi lại)
+file_handler.setLevel(logging.INFO)
+app.logger.addHandler(file_handler)
+
+app.logger.setLevel(logging.INFO)
+app.logger.info('--- Ứng dụng DA01 Khởi động ---')
+# === KẾT THÚC PHẦN THÊM MỚI ===
 
 # --- Hàng đợi lệnh ---
 COMMAND_QUEUE = queue.Queue(maxsize=10)
@@ -125,19 +151,192 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Xử lý trang đăng nhập.
+    (Sử dụng flash để gửi thông báo lỗi)
+    """
+    # --- Logic "Người Gác Cổng" ---
+    if not User.query.first():
+        flash('Chào mừng! Vui lòng tạo tài khoản quản trị viên đầu tiên.', 'info')
+        return redirect(url_for('setup'))
+    # -----------------------------
+
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    error = None
+
     if request.method == 'POST':
         username = request.form['username'].strip()
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
+
         if user and user.check_password(password):
             login_user(user)
+            session['username'] = user.username
             return redirect(url_for('index'))
         else:
-            error = 'Sai tên đăng nhập hoặc mật khẩu.'
-    return render_template('login.html', error=error)
+            # === SỬA ĐỔI CHÍNH ===
+            # Dùng flash để gửi thông báo lỗi thay vì biến error
+            flash('Sai tên đăng nhập hoặc mật khẩu.', 'danger')
+            # =====================
+
+    return render_template('login.html')
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    """
+    Xử lý việc đặt lại mật khẩu mới sau khi đã xác thực thành công.
+    """
+    # KIỂM LỖI: Đảm bảo người dùng đã đi qua bước xác thực
+    if 'user_id_for_reset' not in session:
+        flash('Vui lòng xác thực bằng mã khôi phục trước.', 'warning')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        # Kiểm tra dữ liệu đầu vào
+        if not password or not confirm_password:
+            flash('Vui lòng nhập đầy đủ mật khẩu mới.', 'danger')
+            return render_template('reset_password.html')
+
+        if password != confirm_password:
+            flash('Mật khẩu xác nhận không khớp.', 'danger')
+            return render_template('reset_password.html')
+
+        if len(password) < 6:
+            flash('Mật khẩu phải có ít nhất 6 ký tự.', 'danger')
+            return render_template('reset_password.html')
+
+        try:
+            # Tìm người dùng và cập nhật mật khẩu mới
+            user_id = session['user_id_for_reset']
+            user = db.session.get(User, user_id)
+            if user:
+                user.set_password(password)
+                db.session.commit()
+
+                # Xóa session tạm sau khi đã reset thành công
+                session.pop('user_id_for_reset', None)
+
+                flash('Mật khẩu của bạn đã được cập nhật thành công! Vui lòng đăng nhập lại.', 'success')
+                return redirect(url_for('login'))
+            else:
+                flash('Không tìm thấy người dùng để cập nhật.', 'danger')
+                return redirect(url_for('forgot_password'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Đã xảy ra lỗi: {e}', 'danger')
+
+    return render_template('reset_password.html')
+
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    """
+    Hiển thị và xử lý form tạo tài khoản quản trị viên lần đầu tiên.
+    (ĐÃ SỬA LỖI 'role' is an invalid keyword argument)
+    """
+    # KIỂM LỖI: Chỉ cho phép truy cập khi CSDL trống
+    if User.query.first():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        # --- KIỂM LỖI DỮ LIỆU ĐẦU VÀO ---
+        if not all([username, password, confirm_password]):
+            flash('Vui lòng điền đầy đủ các trường thông tin.', 'danger')
+            return render_template('setup.html')
+
+        if password != confirm_password:
+            flash('Mật khẩu xác nhận không khớp.', 'danger')
+            return render_template('setup.html')
+        
+        if len(password) < 6:
+            flash('Mật khẩu phải có ít nhất 6 ký tự.', 'danger')
+            return render_template('setup.html')
+        # ---------------------------------
+
+        try:
+            # === PHẦN SỬA LỖI CHÍNH XÁC ===
+            # 1. Tạo người dùng mới chỉ với username.
+            # Model User của bạn không có trường 'role'.
+            new_user = User(username=username)
+            
+            # 2. Dùng phương thức set_password của model để mã hóa và gán mật khẩu.
+            new_user.set_password(password)
+            # ==============================
+            
+            db.session.add(new_user)
+            db.session.commit()
+
+            login_user(new_user)
+            session['username'] = new_user.username
+
+            flash('Tài khoản đã tạo! Giờ hãy lưu mã khôi phục của bạn.', 'success')
+
+            # THAY ĐỔI DÒNG NÀY:
+            return redirect(url_for('setup_recovery'))
+
+        except Exception as e:
+            db.session.rollback()
+            # Hiển thị lỗi một cách thân thiện hơn
+            flash(f'Đã xảy ra lỗi khi tạo tài khoản: {e}', 'danger')
+            return render_template('setup.html')
+
+    return render_template('setup.html')
+
+@app.route('/setup/recovery')
+@login_required
+def setup_recovery():
+    """
+    Tạo và hiển thị mã khôi phục cho người dùng sau khi đăng ký.
+    """
+    # KIỂM LỖI: Đảm bảo người dùng chưa có mã khôi phục
+    if current_user.recovery_code_hash:
+        # Nếu đã có mã, chuyển thẳng về trang chính
+        return redirect(url_for('index'))
+
+    # Tạo mã khôi phục ngẫu nhiên (ví dụ: ABCD-EFGH-IJKL)
+    alphabet = string.ascii_uppercase + string.digits
+    parts = [''.join(secrets.choice(alphabet) for _ in range(4)) for _ in range(3)]
+    recovery_code = '-'.join(parts)
+
+    # Hash mã khôi phục trước khi lưu vào CSDL
+    current_user.recovery_code_hash = generate_password_hash(recovery_code)
+    db.session.commit()
+
+    # Truyền mã khôi phục (dạng chữ) ra template để hiển thị cho người dùng
+    return render_template('setup_recovery.html', recovery_code=recovery_code)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    """
+    Xử lý việc xác thực người dùng bằng username và mã khôi phục.
+    """
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        recovery_code = request.form.get('recovery_code', '').strip()
+
+        if not username or not recovery_code:
+            flash('Vui lòng nhập đầy đủ thông tin.', 'danger')
+            return render_template('forgot_password.html')
+
+        user = User.query.filter_by(username=username).first()
+
+        # Kiểm tra xem người dùng có tồn tại không và mã khôi phục có khớp không
+        if user and user.recovery_code_hash and check_password_hash(user.recovery_code_hash, recovery_code):
+            # Nếu thành công, lưu tạm ID người dùng vào session để cho phép reset
+            session['user_id_for_reset'] = user.id
+            flash('Xác thực thành công! Vui lòng đặt lại mật khẩu mới.', 'success')
+            return redirect(url_for('reset_password'))
+        else:
+            flash('Tên người dùng hoặc Mã khôi phục không chính xác.', 'danger')
+
+    return render_template('forgot_password.html')
 
 @app.route('/logout')
 @login_required
@@ -292,10 +491,9 @@ def update_profile():
 if __name__ == '__main__':
     # <<< SỬA ĐỔI: Thêm các dòng print mới >>>
     ip_address = get_ip_address()
-    print("===================================================")
-    print(f"✅ Server Flask đã sẵn sàng!")
-    print(f"   - Địa chỉ IP của máy chủ: {ip_address}")
-    print(f"   - Vui lòng cấu hình Pi để kết nối tới: http://{ip_address}:5000")
-    print("🚀 Server đang khởi chạy bằng Waitress...")
-    print("===================================================")
+    app.logger.info("===================================================")
+    app.logger.info(f"✅ Server Flask đã sẵn sàng!")
+    app.logger.info(f"   - Địa chỉ IP của máy chủ: {ip_address}")
+    app.logger.info(f"   - Vui lòng truy cập http://{ip_address}:8080 trên các thiết bị trong cùng mạng.")
+    app.logger.info("===================================================")
     serve(app, host='0.0.0.0', port=5000, threads=8)

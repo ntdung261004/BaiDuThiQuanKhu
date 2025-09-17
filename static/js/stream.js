@@ -60,16 +60,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function sendZoomCommand() {
+    // === SỬA ĐỔI: Thay thế alert bằng toast trong hàm sendZoomCommand ===
+    async function sendZoomCommand() {
         const zoomValue = zoomSlider.value;
-        fetch('/set_zoom', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ zoom: parseFloat(zoomValue) }),
-        })
-        .then(response => response.json())
-        .then(data => alert(`Đã gửi lệnh zoom: ${zoomValue}x`))
-        .catch(error => alert('Gửi lệnh zoom thất bại!'));
+        try {
+            const response = await fetch('/set_zoom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ zoom: parseFloat(zoomValue) }),
+            });
+            if (!response.ok) throw new Error('Phản hồi từ server không hợp lệ.');
+            
+            await response.json();
+            showToast(`Đã tinh chỉnh zoom: ${zoomValue}x`);
+
+        } catch (error) {
+            console.error('Lỗi khi gửi lệnh zoom:', error);
+            showToast('Gửi lệnh zoom thất bại!', 'danger');
+        }
     }
 
     function getRenderedVideoSize() {
@@ -152,7 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function handleVideoClick(event) {
+    // === SỬA ĐỔI: Thay thế alert bằng toast trong hàm handleVideoClick ===
+    async function handleVideoClick(event) {
         if (!isCalibrating) return;
         const { renderedWidth, renderedHeight, offsetX, offsetY } = getRenderedVideoSize();
         const rect = videoFeed.getBoundingClientRect();
@@ -169,20 +178,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const calibratedX = Math.round(relativeMouseX * scaleX);
             const calibratedY = Math.round(relativeMouseY * scaleY);
             
-            fetch('/set_center', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ center: { x: calibratedX, y: calibratedY } }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(`Đã gửi tâm ngắm mới: (X: ${calibratedX}, Y: ${calibratedY})`);
+            try {
+                const response = await fetch('/set_center', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ center: { x: calibratedX, y: calibratedY } }),
+                });
+                if (!response.ok) throw new Error('Phản hồi từ server không hợp lệ.');
+
+                await response.json();
+                showToast('Đã hiệu chỉnh tâm ngắm mới');
                 toggleCalibrationMode();
-            })
-            .catch(error => {
+
+            } catch (error) {
                 console.error('Lỗi khi gửi tọa độ:', error);
-                alert('Gửi tọa độ thất bại!');
-            });
+                showToast('Gửi tọa độ thất bại!', 'danger');
+            }
         }
     }
 

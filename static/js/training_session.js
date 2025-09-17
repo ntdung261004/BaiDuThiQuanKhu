@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const filterExerciseSelect = document.getElementById('filter-exercise');
     const sortBySelect = document.getElementById('sort-by-select');
     // ===============================================
-
+    const loadingSpinner = document.getElementById('loading-spinner');
     // --- CÁC HÀM TẢI DỮ LIỆU ---
 
     async function loadExercises() {
@@ -111,33 +111,57 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function loadSessions() {
-        // Lấy giá trị từ các bộ lọc và sắp xếp
-        const statusFilter = filterStatusSelect.value;
-        const exerciseFilter = filterExerciseSelect.value;
-        const sortByValue = sortBySelect.value; // Ví dụ: "date_created_desc"
-
-        // === PHẦN SỬA LỖI LOGIC ===
-        // Tìm vị trí của dấu gạch dưới cuối cùng để tách chuỗi cho chính xác
-        const lastUnderscoreIndex = sortByValue.lastIndexOf('_');
-        const sortBy = sortByValue.substring(0, lastUnderscoreIndex); // Kết quả: "date_created"
-        const sortOrder = sortByValue.substring(lastUnderscoreIndex + 1); // Kết quả: "desc"
-        // === KẾT THÚC PHẦN SỬA LỖI ===
-
-        // Tạo URL với các query parameters
-        const url = new URL('/api/training_sessions', window.location.origin);
-        if (statusFilter) url.searchParams.append('status_filter', statusFilter);
-        if (exerciseFilter) url.searchParams.append('exercise_filter', exerciseFilter);
-        url.searchParams.append('sort_by', sortBy);
-        url.searchParams.append('sort_order', sortOrder);
+        // === BẮT ĐẦU PHẦN SỬA ĐỔI ===
+        // 1. Dọn dẹp danh sách cũ và BẬT spinner lên
+        sessionsList.innerHTML = '';
+        loadingSpinner.style.display = 'block';
+        // ============================
 
         try {
-            const response = await fetch(url.toString()); // Sử dụng URL mới
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const sessions = await response.json();
-            sessionsList.innerHTML = '';
+            const sortByValue = sortBySelect.value;
+            const lastUnderscoreIndex = sortByValue.lastIndexOf('_');
+            const sortBy = sortByValue.substring(0, lastUnderscoreIndex);
+            const sortOrder = sortByValue.substring(lastUnderscoreIndex + 1);
 
-            if (sessions.length > 0) {
+            const params = new URLSearchParams({
+                status_filter: filterStatusSelect.value,
+                exercise_filter: filterExerciseSelect.value,
+                sort_by: sortBy,
+                sort_order: sortOrder
+            });
+
+            const response = await fetch(`/api/training_sessions?${params.toString()}`);
+            if (!response.ok) {
+                throw new Error(`Lỗi HTTP: ${response.status}`);
+            }
+            // === PHẦN THAY ĐỔI CHÍNH ===
+            const data = await response.json(); // data bây giờ là một object { sessions: [], total_count: X }
+            const sessions = data.sessions;
+            const totalCount = data.total_count;
+
+            // Cập nhật con số tổng trên tiêu đề
+            const totalCountBadge = document.getElementById('session-total-count');
+            if (totalCountBadge) {
+                totalCountBadge.textContent = totalCount;
+            }
+
+            // === BẮT ĐẦU PHẦN SỬA ĐỔI ===
+            // 2. TẮT spinner đi trước khi hiển thị kết quả
+            loadingSpinner.style.display = 'none';
+            // ============================
+
+            if (sessions.length === 0) {
+                sessionsList.innerHTML = `
+                    <div class="col-12 text-center mt-5" style="min-height: 50vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                        <h4>Không có phiên tập nào phù hợp</h4>
+                        <p class="text-muted">Hãy thử thay đổi bộ lọc hoặc tạo một phiên tập mới.</p>
+                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createSessionModal">
+                            <i class="fas fa-plus me-2"></i> Tạo Phiên Mới
+                        </button>
+                    </div>
+                `;
+            } else {
                 sessions.forEach(session => {
                     let topBorderColor, statusText, actionMenuItemHtml, statusBgColor;
 
@@ -213,24 +237,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                     sessionsList.insertAdjacentHTML('beforeend', cardHtml);
                 });
-            } else {
-                sessionsList.innerHTML = `
-                    <div class="col-12 text-center mt-5">
-                        <i class="fas fa-info-circle fa-4x text-muted mb-3"></i>
-                        <h4>Chưa có phiên tập nào được tạo.</h4>
-                        <p class="text-muted">Bấm vào "Tạo Phiên Mới" để bắt đầu.</p>
-                    </div>
-                `;
             }
         } catch (error) {
-            console.error('Lỗi khi tải danh sách phiên tập:', error);
-            sessionsList.innerHTML = `
-                <div class="col-12 text-center mt-5">
-                    <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
-                    <h4>Không thể tải dữ liệu.</h4>
-                    <p class="text-muted">Vui lòng kiểm tra kết nối với server.</p>
-                </div>
-            `;
+            console.error('Lỗi khi tải phiên tập:', error);
+
+            // === BẮT ĐẦU PHẦN SỬA ĐỔI ===
+            // 3. TẮT spinner đi nếu có lỗi xảy ra
+            loadingSpinner.style.display = 'none';
+            // ============================
+            sessionsList.innerHTML = '<p class="col-12 text-center text-danger mt-5">Không thể tải dữ liệu. Vui lòng thử lại.</p>';
         }
     }
 
@@ -306,11 +321,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                       .map(checkbox => checkbox.value);
 
         if (!exerciseId) {
-            alert('Vui lòng chọn một loại bài tập.');
+            showToast('Vui lòng chọn một loại bài tập.', 'danger');
             return;
         }
         if (selectedSoldiers.length === 0) {
-            alert('Vui lòng chọn ít nhất một chiến sĩ.');
+            showToast('Vui lòng chọn ít nhất một chiến sĩ.', 'danger');
             return;
         }
 
@@ -329,6 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('createSessionModal'));
                 modal.hide();
                 loadSessions();
+                showToast('Tạo phiên tập thành công!', 'success');
             } else {
                 alert('Có lỗi xảy ra khi tạo phiên tập.');
             }

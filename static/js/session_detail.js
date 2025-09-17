@@ -28,43 +28,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     let connectionInterval;
     let dataFeedInterval;
     let soldiers = []; // Khai báo ở đây để có thể truy cập toàn cục trong file
+    let isUserDraggingZoom = false;
 
-    // =======================================================================
-    // === BẮT ĐẦU PHẦN NÂNG CẤP: MODAL VÀ TOAST CHO VIỆC KẾT THÚC PHIÊN ===
-    // =======================================================================
-
-    // --- 1. HÀM TẠO VÀ HIỂN THỊ TOAST ---
-    function showToast(message, type = 'success') {
-        const toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) {
-            console.error('Toast container not found!');
-            return;
-        }
-
-        const toastId = 'toast-' + Date.now();
-        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
-        const iconHtml = type === 'success' ?
-            '<i class="fas fa-check-circle me-2"></i>' :
-            '<i class="fas fa-exclamation-triangle me-2"></i>';
-
-        const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${iconHtml}
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
-        toast.show();
-        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
-    }
 
     // --- 2. LOGIC XỬ LÝ SỰ KIỆN KẾT THÚC PHIÊN ---
     const finishSessionBtn = document.getElementById('end-session-btn');
@@ -184,7 +149,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function checkConnectionStatus() {
         try {
             const response = await fetch('/connection-status');
-            updateConnectionStatus(response.ok && (await response.json()).status === 'connected');
+            const data = await response.json(); // Luôn lấy dữ liệu JSON
+
+            // Cập nhật trạng thái kết nối chung
+            updateConnectionStatus(response.ok && data.status === 'connected');
+
+            // --- PHẦN NÂNG CẤP ĐỒNG BỘ ZOOM ---
+            // Chỉ cập nhật nếu kết nối và người dùng không đang kéo thanh trượt
+            if (response.ok && data.status === 'connected' && !isUserDraggingZoom) {
+                const currentZoom = data.zoom || 1.0;
+                const zoomSlider = document.getElementById('zoom-slider');
+                const zoomValueDisplay = document.getElementById('zoom-value-display');
+
+                if (zoomSlider && zoomValueDisplay) {
+                    zoomSlider.value = currentZoom;
+                    zoomValueDisplay.textContent = `${parseFloat(currentZoom).toFixed(1)}x`;
+                }
+            }
+            // --- KẾT THÚC PHẦN NÂNG CẤP ---
+
         } catch (error) {
             updateConnectionStatus(false);
         }
@@ -421,6 +404,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
+                if (response.ok) {
+                    // Nếu có tin nhắn thành công, hiển thị toast
+                    if (successMessage) {
+                        showToast(successMessage);
+                    }
+                } else {
+                    // Nếu có lỗi, hiển thị toast báo lỗi
+                    const result = await response.json();
+                    showToast(result.message || 'Lệnh không thành công', 'danger');
+                }
             } catch (error) {
                 console.error(`Lỗi khi gửi lệnh đến ${endpoint}:`, error);
             }
@@ -443,6 +436,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const nativeWidth = 480; const nativeHeight = 640;
                 const scaledX = Math.round((x / videoFeed.clientWidth) * nativeWidth);
                 const scaledY = Math.round((y / videoFeed.clientHeight) * nativeHeight);
+                showToast("Đã hiệu chỉnh tâm ngắm mới");
                 sendPiCommand('/set_center', { center: { x: scaledX, y: scaledY } });
                 isCenteringMode = false;
                 recenterBtn.classList.remove('btn-success');
@@ -451,10 +445,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         }
         if (zoomSlider) {
+            // Sự kiện này cập nhật giá trị và gửi lệnh đi liên tục khi kéo
             zoomSlider.addEventListener('input', () => {
                 const zoomValue = parseFloat(zoomSlider.value);
-                sendPiCommand('/set_zoom', { zoom: zoomValue });
+                // Gửi lệnh đi nhưng không hiện toast
+                sendPiCommand('/set_zoom', { zoom: zoomValue }); 
                 zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
+            });
+
+            // Sự kiện này chỉ kích hoạt khi người dùng nhả chuột
+            // Chúng ta sẽ dùng nó để hiện toast
+            zoomSlider.addEventListener('change', () => {
+                const zoomValue = parseFloat(zoomSlider.value);
+                showToast(`Đã tinh chỉnh zoom ${zoomValue.toFixed(1)}x`);
             });
         }
     }

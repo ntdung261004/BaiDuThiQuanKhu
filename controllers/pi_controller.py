@@ -6,6 +6,7 @@ import threading
 import time
 import base64
 import os
+from flask import current_app
 import io # Thêm thư viện này để làm việc với stream dữ liệu
 
 from datetime import datetime
@@ -118,10 +119,10 @@ def processed_data_upload():
                         with open(image_path, 'wb') as f:
                             f.write(decoded_image)
                         
-                        print(f"✅ Đã lưu ảnh vào thư mục cục bộ: {image_path}")
+                        current_app.logger.info(f"✅ Đã lưu ảnh vào thư mục cục bộ: {image_path}")
 
                     except Exception as e:
-                        print(f"❌ Lỗi khi lưu ảnh cục bộ: {e}")
+                        current_app.logger.error(f"❌ Lỗi khi lưu ảnh cục bộ: {e}", exc_info=True)
                         
                 # Tạo đối tượng Shot và lưu vào CSDL
                 new_shot = Shot(
@@ -140,11 +141,11 @@ def processed_data_upload():
                 data['image_path'] = image_path # Truyền đường dẫn ảnh mới vào dữ liệu
             else:
                 status_str = "không tồn tại" if not current_session else "đã kết thúc"
-                print(f"⚠️ Từ chối lưu vì phiên #{active_session_id} {status_str}.")
+                current_app.logger.warning(f"⚠️ Từ chối lưu vì phiên #{active_session_id} {status_str}.")
 
         except Exception as e:
             db.session.rollback()
-            print(f"❌ Lỗi khi lưu lần bắn vào database: {e}")
+            current_app.logger.error(f"❌ Lỗi khi lưu lần bắn vào database: {e}", exc_info=True)
     else:
         print("⚠️ Nhận được dữ liệu bắn nhưng không lưu vì không có xạ thủ được kích hoạt.")
 
@@ -166,7 +167,16 @@ def connection_status():
     global pi_connected, last_heartbeat
     if time.time() - last_heartbeat > 5:
         pi_connected = False
-    return jsonify({'status': 'connected' if pi_connected else 'disconnected'})
+
+    if pi_connected:
+        # Nếu kết nối, trả về trạng thái và thông số zoom hiện tại
+        return jsonify({
+            'status': 'connected',
+            'zoom': CURRENT_PI_CONFIG.get('zoom', 1.0)
+        })
+    else:
+        # Nếu mất kết nối, chỉ trả về trạng thái
+        return jsonify({'status': 'disconnected'})
 
 @pi_bp.route('/video_feed')
 def video_feed():
@@ -192,6 +202,11 @@ def set_zoom():
     data = request.get_json()
     zoom_level = data.get('zoom')
     if zoom_level:
+        # --- DÒNG THÊM MỚI ---
+        # Cập nhật trạng thái zoom hiện tại vào biến toàn cục
+        CURRENT_PI_CONFIG['zoom'] = float(zoom_level)
+        # --------------------
+
         command = {'type': 'zoom', 'value': zoom_level}
         try:
             COMMAND_QUEUE.put_nowait(command)
