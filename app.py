@@ -1,52 +1,90 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
+from flask import Flask, render_template, request, jsonify, redirect, url_for, Response, session, flash, send_from_directory
 from flask_login import login_required, LoginManager, UserMixin, login_user, logout_user, current_user
-import base64, threading, time
+import base64, threading, time, queue, socket, uuid, os, platform, secrets, string
 from datetime import datetime
-import queue
 from waitress import serve
-import socket # <<< THÊM MỚI
-import cloudinary
-import os
+from werkzeug.security import generate_password_hash, check_password_hash
+from pathlib import Path
 import logging
 from logging.handlers import RotatingFileHandler
-import secrets
-import string
-from werkzeug.utils import secure_filename
-import uuid
-from werkzeug.security import generate_password_hash,  check_password_hash
-from flask import flash, session
 
+# Import models và blueprints
 from models import db, User, Soldier, TrainingSession, Exercise, Shot, init_db, SessionStatus
 from controllers.soldier_controller import soldier_bp
 from controllers.pi_controller import pi_bp
 from controllers.training_controller import training_bp
-from controllers.report_controller import report_bp #
+from controllers.report_controller import report_bp
 
 app = Flask(__name__)
-# === BẮT ĐẦU PHẦN THÊM MỚI: CẤU HÌNH LOGGING ===
-# Đảm bảo thư mục 'instance' tồn tại
-if not os.path.exists('instance'):
-    os.makedirs('instance')
 
-# Thiết lập handler để ghi log vào file, có xoay vòng
-# (Tối đa 10MB mỗi file, giữ lại 5 file cũ)
-file_handler = RotatingFileHandler('instance/app.log', maxBytes=10240, backupCount=5)
+# === BẮT ĐẦU PHẦN SỬA LỖI: QUẢN LÝ ĐƯỜNG DẪN DỮ LIỆU TẬP TRUNG ===
+APP_NAME = "HeThongHuanLuyenDA01"
 
-# Định dạng cho mỗi dòng log (Thời gian - Cấp độ - Nội dung - Vị trí lỗi)
+# Xác định đường dẫn thư mục dữ liệu dựa trên hệ điều hành
+if platform.system() == "Windows":
+    data_dir = Path(os.getenv('APPDATA')) / APP_NAME
+else: # macOS và Linux
+    data_dir = Path.home() / f".{APP_NAME}"
+
+# Tạo thư mục nếu nó chưa tồn tại
+data_dir.mkdir(parents=True, exist_ok=True)
+
+# Tạo các thư mục con cần thiết
+AVATAR_UPLOAD_FOLDER = data_dir / 'avatars'
+SHOT_IMAGE_FOLDER = data_dir / 'shot_images'
+AVATAR_UPLOAD_FOLDER.mkdir(exist_ok=True)
+SHOT_IMAGE_FOLDER.mkdir(exist_ok=True)
+# === KẾT THÚC PHẦN SỬA LỖI ===
+
+# --- Cấu hình ứng dụng ---
+app.config['SECRET_KEY'] = 'your_very_secret_key_change_this' # Thay đổi key này trong thực tế
+
+# Sử dụng đường dẫn CSDL đã được xác định ở trên
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{data_dir / "database.db"}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Cấu hình đường dẫn upload
+app.config['AVATAR_UPLOAD_FOLDER'] = str(AVATAR_UPLOAD_FOLDER)
+app.config['SHOT_IMAGE_FOLDER'] = str(SHOT_IMAGE_FOLDER)
+
+# --- Cấu hình Logging ---
+file_handler = RotatingFileHandler(data_dir / 'app.log', maxBytes=10240, backupCount=10)
 file_handler.setFormatter(logging.Formatter(
     '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 ))
-
-# Đặt cấp độ ghi log (INFO và cao hơn sẽ được ghi lại)
 file_handler.setLevel(logging.INFO)
 app.logger.addHandler(file_handler)
-
 app.logger.setLevel(logging.INFO)
-app.logger.info('--- Ứng dụng DA01 Khởi động ---')
-# === KẾT THÚC PHẦN THÊM MỚI ===
+app.logger.info(f'--- HỆ THỐNG KHỞI ĐỘNG --- Dữ liệu được lưu tại: {data_dir}')
 
-# --- Hàng đợi lệnh ---
-COMMAND_QUEUE = queue.Queue(maxsize=10)
+
+# --- Khởi tạo DB và Login Manager ---
+init_db(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@app.context_processor
+def inject_profile_status():
+    """
+    Tự động kiểm tra và gửi trạng thái profile đến tất cả các template.
+    """
+    if current_user.is_authenticated and not current_user.is_profile_complete:
+        # Nếu người dùng đã đăng nhập nhưng chưa hoàn thành profile
+        # và họ không đang ở trang đăng xuất, thì gửi cờ TRUE
+        if request.endpoint and 'logout' not in request.endpoint and 'static' not in request.endpoint:
+             return dict(PROFILE_INCOMPLETE=True)
+    return dict(PROFILE_INCOMPLETE=False)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+# --- Đăng ký Blueprints ---
+app.register_blueprint(soldier_bp)
+app.register_blueprint(pi_bp)
+app.register_blueprint(training_bp)
+app.register_blueprint(report_bp)
 
 # <<< THÊM MỚI: Hàm để lấy địa chỉ IP nội bộ >>>
 def get_ip_address():
@@ -61,55 +99,23 @@ def get_ip_address():
     finally:
         s.close()
     return IP
-
-# --- Cấu hình ứng dụng ---
-# Thêm cấu hình cho thư mục upload, đặt gần các app.config khác
-UPLOAD_FOLDER = os.path.join(app.static_folder, 'uploads', 'avatars')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# Tạo thư mục nếu chưa tồn tại
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-app.config['SECRET_KEY'] = 'a_very_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-init_db(app)
-
-# CẤU HÌNH CLOUDINARY>>>
-cloudinary.config( 
-    cloud_name = "dmeho8uqs", 
-    api_key = "274359684344333", 
-    api_secret = "YTVCyDi_WIJXvKOfp6lc4nlGsks",
-    secure=True
-)
-# --- Quản lý Login ---
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-# === BẮT ĐẦU PHẦN THÊM MỚI: KIỂM TRA PROFILE ===
-@app.context_processor
-def inject_profile_status():
+# --- Các trang (Pages) ---
+@app.route('/user_data/<path:filename>')
+@login_required
+def serve_user_data(filename):
     """
-    Tự động kiểm tra và gửi trạng thái profile đến tất cả các template.
+    Route an toàn để phục vụ các file từ thư mục dữ liệu của ứng dụng
+    (ảnh đại diện, ảnh kết quả bắn).
     """
-    if current_user.is_authenticated and not current_user.is_profile_complete:
-        # Nếu người dùng đã đăng nhập nhưng chưa hoàn thành profile
-        # và họ không đang ở trang đăng xuất, thì gửi cờ TRUE
-        if request.endpoint and 'logout' not in request.endpoint and 'static' not in request.endpoint:
-             return dict(PROFILE_INCOMPLETE=True)
-    return dict(PROFILE_INCOMPLETE=False)
+    # Xác định xem file là avatar hay ảnh kết quả bắn để lấy đúng thư mục
+    if 'avatar_' in filename:
+        return send_from_directory(app.config['AVATAR_UPLOAD_FOLDER'], filename)
+    elif 'shot_' in filename:
+        return send_from_directory(app.config['SHOT_IMAGE_FOLDER'], filename)
+    else:
+        return "File not found", 404
 # === KẾT THÚC PHẦN THÊM MỚI ===
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, int(user_id)) # Dùng phương thức mới, tránh warning
-
-# --- Đăng ký Blueprints ---
-app.register_blueprint(soldier_bp)
-app.register_blueprint(pi_bp)
-app.register_blueprint(training_bp)
-app.register_blueprint(report_bp)
-# --- Các trang (Pages) ---
 @app.route('/')
 @login_required
 def index():
@@ -409,15 +415,10 @@ def api_update_profile():
             file = request.files['avatar']
             if file and file.filename != '':
                 # Tạo tên file duy nhất để tránh trùng lặp
-                filename = secure_filename(file.filename)
-                unique_filename = f"{uuid.uuid4().hex}_{filename}"
-                
-                # Lưu file vào thư mục static/uploads/avatars
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(file_path)
-                
-                # Lưu đường dẫn tương đối để có thể truy cập từ web
-                user.avatar_url = f"/static/uploads/avatars/{unique_filename}"
+                filename = "avatar_" + str(current_user.id) + "_" + str(uuid.uuid4())[:8] + ".jpg"
+                # Lưu file vào thư mục avatar đã cấu hình
+                file.save(os.path.join(app.config['AVATAR_UPLOAD_FOLDER'], filename))
+                user.avatar_url = filename # Chỉ lưu tên file vào CSDL
 
         # Xử lý đổi mật khẩu
         new_password = request.form.get('new_password')
@@ -496,4 +497,4 @@ if __name__ == '__main__':
     app.logger.info(f"   - Địa chỉ IP của máy chủ: {ip_address}")
     app.logger.info(f"   - Vui lòng truy cập http://{ip_address}:8080 trên các thiết bị trong cùng mạng.")
     app.logger.info("===================================================")
-    serve(app, host='0.0.0.0', port=5000, threads=8)
+    serve(app, host='0.0.0.0', port=8080, threads=8)

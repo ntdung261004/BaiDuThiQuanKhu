@@ -97,40 +97,42 @@ def processed_data_upload():
     # Bước 2: Chỉ xử lý nếu có xạ thủ đang được kích hoạt
     if active_session_id and active_soldier_id:
         try:
-            # Bước 3: Lấy phiên từ DB và kiểm tra trạng thái lần cuối (lớp bảo vệ)
-            current_session = db.session.get(TrainingSession, int(active_session_id))
-            
+            current_session = db.session.get(TrainingSession, active_session_id)
             if current_session and current_session.status != SessionStatus.COMPLETED:
-                # Nếu mọi thứ hợp lệ, tiến hành tạo và lưu đối tượng Shot
+                data = request.get_json()
+                score = data.get('score')
+                target_name = data.get('target')
                 image_data = data.get('image_data')
-                
-                image_path = None # Sẽ lưu đường dẫn cục bộ
-                
-                # <<< LOGIC LƯU ẢNH CỤC BỘ MỚI >>>
+
+                # === BẮT ĐẦU PHẦN SỬA LỖI ===
+
+                image_filename = None # 1. Khởi tạo tên file ảnh là None
+
+                # 2. Xử lý và lưu ảnh trước (nếu có)
                 if image_data:
                     try:
-                        decoded_image = base64.b64decode(image_data)
-                        
-                        # Tạo tên file duy nhất: session_id_soldier_id_timestamp.jpg
-                        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
-                        filename = f'shot_{active_session_id}_{active_soldier_id}_{timestamp}.jpg'
-                        image_path = os.path.join(UPLOAD_FOLDER, filename)
+                        # Tạo tên file duy nhất
+                        image_filename = f"shot_{active_session_id}_{active_soldier_id}_{int(time.time())}.jpg"
+                        # Lấy đường dẫn từ config của app
+                        image_path = os.path.join(current_app.config['SHOT_IMAGE_FOLDER'], image_filename)
 
+                        # Giải mã base64 và lưu file
+                        img_bytes = base64.b64decode(image_data)
                         with open(image_path, 'wb') as f:
-                            f.write(decoded_image)
-                        
-                        current_app.logger.info(f"✅ Đã lưu ảnh vào thư mục cục bộ: {image_path}")
+                            f.write(img_bytes)
+                        current_app.logger.info(f"✅ Đã lưu ảnh kết quả: {image_path}")
 
                     except Exception as e:
-                        current_app.logger.error(f"❌ Lỗi khi lưu ảnh cục bộ: {e}", exc_info=True)
-                        
-                # Tạo đối tượng Shot và lưu vào CSDL
+                        current_app.logger.error(f"❌ Lỗi khi lưu ảnh kết quả: {e}", exc_info=True)
+                        image_filename = None # Reset về None nếu có lỗi
+
+                # 3. Bây giờ mới tạo đối tượng Shot với thông tin đầy đủ
                 new_shot = Shot(
                     session_id=active_session_id,
                     soldier_id=active_soldier_id,
-                    score=data.get('score', 0),
-                    target_name=data.get('target', 'Không xác định'),
-                    result_image_path=image_path # Lưu đường dẫn cục bộ
+                    score=score,
+                    target_name=target_name,
+                    result_image_path=image_filename # Gán tên file đã xử lý
                 )
                 
                 db.session.add(new_shot)

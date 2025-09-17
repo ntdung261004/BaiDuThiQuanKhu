@@ -51,10 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // <<< THAY ĐỔI TẠI ĐÂY: XỬ LÝ ĐƯỜNG DẪN ẢNH VÀ CÁC TRẠNG THÁI >>>
         if (shot.result_image_path) {
-            // Thêm dấu '/' vào đầu để đảm bảo trình duyệt tìm đúng đường dẫn cục bộ
-            const imageUrl = '/' + shot.result_image_path;
             
-            shotDetailImage.src = imageUrl;
+            shotDetailImage.src = `/user_data/${shot.result_image_path}`;
             
             shotDetailImage.onload = () => {
                 shotDetailLoading.style.display = 'none';
