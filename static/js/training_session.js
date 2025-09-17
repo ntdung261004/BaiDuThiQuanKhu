@@ -49,6 +49,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function updateTotalCountBadge() {
+        try {
+            const response = await fetch('/api/sessions/total_count');
+            const data = await response.json();
+            const totalCountBadge = document.getElementById('session-total-count');
+            if (totalCountBadge) {
+                totalCountBadge.textContent = data.total_count;
+            }
+        } catch (error) {
+            console.error('Không thể tải tổng số phiên:', error);
+            const totalCountBadge = document.getElementById('session-total-count');
+            if (totalCountBadge) {
+                totalCountBadge.textContent = '?'; // Hiển thị lỗi
+            }
+        }
+    }
     // <<< SỬA ĐỔI HOÀN TOÀN HÀM loadSoldiersIntoModal >>>
     async function loadSoldiersIntoModal() {
         if (!soldierChecklist) return;
@@ -116,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionsList.innerHTML = '';
         loadingSpinner.style.display = 'block';
         // ============================
-
+        updateTotalCountBadge();
         try {
             const sortByValue = sortBySelect.value;
             const lastUnderscoreIndex = sortByValue.lastIndexOf('_');
@@ -134,16 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) {
                 throw new Error(`Lỗi HTTP: ${response.status}`);
             }
-            // === PHẦN THAY ĐỔI CHÍNH ===
-            const data = await response.json(); // data bây giờ là một object { sessions: [], total_count: X }
-            const sessions = data.sessions;
-            const totalCount = data.total_count;
-
-            // Cập nhật con số tổng trên tiêu đề
-            const totalCountBadge = document.getElementById('session-total-count');
-            if (totalCountBadge) {
-                totalCountBadge.textContent = totalCount;
-            }
+            const sessions = await response.json();
 
             // === BẮT ĐẦU PHẦN SỬA ĐỔI ===
             // 2. TẮT spinner đi trước khi hiển thị kết quả

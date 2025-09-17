@@ -7,7 +7,7 @@ from waitress import serve
 
 # --- CẤU HÌNH ---
 HOST = '0.0.0.0'
-PORT = 5000 # Hoặc port bạn đã dùng, ví dụ 8080
+PORT = 8080 # Hoặc port bạn đã dùng, ví dụ 8080
 
 # --- CÁC HÀM CHỨC NĂNG ---
 

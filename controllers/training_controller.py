@@ -73,8 +73,6 @@ def get_training_sessions():
             sort_by=sort_by,
             sort_order=sort_order
         )
-        # Lấy tổng số tất cả các phiên trong CSDL (không bị ảnh hưởng bởi bộ lọc)
-        total_count = TrainingSession.query.count()
         result = []
         for session in sessions:
             # Đếm số lượng chiến sĩ đã thực hiện ít nhất một phát bắn trong phiên
@@ -95,10 +93,7 @@ def get_training_sessions():
                 'date_created': session.date_created.isoformat() # Chuyển đổi ngày giờ sang chuỗi ISO
             })
             
-        return jsonify({
-            'sessions': result,
-            'total_count': total_count
-        })
+        return jsonify(result)
         
     except Exception as e:
         db.session.rollback()
@@ -330,3 +325,13 @@ def deactivate_shooter():
         ACTIVE_SHOOTER_STATE['soldier_id'] = None
     print("🔴 Xạ thủ đã được hủy kích hoạt do người dùng rời trang.")
     return jsonify({'status': 'deactivated'}), 200
+
+@training_bp.route('/api/sessions/total_count', methods=['GET'])
+def get_total_session_count():
+    """API siêu nhẹ chỉ để lấy tổng số phiên tập."""
+    try:
+        count = TrainingSession.query.count()
+        return jsonify({'total_count': count})
+    except Exception as e:
+        current_app.logger.error(f"Lỗi khi đếm tổng số phiên: {e}", exc_info=True)
+        return jsonify({'total_count': 0}), 500
