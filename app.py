@@ -393,8 +393,33 @@ def profile_page():
 @app.route('/session/<int:session_id>')
 @login_required
 def session_details(session_id):
-    # Chúng ta chỉ cần render trang, JavaScript sẽ tự tải dữ liệu
-    return render_template('session_details.html', session_id=session_id)
+    training_session = TrainingSession.query.get_or_404(session_id)
+
+    # Lấy bài tập gắn với session
+    exercise = Exercise.query.get(training_session.exercise_id)
+
+    # Kiểm tra theo tên bài tập
+    if exercise.exercise_name.startswith("Bài 1"):
+        return render_template(
+            'session_details.html',
+            session=training_session,
+            exercise=exercise
+        )
+    elif exercise.exercise_name.startswith("Bài 2"):
+        return render_template(
+            'session_bai2.html',
+            session=training_session,
+            exercise=exercise
+        )
+    else:
+        # mặc định nếu không thuộc Bài 1 hay Bài 2
+        return render_template(
+            'session_default.html',
+            session=training_session,
+            exercise=exercise
+        )
+
+
 
 # ROUTE XỬ LÝ CẬP NHẬT PROFILE ===
 @app.route('/profile/update', methods=['POST'])
