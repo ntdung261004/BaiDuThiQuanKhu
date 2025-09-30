@@ -7,13 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveSessionNameBtn = document.getElementById('save-session-name-btn');
     const createSessionModalEl = document.getElementById('createSessionModal');
     const soldierChecklist = document.getElementById('soldier-checklist');
-
-    // === KHAI BÁO BIẾN CHO BỘ LỌC VÀ SẮP XẾP MỚI ===
     const filterStatusSelect = document.getElementById('filter-status');
     const filterExerciseSelect = document.getElementById('filter-exercise');
     const sortBySelect = document.getElementById('sort-by-select');
-    // ===============================================
     const loadingSpinner = document.getElementById('loading-spinner');
+
     // --- CÁC HÀM TẢI DỮ LIỆU ---
 
     async function loadExercises() {
@@ -22,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const exercises = await response.json();
             
-            // Cập nhật cả dropdown trong modal và dropdown lọc
             exerciseTypeSelect.innerHTML = '<option value="" disabled selected>Chọn một bài tập</option>';
             filterExerciseSelect.innerHTML = '<option value="">Tất cả</option>';
             
@@ -61,19 +58,17 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Không thể tải tổng số phiên:', error);
             const totalCountBadge = document.getElementById('session-total-count');
             if (totalCountBadge) {
-                totalCountBadge.textContent = '?'; // Hiển thị lỗi
+                totalCountBadge.textContent = '?';
             }
         }
     }
-    // <<< SỬA ĐỔI HOÀN TOÀN HÀM loadSoldiersIntoModal >>>
+
     async function loadSoldiersIntoModal() {
         if (!soldierChecklist) return;
 
-        // Lấy checkbox "Chọn tất cả"
         const selectAllCheckbox = document.getElementById('select-all-soldiers');
         
         soldierChecklist.innerHTML = '<p class="text-muted text-center">Đang tải danh sách...</p>';
-        // Ẩn checkbox "Chọn tất cả" trong lúc tải
         if(selectAllCheckbox) selectAllCheckbox.style.display = 'none';
 
         try {
@@ -83,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             soldierChecklist.innerHTML = '';
             if (soldiers.length > 0) {
-                // Hiển thị checkbox "Chọn tất cả" khi có dữ liệu
                 if(selectAllCheckbox) selectAllCheckbox.style.display = 'block';
 
                 soldiers.forEach(soldier => {
@@ -105,7 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
             soldierChecklist.innerHTML = '<p class="text-danger text-center">Không thể tải danh sách chiến sĩ.</p>';
         }
 
-        // Gán sự kiện cho checkbox "Chọn tất cả"
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener('change', function() {
                 const isChecked = this.checked;
@@ -115,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            // Gán sự kiện để kiểm tra nếu tất cả được chọn thì tick vào checkbox "Chọn tất cả"
             soldierChecklist.addEventListener('change', function(event) {
                 if (event.target.classList.contains('soldier-checkbox')) {
                     const allCheckboxes = soldierChecklist.querySelectorAll('.soldier-checkbox');
@@ -127,11 +119,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function loadSessions() {
-        // === BẮT ĐẦU PHẦN SỬA ĐỔI ===
-        // 1. Dọn dẹp danh sách cũ và BẬT spinner lên
         sessionsList.innerHTML = '';
         loadingSpinner.style.display = 'block';
-        // ============================
         updateTotalCountBadge();
         try {
             const sortByValue = sortBySelect.value;
@@ -147,15 +136,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const response = await fetch(`/api/training_sessions?${params.toString()}`);
-            if (!response.ok) {
-                throw new Error(`Lỗi HTTP: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
             const sessions = await response.json();
 
-            // === BẮT ĐẦU PHẦN SỬA ĐỔI ===
-            // 2. TẮT spinner đi trước khi hiển thị kết quả
             loadingSpinner.style.display = 'none';
-            // ============================
 
             if (sessions.length === 0) {
                 sessionsList.innerHTML = `
@@ -171,13 +155,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 sessions.forEach(session => {
                     let topBorderColor, statusText, actionMenuItemHtml, statusBgColor;
-
+                    
                     switch (session.status) {
                         case 'IN_PROGRESS':
                             topBorderColor = 'var(--bs-success)';
                             statusText = 'Đang huấn luyện';
                             statusBgColor = 'bg-success-subtle text-success-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-arrow-right fa-fw me-2"></i> Tiếp tục</a></li>`;
+                            actionMenuItemHtml = `<li><a class="dropdown-item start-session-link" href="#" data-session-id="${session.id}"><i class="fas fa-arrow-right fa-fw me-2"></i> Tiếp tục</a></li>`;
                             break;
                         case 'COMPLETED':
                             topBorderColor = 'var(--bs-primary)';
@@ -190,21 +174,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             topBorderColor = 'var(--bs-danger)';
                             statusText = 'Chưa huấn luyện';
                             statusBgColor = 'bg-danger-subtle text-danger-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
+                            actionMenuItemHtml = `<li><a class="dropdown-item start-session-link" href="#" data-session-id="${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
                             break;
                     }
-                    // Logic để định dạng ngày tháng
+                    
                     const date_created = new Date(session.date_created);
                     const formattedDate = `${date_created.getDate().toString().padStart(2, '0')}/${(date_created.getMonth() + 1).toString().padStart(2, '0')}/${date_created.getFullYear()}`;
-                    // ===================================
+
                     const cardHtml = `
                         <div class="col">
                             <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid ${topBorderColor};">
-                                
                                 <div class="card-header ${statusBgColor} py-2 text-center small fw-bold">
                                     ${statusText}
                                 </div>
-
                                 <div class="card-body" p-3>
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
@@ -213,18 +195,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <p class="card-text text-muted small mb-0">
                                                 Bài tập: <strong>${session.exercise_name}</strong>
                                             </p>
-
                                             <div class="d-flex justify-content-between small text-muted mb-3">
-                                                <span title="Ngày tạo">
-                                                    <i class="far fa-calendar-alt me-1"></i>
-                                                    ${formattedDate}
-                                                </span>
-                                                <span title="Số chiến sĩ đã tập">
-                                                    <i class="fas fa-check-circle me-1"></i>
-                                                    Đã tập: <strong>${session.completed_soldier_count}/${session.total_soldier_count}</strong>
-                                                </span>
+                                                <span title="Ngày tạo"><i class="far fa-calendar-alt me-1"></i> ${formattedDate}</span>
+                                                <span title="Số chiến sĩ đã tập"><i class="fas fa-check-circle me-1"></i> Đã tập: <strong>${session.completed_soldier_count}/${session.total_soldier_count}</strong></span>
                                             </div>
-
                                         </div>
                                         <div class="dropdown" style="position: relative; z-index: 2;">
                                             <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -247,11 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Lỗi khi tải phiên tập:', error);
-
-            // === BẮT ĐẦU PHẦN SỬA ĐỔI ===
-            // 3. TẮT spinner đi nếu có lỗi xảy ra
             loadingSpinner.style.display = 'none';
-            // ============================
             sessionsList.innerHTML = '<p class="col-12 text-center text-danger mt-5">Không thể tải dữ liệu. Vui lòng thử lại.</p>';
         }
     }
@@ -285,30 +255,54 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     sessionsList.addEventListener('click', async function(e) {
-        if (e.target.closest('.delete-session-btn')) {
-            e.preventDefault();
-            const button = e.target.closest('.delete-session-btn');
-            const sessionId = button.dataset.sessionId;
+        e.preventDefault();
+
+        const startButton = e.target.closest('.start-session-link');
+        const deleteButton = e.target.closest('.delete-session-btn');
+        const editButton = e.target.closest('.edit-session-btn');
+
+        if (startButton) {
+            const sessionId = startButton.dataset.sessionId;
+            
+            try {
+                // Bước 1: Gọi API để đổi trạng thái phiên tập
+                const response = await fetch(`/api/training_sessions/${sessionId}/start`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Không thể bắt đầu phiên tập từ server.');
+
+                // ===================================================================
+                // === SỬA LỖI TẠI ĐÂY: Luôn chuyển hướng đến route /session/<ID> ===
+                // ===================================================================
+                window.location.href = `/session/${sessionId}`;
+                
+            } catch (error) {
+                console.error("Lỗi khi bắt đầu phiên:", error);
+                showToast(error.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error');
+            }
+        }
+        
+        else if (deleteButton) {
+            const sessionId = deleteButton.dataset.sessionId;
             if (confirm(`Bạn có chắc chắn muốn xóa Phiên Tập #${sessionId} không?`)) {
                 try {
                     const response = await fetch(`/api/training_sessions/${sessionId}`, { method: 'DELETE' });
                     if (response.ok) {
                         loadSessions(); 
+                        showToast('Đã xóa phiên tập thành công.', 'success');
                     } else {
-                        alert('Có lỗi xảy ra khi xóa phiên tập.');
+                        showToast('Có lỗi xảy ra khi xóa phiên tập.', 'error');
                     }
                 } catch (error) {
                     console.error('Lỗi khi xóa phiên tập:', error);
-                    alert('Lỗi mạng, không thể xóa.');
+                    showToast('Lỗi mạng, không thể xóa.', 'error');
                 }
             }
         }
         
-        if (e.target.closest('.edit-session-btn')) {
-            e.preventDefault();
-            const button = e.target.closest('.edit-session-btn');
-            const sessionId = button.dataset.sessionId;
-            const sessionName = button.dataset.sessionName;
+        else if (editButton) {
+            const sessionId = editButton.dataset.sessionId;
+            const sessionName = editButton.dataset.sessionName;
             const editModal = new bootstrap.Modal(document.getElementById('editSessionModal'));
             document.getElementById('edit-session-id').value = sessionId;
             document.getElementById('edit-session-name').value = sessionName;
@@ -317,22 +311,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // <<< SỬA ĐỔI: Cập nhật hàm xử lý submit form >>>
     createSessionForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const sessionName = sessionNameInput.value;
         const exerciseId = exerciseTypeSelect.value;
-        
-        // Lấy danh sách ID của các chiến sĩ được chọn
-        const selectedSoldiers = Array.from(soldierChecklist.querySelectorAll('input[type="checkbox"]:checked'))
-                                      .map(checkbox => checkbox.value);
+        const selectedSoldiers = Array.from(soldierChecklist.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
         if (!exerciseId) {
-            showToast('Vui lòng chọn một loại bài tập.', 'danger');
+            showToast('Vui lòng chọn một loại bài tập.', 'error');
             return;
         }
         if (selectedSoldiers.length === 0) {
-            showToast('Vui lòng chọn ít nhất một chiến sĩ.', 'danger');
+            showToast('Vui lòng chọn ít nhất một chiến sĩ.', 'error');
             return;
         }
 
@@ -343,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     session_name: sessionName,
                     exercise_id: exerciseId,
-                    soldier_ids: selectedSoldiers // Gửi danh sách ID
+                    soldier_ids: selectedSoldiers
                 })
             });
             
@@ -361,21 +351,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- GÁN SỰ KIỆN KHI MODAL MỞ RA ---
     if (createSessionModalEl) {
         createSessionModalEl.addEventListener('show.bs.modal', function() {
-            // Khi modal sắp được hiển thị, tải danh sách chiến sĩ
             loadSoldiersIntoModal();
-            // Reset form để xóa các giá trị cũ
             createSessionForm.reset();
         });
     }
 
-    // === GÁN SỰ KIỆN CHO CÁC DROPDOWN LỌC VÀ SẮP XẾP ===
     filterStatusSelect.addEventListener('change', loadSessions);
     filterExerciseSelect.addEventListener('change', loadSessions);
     sortBySelect.addEventListener('change', loadSessions);
-    // ==================================================
 
     // --- KHỞI CHẠY LẦN ĐẦU ---
     loadExercises();

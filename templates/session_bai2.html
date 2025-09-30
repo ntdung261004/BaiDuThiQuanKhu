@@ -1,0 +1,114 @@
+{% extends "base_fullscreen.html" %}
+
+{% block title %}Huấn luyện Bài 2{% endblock %}
+
+{% block content %}
+<div id="page-content-wrapper">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light py-3 px-4">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('training') }}" class="btn btn-light me-3 fs-4" title="Quay lại"><i class="fas fa-arrow-left"></i></a>
+            <div>
+                <h2 id="session-name-header" class="fs-4 m-0">Đang tải...</h2>
+                <p id="exercise-name-display" class="text-muted small m-0">Bài tập: Đang tải...</p>
+            </div>
+        </div>
+    </nav>
+    <div id="connection-status-banner" class="ms-auto fw-bold">
+        <i class="fas fa-plug"></i> <span id="connection-text">Kiểm tra kết nối...</span>
+    </div>
+
+    <div id="session-dashboard-grid" class="container-fluid p-3">
+        
+        <div id="grid-livestream" class="grid-item">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold"><i class="fas fa-video me-2"></i>Livestream & Điều khiển</div>
+                <div class="card-body p-2 d-flex flex-column">
+                    <div class="flex-grow-1 bg-dark d-flex align-items-center justify-content-center" style="min-height: 0; border-radius: 0.25rem;">
+                        <img src="" id="video-feed" style="display: none;">
+                        <div id="status-message" class="text-white text-center">
+                            <i class="fas fa-video-slash fa-2x mb-2"></i>
+                            <p class="m-0">Chờ kết nối từ thiết bị...</p>
+                        </div>
+                    </div>
+                    <div class="livestream-controls d-flex align-items-center gap-3 p-2 border-top mt-2">
+                        <button id="recenter-btn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-crosshairs me-2"></i>Hiệu chỉnh tâm
+                        </button>
+                        <div class="flex-grow-1 d-flex align-items-center gap-2">
+                            <i class="fas fa-search-minus text-muted"></i>
+                            <input type="range" class="form-range" min="1" max="5" step="0.1" value="1" id="zoom-slider">
+                            <i class="fas fa-search-plus text-muted"></i>
+                            <span id="zoom-value-display" class="badge bg-secondary" style="width: 45px;">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-results" class="grid-item">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold"><i class="fas fa-bullseye me-2"></i>Kết quả Mới nhất</div>
+                <div class="card-body d-flex flex-column p-2">
+                    <ul class="list-group list-group-flush mb-2">
+                        <li class="list-group-item d-flex justify-content-between"><span>Xạ thủ đang tập:</span><strong id="current-shooter-name" class="text-primary">Chưa có</strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span>Thời gian:</span><strong id="shot-time">--:--:--</strong></li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center"><span>Kết quả:</span><strong id="shot-result" class="text-success fs-4">--</strong></li>
+                    </ul>
+                    <div id="target-image-container" class="target-img-container-session flex-grow-1">
+                        <img id="target-image" src="" style="display: none;" alt="Mô hình bia">
+                        <div id="target-image-notice" class="text-muted text-center">
+                            <i class="fas fa-camera fa-2x mb-2"></i>
+                            <p class="m-0">Đang đợi kết quả gửi về...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-shooters" class="grid-item">
+             <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-users me-2"></i>Danh sách Xạ thủ</span>
+                    <span id="shooter-count-badge" class="badge bg-success rounded-pill">0</span>
+                </div>
+                <div id="soldiers-list" class="list-group list-group-flush shooter-list-scroll flex-grow-1 p-2">
+                    <div class="list-group-item text-center p-5"><div class="spinner-border spinner-border-sm" role="status"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-history" class="grid-item">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold"><i class="fas fa-history me-2"></i>Nhật ký Huấn luyện</div>
+                <div id="shot-log-list" class="card-body shot-status-scroll p-2">
+                    <p class="text-muted mb-0">Chưa có hoạt động nào được ghi nhận.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid-overview" class="grid-item">
+             <div class="card h-100 d-flex flex-column">
+                <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-clipboard-list me-2"></i>Tổng quan Phiên</span>
+                    <button id="end-session-btn" class="btn btn-danger btn-sm"><i class="fas fa-stop-circle me-1"></i>Kết thúc Phiên</button>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between"><span>Tổng số lần bắn:</span><strong id="total-shots">0</strong></li>
+                    <li class="list-group-item d-flex justify-content-between"><span>Tổng số bia trúng:</span><strong id="total-hits">0</strong></li>
+                    <li class="list-group-item d-flex justify-content-between"><span>Xạ thủ đã hoàn thành:</span><strong id="completed-shooters">0 / 0</strong></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% include 'partials/end_session_modal.html' %}
+{% include 'partials/soldier_summary_modal.html' %} {# <-- **THÊM MỚI** #}
+{% endblock %}
+
+
+{% block scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/session_detail.css') }}">
+<script src="{{ url_for('static', filename='js/session_bai2.js') }}"></script>
+{% endblock %}
