@@ -99,19 +99,16 @@ def init_db(app):
     with app.app_context():
         db.init_app(app)
         db.create_all()
-        
-        # Khởi tạo người dùng admin nếu chưa có
-        #if not User.query.filter_by(username='admin').first():
-        #    admin_user = User(username='admin', is_profile_complete=False) 
-        #    admin_user.set_password('123')
-        #    db.session.add(admin_user)
-        #   db.session.commit()
-            
-        # Khởi tạo các bài tập mẫu nếu chưa có
-        if not Exercise.query.all():
-            ex1 = Exercise(exercise_name='Phân đoạn 1 - Bắn bia số 4')
-            ex2 = Exercise(exercise_name='Phân đoạn 2 - Bắn bia số 7')
-            ex3 = Exercise(exercise_name='Phân đoạn 3 - Bắn bia số 8')
-            ex4 = Exercise(exercise_name='Tổng hợp 3 bia')
-            db.session.add_all([ex1, ex2, ex3, ex4])
-            db.session.commit()
+
+        # Xóa dữ liệu cũ để tránh trùng lặp
+        Exercise.query.delete()
+        db.session.commit()
+
+        # Thêm mới danh sách bài tập
+        ex1 = Exercise(exercise_name='Bài 1: Phân đoạn 1 - Bắn bia số 4')
+        ex2 = Exercise(exercise_name='Bài 1: Phân đoạn 2 - Bắn bia số 7')
+        ex3 = Exercise(exercise_name='Bài 1: Phân đoạn 3 - Bắn bia số 8')
+        ex4 = Exercise(exercise_name='Bài 1: Tổng hợp 3 bia')
+        ex5 = Exercise(exercise_name='Bài 2: Bắn mục tiêu ẩn hiện ban ngày')
+        db.session.add_all([ex1, ex2, ex3, ex4, ex5])
+        db.session.commit()
