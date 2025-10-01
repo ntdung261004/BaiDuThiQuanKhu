@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             topBorderColor = 'var(--bs-success)';
                             statusText = 'Đang huấn luyện';
                             statusBgColor = 'bg-success-subtle text-success-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item start-session-link" href="#" data-session-id="${session.id}"><i class="fas fa-arrow-right fa-fw me-2"></i> Tiếp tục</a></li>`;
+                            actionMenuItemHtml = `<li><a class="dropdown-item start-session-link" href="#" data-session-id="${session.id}" data-exercise-name="${session.exercise_name}"><i class="fas fa-arrow-right fa-fw me-2"></i> Tiếp tục</a></li>`;
                             break;
                         case 'COMPLETED':
                             topBorderColor = 'var(--bs-primary)';
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             topBorderColor = 'var(--bs-danger)';
                             statusText = 'Chưa huấn luyện';
                             statusBgColor = 'bg-danger-subtle text-danger-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item start-session-link" href="#" data-session-id="${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
+                            actionMenuItemHtml = `<li><a class="dropdown-item start-session-link" href="#" data-session-id="${session.id}" data-exercise-name="${session.exercise_name}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
                             break;
                     }
                     
@@ -254,6 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // ===================================================================
+    // === SỬA LỖI TẠI ĐÂY: Thêm logic gửi lệnh cho Pi khi bắt đầu "Bài 2" ===
+    // ===================================================================
     sessionsList.addEventListener('click', async function(e) {
         e.preventDefault();
 
@@ -263,17 +266,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (startButton) {
             const sessionId = startButton.dataset.sessionId;
+            const exerciseName = startButton.dataset.exerciseName;
             
             try {
                 // Bước 1: Gọi API để đổi trạng thái phiên tập
-                const response = await fetch(`/api/training_sessions/${sessionId}/start`, {
+                const startResponse = await fetch(`/api/training_sessions/${sessionId}/start`, {
                     method: 'POST'
                 });
-                if (!response.ok) throw new Error('Không thể bắt đầu phiên tập từ server.');
+                if (!startResponse.ok) throw new Error('Không thể bắt đầu phiên tập từ server.');
 
-                // ===================================================================
-                // === SỬA LỖI TẠI ĐÂY: Luôn chuyển hướng đến route /session/<ID> ===
-                // ===================================================================
+                // Bước 2: KIỂM TRA và GỬI LỆNH cho Pi nếu là Bài 2
+                const isBai2 = exerciseName && exerciseName.toLowerCase().includes('bài 2');
+                const fireMode = isBai2 ? 'continuous' : 'single'; // Xác định chế độ
+
+                const modeResponse = await fetch(`/api/pi/set_fire_mode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: fireMode })
+                });
+                if (!modeResponse.ok) throw new Error('Không thể gửi lệnh chế độ bắn cho thiết bị.');
+                
+                // Bước 3: Chuyển hướng đến trang tập luyện
                 window.location.href = `/session/${sessionId}`;
                 
             } catch (error) {

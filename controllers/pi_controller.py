@@ -152,6 +152,7 @@ def processed_data_upload():
         print("⚠️ Nhận được dữ liệu bắn nhưng không lưu vì không có xạ thủ được kích hoạt.")
 
     # Cập nhật dữ liệu tạm thời để gửi về cho giao diện
+    data['timestamp'] = time.time()
     latest_processed_data.update(data)
     
     return jsonify({'status': 'success'})
@@ -254,3 +255,23 @@ def get_command():
         pass
     
     return jsonify(response_data)
+
+@pi_bp.route('/api/pi/set_fire_mode', methods=['POST'])
+def set_fire_mode():
+    """
+    API để thiết lập chế độ bắn cho Pi (ví dụ: 'single' hoặc 'continuous').
+    """
+    data = request.get_json()
+    mode = data.get('mode')
+
+    if mode in ['single', 'continuous']:
+        command = {'type': 'fire_mode', 'value': mode}
+        try:
+            COMMAND_QUEUE.put_nowait(command)
+            print(f"✅ Đã gửi lệnh chuyển chế độ bắn: {mode}")
+            return jsonify({'status': 'success', 'message': f'Lệnh đổi chế độ thành {mode} đã được gửi.'})
+        except queue.Full:
+            return jsonify({'status': 'error', 'message': 'Hàng đợi lệnh đang đầy.'}), 503
+    
+    return jsonify({'status': 'error', 'message': 'Chế độ bắn không hợp lệ.'}), 400
+# =================================================================
