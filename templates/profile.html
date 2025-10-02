@@ -14,57 +14,104 @@
     </nav>
 
     <div class="container py-4 px-4">
-        <div class="row my-4 justify-content-center d-flex align-items-stretch">
-            
-            <div class="col-lg-4 col-md-12 mb-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body text-center p-4 d-flex flex-column justify-content-center">
-                        <h5 class="card-title mb-4">Ảnh đại diện</h5>
-                        
-                        <div class="avatar-upload-container mb-3 d-flex flex-column align-items-center">
-                            <img id="avatar-preview" 
-                                src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/default_avatar.png') }}"
-                                 class="rounded-circle mb-3" 
-                                 width="200" height="200" 
-                                 style="object-fit: cover; border: 5px solid #dee2e6;">
-                            
-                            <button type="button" id="change-avatar-btn" class="btn btn-outline-primary">
-                                <i class="fas fa-camera me-2"></i>Đổi ảnh
-                            </button>
-                        </div>
-                        
-                        <h6 id="profile-card-name" class="card-subtitle mt-3 mb-2 fs-5 text-dark">{{ current_user.full_name or current_user.username }}</h6>
-                        <p id="profile-card-position" class="text-muted">{{ current_user.position or 'Chưa có chức vụ' }}</p>
-                    </div>
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 mb-4">
+                <div class="list-group shadow-sm">
+                    <a href="#tab-profile" class="list-group-item list-group-item-action active" data-bs-toggle="tab">
+                        <i class="fas fa-user me-2"></i> Hồ sơ
+                    </a>
+                    <a href="#tab-password" class="list-group-item list-group-item-action" data-bs-toggle="tab">
+                        <i class="fas fa-lock me-2"></i> Đổi mật khẩu
+                    </a>
                 </div>
             </div>
 
-            <div class="col-lg-8 col-md-12 mb-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body p-4">
-                        <h5 class="card-title mb-4">Chỉnh sửa thông tin</h5>
-                        <form id="edit-profile-form" enctype="multipart/form-data">
-                            <input type="file" id="avatar-input" name="avatar" class="d-none" accept="image/*">
+            <!-- Nội dung chính -->
+            <div class="col-md-10">
+                <div class="tab-content">
+                    
+                    <!-- Tab Hồ sơ -->
+<div class="tab-pane fade show active" id="tab-profile">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h5 class="card-title mb-4">Thông tin cá nhân</h5>
+            <form id="edit-profile-form" enctype="multipart/form-data">
+                <input type="file" id="avatar-input" name="avatar" class="d-none" accept="image/*">
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3"><label for="profile-username" class="form-label">Tên đăng nhập</label><input type="text" class="form-control" id="profile-username" name="username" value="{{ current_user.username }}" required></div>
-                                <div class="col-md-6 mb-3"><label for="profile-full_name" class="form-label">Họ và Tên</label><input type="text" class="form-control" id="profile-full_name" name="full_name" value="{{ current_user.full_name or '' }}" required></div>
+                <div class="row">
+                    <!-- Cột ảnh đại diện -->
+                    <div class="col-md-4 text-center mb-4">
+                        <img id="avatar-preview" 
+                            src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/default_avatar.png') }}"
+                            class="rounded-circle mb-3"
+                            width="150" height="150"
+                            style="object-fit: cover; border: 4px solid #dee2e6;">
+                        <br>
+                        <button type="button" id="change-avatar-btn" class="btn btn-outline-primary mt-2">
+                            <i class="fas fa-camera me-2"></i>Đổi ảnh
+                        </button>
+                    </div>
+
+                    <!-- Cột thông tin -->
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="profile-username" class="form-label">Tên đăng nhập</label>
+                                <input type="text" class="form-control" id="profile-username" name="username" value="{{ current_user.username }}" required>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3"><label for="profile-rank" class="form-label">Cấp bậc</label><input type="text" class="form-control" id="profile-rank" name="rank" value="{{ current_user.rank or '' }}" required></div>
-                                <div class="col-md-6 mb-3"><label for="profile-position" class="form-label">Chức vụ</label><input type="text" class="form-control" id="profile-position" name="position" value="{{ current_user.position or '' }}" required></div>
+                            <div class="col-md-6 mb-3">
+                                <label for="profile-full_name" class="form-label">Họ và Tên</label>
+                                <input type="text" class="form-control" id="profile-full_name" name="full_name" value="{{ current_user.full_name or '' }}" required>
                             </div>
-                            <div class="mb-3"><label for="profile-unit" class="form-label">Đơn vị</label><input type="text" class="form-control" id="profile-unit" name="unit" value="{{ current_user.unit or '' }}" required></div>
-                            <hr>
-                            <h6 class="text-muted">Đổi mật khẩu</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3"><label for="profile-new_password" class="form-label">Mật khẩu mới</label><input type="password" class="form-control" id="profile-new_password" name="new_password" placeholder="Để trống nếu không đổi" autocomplete="new-password"></div>
-                                <div class="col-md-6 mb-3"><label for="profile-confirm_password" class="form-label">Xác nhận mật khẩu</label><input type="password" class="form-control" id="profile-confirm_password" name="confirm_password" autocomplete="new-password"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="profile-rank" class="form-label">Cấp bậc</label>
+                                <input type="text" class="form-control" id="profile-rank" name="rank" value="{{ current_user.rank or '' }}" required>
                             </div>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu thay đổi</button>
-                        </form>
+                            <div class="col-md-6 mb-3">
+                                <label for="profile-position" class="form-label">Chức vụ</label>
+                                <input type="text" class="form-control" id="profile-position" name="position" value="{{ current_user.position or '' }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profile-unit" class="form-label">Đơn vị</label>
+                            <input type="text" class="form-control" id="profile-unit" name="unit" value="{{ current_user.unit or '' }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
                     </div>
                 </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                    <!-- Tab Đổi mật khẩu -->
+                    <div class="tab-pane fade" id="tab-password">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-4">
+                                <h5 class="card-title mb-4">Đổi mật khẩu</h5>
+                                <form id="change-password-form">
+                                    <div class="mb-3">
+                                        <label for="profile-new_password" class="form-label">Mật khẩu mới</label>
+                                        <input type="password" class="form-control" id="profile-new_password" name="new_password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="profile-confirm_password" class="form-label">Xác nhận mật khẩu</label>
+                                        <input type="password" class="form-control" id="profile-confirm_password" name="confirm_password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-lock me-2"></i>Đổi mật khẩu
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- tab-content -->
             </div>
         </div>
     </div>
