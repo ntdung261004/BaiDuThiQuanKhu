@@ -161,7 +161,7 @@
 
 {% block scripts %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stream.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
 <script src="{{ url_for('static', filename='js/che_do_1.js') }}"></script>
 
 <div class="modal fade" id="selectSoldierModal" tabindex="-1" aria-labelledby="selectSoldierModalLabel" aria-hidden="true">

@@ -109,9 +109,12 @@ def init_db(app):
             
         # Khởi tạo các bài tập mẫu nếu chưa có
         if not Exercise.query.all():
-            ex1 = Exercise(exercise_name='Phân đoạn 1 - Bắn bia số 4')
-            ex2 = Exercise(exercise_name='Phân đoạn 2 - Bắn bia số 7')
-            ex3 = Exercise(exercise_name='Phân đoạn 3 - Bắn bia số 8')
-            ex4 = Exercise(exercise_name='Tổng hợp 3 bia')
-            db.session.add_all([ex1, ex2, ex3, ex4])
+            ex1 = Exercise(exercise_name='STV Bài 1: Phân đoạn 1 - Bắn bia số 4')
+            ex2 = Exercise(exercise_name='STV Bài 1: Phân đoạn 2 - Bắn bia số 7')
+            ex3 = Exercise(exercise_name='STV Bài 1: Phân đoạn 3 - Bắn bia số 8')
+            ex4 = Exercise(exercise_name='STV Bài 1: Luyện tập tự do')
+            ex5 = Exercise(exercise_name='K54: Bắn bia 4b')
+            ex6 = Exercise(exercise_name='K54: Bắn bia 4c')
+            ex7 = Exercise(exercise_name='K54: Luyện tập tự do')
+            db.session.add_all([ex1, ex2, ex3, ex4, ex5, ex6, ex7])
             db.session.commit()
