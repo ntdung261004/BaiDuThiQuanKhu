@@ -2,27 +2,42 @@
 
 {% block title %}Báo cáo & Thống kê{% endblock %}
 
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">
-{% endblock %}
+
+
 
 {% block content %}
 <div class="d-flex" id="wrapper">
     {% include 'sidebar.html' %}
     <div id="page-content-wrapper" style="width: 85%;">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light py-4 px-4">
-            <h2 class="fs-2 m-0">
-                <i class="fas fa-chart-pie me-3"></i>Báo cáo & Thống kê
-            </h2>
-        </nav>
+        <nav id="topbar" class="navbar navbar-expand-lg py-3 px-5">
+  <div class="d-flex align-items-center">
+    <h2 class="fs-3 m-0">Báo cáo & Thống kê</h2>
+  </div>
+  <div class="ms-auto">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <img id="navbar-avatar" 
+               src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}" 
+               class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+          <span id="navbar-greeting">Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}</span>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
 
         <div class="container-fluid px-4 mt-4" 
              data-report-type="{{ report_type or 'none' }}" 
              data-report-id="{{ report_id or '0' }}">
             
-            <div class="card shadow-sm mb-4">
+            <div class="card bgcard shadow-sm mb-4 ">
                 <div class="card-body d-flex gap-3 align-items-center">
-                    <label for="report-type-select" class="form-label fw-bold mb-0">Xem báo cáo theo:</label>
+                    <label for="report-type-select" class="form-label fw-bold mb-0 w-25">Xem báo cáo theo:</label>
                     <select class="form-select w-auto" id="report-type-select">
                         <option value="session">Phiên tập</option>
                         <option value="soldier">Chiến sĩ</option>
@@ -34,7 +49,7 @@
             </div>
 
             <div id="report-container">
-                <h3 id="report-title" class="mb-3">Vui lòng chọn một mục để xem báo cáo</h3>
+                <h4 id="report-title" class="mb-3 fst-italic">Vui lòng chọn một mục để xem báo cáo</h4>
                 
                 <div class="row g-3 mb-4" id="kpi-cards-container">
                     </div>
@@ -56,6 +71,8 @@
 {% endblock %}
 
 {% block scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">
+
 <script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chartjs-plugin-datalabels.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/report.js') }}"></script>

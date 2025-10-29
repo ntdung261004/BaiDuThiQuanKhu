@@ -9,20 +9,121 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
     <style>
-        body {
-            background-color: #f8f9fa;
+        :root{
+            /* Xanh lá kiểu "bộ đội" */
+            --army: #2f6d2f;
+            --army-dark:#245523;
+            --army-50:#e9f2ea;
+        }
+        body{ background-color:#f8f9fa; }
+
+        /* Tiêu đề trang nghiêm ở ngoài, căn giữa trên màn hình */
+        .hero-title{
+            font-size: 25px;
+            position: fixed;
+            top: 25px; left: 0; right: 0;
+            text-align: center;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--army);
+            opacity: 0;
+            transform: translateY(-8px);
+            animation: heroFadeDown .9s ease forwards .15s;
+            padding: 0 12px;
+            z-index: 10;
+            user-select: none;
+        }
+        .hero-title .sub{
+            display:inline-block;
+            font-weight:800;
+            letter-spacing:.06em;
+            opacity:.9;
+        }
+        .hero-title .underline{
+            display:block;
+            width: 260px;
+            max-width: 70%;
+            height: 3px;
+            margin: 8px auto 0;
+            background: linear-gradient(90deg, transparent, var(--army), transparent);
+            border-radius: 999px;
+        }
+        @keyframes heroFadeDown{
+            to{ opacity:1; transform:translateY(0); }
+        }
+
+        /* Thay palette mặc định sang xanh lá */
+        .btn-primary{
+            background-color: var(--army);
+            border-color: var(--army);
+        }
+        .btn-primary:hover, .btn-primary:focus{
+            background-color: var(--army-dark);
+            border-color: var(--army-dark);
+        }
+        .btn-primary:active{
+            background-color: var(--army-dark) !important;
+            border-color: var(--army-dark) !important;
+        }
+        .text-primary{ color: var(--army) !important; }
+        a{ color: var(--army); }
+        a:hover{ color: var(--army-dark); }
+
+        .form-control:focus{
+            border-color: var(--army);
+            box-shadow: 0 0 0 .25rem rgba(47,109,47,.25);
+        }
+        .form-control, .form-floating {
+    border: 1px solid #bdbcbc !important;
+    border-radius: 6px;
+}
+        /* Hiệu ứng form hiện ra */
+        .card-appear{
+            border: 1px soild #245523;
+            opacity: 0;
+            transform: translateY(12px) scale(0.99);
+            transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1);
+        }
+        .card-appear.ready{
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Logo trong card */
+        .login-logo{
+            height: 64px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 0 rgba(0,0,0,.04));
+        }
+
+        /* Viền nhấn nhẹ cho card */
+        .card.army{
+            border: 1px solid rgba(47,109,47,.12) !important;
         }
     </style>
 </head>
 <body>
+
+<!-- TIÊU ĐỀ NGOÀI – TRANG NGHIÊM -->
+<div class="hero-title">
+    <div>Chào mừng đến với</div>
+    <div class="sub">Hệ thống huấn luyện bắn súng ứng dụng AI DA01</div>
+    <span class="underline"></span>
+</div>
+
 <div class="container">
     <div class="row justify-content-center align-items-center vh-100">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg border-0">
+        <div class="col-md-6 col-lg-5 mt-5">
+            <div class="card shadow-lg border-0 army card-appear">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
-                        <i class="fas fa-bullseye fa-3x text-primary"></i>
-                        <h1 class="h3 mt-3 mb-1 fw-bold">Đăng nhập hệ thống</h1>
+                        <!-- THAY ICON = LOGO HÌNH ẢNH -->
+                        <img src="{{ url_for('static', filename='image/favicon.png') }}"
+                             alt="Logo hệ thống AI DA01"
+                             class="login-logo mb-3">
+                        <h1 class="h3 mb-1 fw-bold">Đăng nhập hệ thống</h1>
                         <p class="text-muted">Vui lòng nhập thông tin của bạn.</p>
                     </div>
 
@@ -35,6 +136,7 @@
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
+
                     <form method="POST" action="{{ url_for('login') }}" novalidate>
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="username" name="username" placeholder="Tên người dùng" required>
@@ -53,11 +155,20 @@
                             <a href="{{ url_for('forgot_password') }}" class="text-muted small">Quên mật khẩu?</a>
                         </div>
                     </form>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+<script>
+    // Kích hoạt hiệu ứng xuất hiện cho form sau khi DOM sẵn sàng
+    document.addEventListener('DOMContentLoaded', function(){
+        const card = document.querySelector('.card-appear');
+        if(card){ requestAnimationFrame(() => card.classList.add('ready')); }
+    });
+</script>
 </body>
 </html>

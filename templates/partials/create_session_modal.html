@@ -5,33 +5,35 @@
                 <h5 class="modal-title" id="createSessionModalLabel">Tạo Phiên Tập Luyện Mới</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="background: #eeeeee;">
                 <form id="create-session-form">
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="session-name" class="form-label">Tên Phiên tập (Tùy chọn)</label>
                         <input type="text" class="form-control" id="session-name" placeholder="Ví dụ: Kiểm tra Quý 4">
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="exercise-type" class="form-label">Chọn Bài tập</label>
                         <select class="form-select" id="exercise-type" required>
                             </select>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Chọn Chiến sĩ tham gia</label>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="select-all-soldiers">
-                            <label class="form-check-label fw-bold" for="select-all-soldiers">
-                                Chọn tất cả
-                            </label>
-                        </div>
-                        <div id="soldier-checklist" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+    <label class="form-label mb-0">Chọn Chiến sĩ tham gia</label>
+    <div class="form-check d-flex align-items-center mb-0">
+        <input class="form-check-input me-2" type="checkbox" id="select-all-soldiers">
+        <label class="form-check-label fw-bold mb-0" for="select-all-soldiers">Chọn tất cả</label>
+    </div>
+</div>
+
+
+                        <div id="soldier-checklist" class="border rounded p-2" style="max-height: 200px; overflow-y: auto; background: #fff">
                             <p class="text-muted text-center">Đang tải danh sách...</p>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="background: #eeeeee;" >
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                 <button type="submit" form="create-session-form" class="btn btn-primary">Lưu Phiên tập</button>
             </div>

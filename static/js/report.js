@@ -156,37 +156,49 @@ document.addEventListener('DOMContentLoaded', function() {
         
         kpiContainer.innerHTML = `
             <div class="col-md-3">
-                <div class="card stat-card shadow-sm">
-                    <div class="card-body">
-                        <div class="stat-value text-primary">${stats.total_shots}</div>
-                        <div class="stat-label">Tổng phát bắn</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card shadow-sm" style="border-left-color: var(--bs-success);">
-                    <div class="card-body">
-                        <div class="stat-value text-success">${stats.avg_score}</div>
-                        <div class="stat-label">Điểm trung bình</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card shadow-sm" style="border-left-color: var(--bs-warning);">
-                    <div class="card-body">
-                        <div class="stat-value text-warning">${stats.hit_rate}%</div>
-                        <div class="stat-label">Tỷ lệ trúng</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card shadow-sm" style="border-left-color: var(--bs-info);">
-                    <div class="card-body">
-                        <div class="stat-value text-info">${reportType === 'session' ? data.soldiers_performance.length : stats.total_sessions}</div>
-                        <div class="stat-label">${reportType === 'session' ? 'Xạ thủ tham gia' : 'Phiên tham gia'}</div>
-                    </div>
-                </div>
-            </div>
+  <div class="card stat-card shadow-sm"> <!-- mặc định viền trái = danger -->
+    <div class="card-body">
+      <div class="stat-value text-danger">${stats.total_shots}</div>
+      <div class="stat-label">Tổng phát bắn</div>
+      <i class="fas fa-bullseye stat-bg-icon text-danger"></i>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="card stat-card shadow-sm" style="border-left-color: var(--bs-success);">
+    <div class="card-body">
+      <div class="stat-value text-success">${stats.avg_score}</div>
+      <div class="stat-label">Điểm trung bình</div>
+      <i class="fas fa-chart-line stat-bg-icon text-success"></i>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="card stat-card shadow-sm" style="border-left-color: var(--bs-warning);">
+    <div class="card-body">
+      <div class="stat-value text-warning">${stats.hit_rate}%</div>
+      <div class="stat-label">Tỷ lệ trúng</div>
+      <i class="fas fa-percentage stat-bg-icon text-warning"></i>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="card stat-card shadow-sm" style="border-left-color: var(--bs-info);">
+    <div class="card-body">
+      <div class="stat-value text-info">
+        ${reportType === 'session' ? data.soldiers_performance.length : stats.total_sessions}
+      </div>
+      <div class="stat-label">
+        ${reportType === 'session' ? 'Xạ thủ tham gia' : 'Phiên tham gia'}
+      </div>
+      <i class="fas fa-user-friends stat-bg-icon text-info"></i>
+    </div>
+  </div>
+</div>
+
         `;
     }
 
@@ -257,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tableHtml += '</tbody></table>';
         tableContainer.innerHTML = tableHtml;
     }
+
     /**
      * Vẽ biểu đồ chính
      */
@@ -264,91 +277,139 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Vẽ biểu đồ chính, có khả năng thay đổi dựa vào bộ lọc
      */
+    function hexToRgba(hex, a = 0.6) {
+  const h = hex.replace('#','');
+  const n = parseInt(h, 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
     function renderMainChart(data, reportType, exerciseFilter = 'all') {
-        const ctx = document.getElementById('main-chart').getContext('2d');
-        let chartConfig = {};
+  const ctx = document.getElementById('main-chart').getContext('2d');
+
+  // Palette kiểu “xanh → tím → hồng” (không dùng bootstrap)
+  const PALETTE = [
+     // light blue
+    { bg: 'rgba(128,106,255,0.85)', border: 'rgb(128,106,255)' }, // indigo
+    { bg: 'rgba(160,120,255,0.85)', border: 'rgb(160,120,255)' }, // violet
+    { bg: 'rgba(99,155,255,0.85)',  border: 'rgb(99,155,255)'  },
+    { bg: 'rgba(187,128,255,0.85)', border: 'rgb(187,128,255)' }, // purple
+    { bg: 'rgba(236,105,197,0.85)', border: 'rgb(236,105,197)' }, // pink
+    { bg: 'rgba(41,182,246,0.85)',  border: 'rgb(41,182,246)'  }, // cyan
+  ];
+  const bgColors = (n) => Array.from({length: n}, (_, i) => PALETTE[i % PALETTE.length].bg);
+  const brColors = (n) => Array.from({length: n}, (_, i) => PALETTE[i % PALETTE.length].border);
+
+  if (mainChart) mainChart.destroy();
+  let chartConfig = {};
+
 
         if (mainChart) {
             mainChart.destroy(); // Hủy biểu đồ cũ nếu có
         }
 
         if (reportType === 'session') {
-            // --- Vẽ biểu đồ cho Báo cáo Phiên tập (giữ nguyên) ---
-            chartConfig = {
-                type: 'bar',
-                data: {
-                    labels: data.soldiers_performance.map(s => `${s.rank} ${s.name}`),
-                    datasets: [{
-                        label: 'Điểm trung bình',
-                        data: data.soldiers_performance.map(s => s.avg_score),
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: { y: { beginAtZero: true, max: 10 } },
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        title: { display: true, text: 'So sánh Điểm trung bình các Xạ thủ' },
-                        datalabels: {
-                            anchor: 'end', align: 'top', color: '#495057',
-                            font: { weight: 'bold' },
-                            formatter: (value) => Math.round(value * 10) / 10
-                        }
-                    }
-                }
-            };
+            // labels:
+const labels = data.soldiers_performance.map(s => `${s.rank} ${s.name}`);
+const values = data.soldiers_performance.map(s => s.avg_score);
+
+chartConfig = {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Điểm trung bình',
+      data: values,
+      backgroundColor: bgColors(values.length),
+      borderColor: brColors(values.length),
+      borderWidth: 1.5
+    }]
+  },
+  options: {
+    scales: { y: { beginAtZero: true, max: 10 } },
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'SO SÁNH ĐIỂM TRUNG BÌNH CÁC XẠ THỦ' },
+      datalabels: {
+        anchor: 'end', align: 'top', color: '#444',
+        font: { weight: 'bold' },
+        formatter: (v) => Math.round(v * 10) / 10
+      }
+    }
+  }
+};
+
         } else { // reportType === 'soldier'
             // --- LOGIC MỚI: Vẽ biểu đồ cho Báo cáo Chiến sĩ dựa vào bộ lọc ---
             if (exerciseFilter === 'all') {
-                // Nếu chọn "Tất cả", vẽ biểu đồ cột so sánh các bài tập
-                chartConfig = {
-                    type: 'bar',
-                    data: {
-                        labels: data.performance_by_exercise.map(e => e.exercise_name),
-                        datasets: [{
-                            label: 'Điểm trung bình',
-                            data: data.performance_by_exercise.map(e => e.avg_score),
-                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: { y: { beginAtZero: true, max: 10 } },
-                        responsive: true,
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: true, text: 'So sánh Điểm trung bình theo Bài tập' }
-                        }
-                    }
-                };
+                const labels = data.performance_by_exercise.map(e => e.exercise_name);
+const values = data.performance_by_exercise.map(e => e.avg_score);
+
+chartConfig = {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Điểm trung bình',
+      data: values,
+      backgroundColor: bgColors(values.length),
+      borderColor: brColors(values.length),
+      borderWidth: 1.5
+    }]
+  },
+  options: {
+    scales: { y: { beginAtZero: true, max: 10 } },
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'SO SÁNH ĐIỂM TRUNG BÌNH THEO BÀI TẬP' }
+    }
+  }
+};
+
             } else {
-                // Nếu chọn 1 bài tập cụ thể, vẽ biểu đồ đường thể hiện tiến độ
-                const filteredSessions = data.sessions_performance.filter(s => s.exercise_name === exerciseFilter);
-                chartConfig = {
-                    type: 'line',
-                    data: {
-                        labels: filteredSessions.map(s => s.session_name).reverse(),
-                        datasets: [{
-                            label: 'Điểm trung bình',
-                            data: filteredSessions.map(s => s.avg_score).reverse(),
-                            fill: false,
-                            borderColor: 'rgb(255, 99, 132)',
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        scales: { y: { beginAtZero: true, max: 10 } },
-                        responsive: true,
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: true, text: `Tiến độ bài tập "${exerciseFilter}"` }
-                        }
-                    }
-                };
+                // Nếu chọn 1 bài tập cụ thể, vẽ BIỂU ĐỒ CỘT thể hiện tiến độ theo các phiên
+const filteredSessions = data.sessions_performance.filter(
+  s => s.exercise_name === exerciseFilter
+);
+
+const labels = filteredSessions.map(s => s.session_name).reverse();
+const values = filteredSessions.map(s => s.avg_score).reverse();
+
+// Bảng màu (có thể thay/ mở rộng)
+const palette = ['#845ef7','#e599f7','#f783ac','#4dabf7','#ffa94d','#51cf66','#63e6be','#15aabf'];
+const backgroundColor = values.map((_, i) => hexToRgba(palette[i % palette.length], 0.6));
+const borderColor     = values.map((_, i) => palette[i % palette.length]);
+
+chartConfig = {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Điểm trung bình',
+      data: values,
+      backgroundColor,
+      borderColor,
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: { y: { beginAtZero: true, max: 10 } },
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: `Thống kê điểm theo các phiên – "${exerciseFilter}"` },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        color: '#495057',
+        font: { weight: 'bold' },
+        formatter: v => Math.round(v * 10) / 10
+      }
+    }
+  }
+};
+
             }
         }
         mainChart = new Chart(ctx, chartConfig);
@@ -447,13 +508,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (reportType === 'session' && data.status !== 'COMPLETED') {
                 // Xác định thông báo dựa trên trạng thái
                 const statusText = data.status === 'IN_PROGRESS' 
-                    ? 'đang huấn luyện' 
-                    : 'chưa bắt đầu';
+                    ? 'Đang huấn luyện' 
+                    : 'Chưa bắt đầu';
                 
                 // Hiển thị thông báo và dừng hàm tại đây
                 reportContainer.innerHTML = `
                     <div class="text-center p-5">
-                        <i class="fas fa-info-circle fa-4x text-info mb-4"></i>
+                        <i class="fas fa-info-circle fa-4x text-warning mb-4"></i>
                         <h3 class="mb-3">Phiên tập này chưa kết thúc</h3>
                         <p class="lead text-muted">Báo cáo chi tiết sẽ có sẵn sau khi phiên tập được đánh dấu là "Đã huấn luyện".</p>
                         <p class="text-muted">Trạng thái hiện tại: <strong>${statusText}</strong></p>
@@ -480,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row g-3">
                     <div class="col-12">
                         <div class="card shadow-sm h-100">
-                            <div class="card-header fw-bold" id="table-title"></div>
+                            <div class="card-header fw-bold" id="table-title" style="font-size: x-large;"></div>
                             <div class="card-body" id="details-table-container"></div>
                         </div>
                     </div>

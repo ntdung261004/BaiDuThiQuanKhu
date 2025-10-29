@@ -1,24 +1,221 @@
-<div class="bg-dark text-white p-4" id="sidebar-wrapper" style="width: 15%;">
-    <div class="sidebar-heading fs-4 fw-bold text-center border-bottom pb-3 mb-4">Hệ thống Huấn luyện</div>
-    <div class="list-group list-group-flush my-3">
-        <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0 fw-bold">
-            <i class="fas fa-tachometer-alt me-2"></i> Trang chủ
-        </a>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sidebar</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
 
-        <a href="{{ url_for('livestream') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0">
-            <i class="fas fa-video me-2"></i>Hiệu chỉnh
-        </a>
+  <style>
+    :root{
+      /* Tông màu “bộ đội” + nhấn vàng */
+      --army-light: #327532;   /* sáng hơn (đầu sidebar) */
+      --army:       #2f6d2f;   /* xanh chuẩn */
+      --army-dark:  #1d3c1d;   /* xanh đậm (menu dưới) */
+      --accent:     #d6b25e;   /* vàng nhấn (active) */
+      --sidebar-w:  15%;
+    }
 
-        <a href="{{ url_for('training') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0">
-            <i class="fas fa-bullseye me-2"></i> Tập luyện
-        </a>
+    /* Khung sidebar chia 2 phần + footer */
+    #sidebar-wrapper{
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--army-dark); /* menu nền đậm */
+      color: #fff;
+      z-index: 1030;
+    }
+    /* Logo trong phần đầu sidebar */
+#sidebar-header .sidebar-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+}
+#sidebar-header span:first-of-type {
+  margin-bottom: 3px;
+}
+#sidebar-header .logo-img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  
+}
 
-        <a href="{{ url_for('report') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0">
-            <i class="fas fa-chart-line me-2"></i> Báo cáo
-        </a>
 
-        <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0">
-            <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
-        </a>
+    /* Phần tiêu đề: nền xanh nhạt hơn menu */
+    #sidebar-header{
+      background: var(--army-light);
+      padding: 20px 16px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      font-weight: 800;
+      line-height: 1.2;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,.18);
+    }
+    #sidebar-header span{ display:block; }
+
+    /* Vùng menu chiếm phần còn lại */
+    #sidebar-menu{
+      flex: 1 1 auto;
+      padding: 16px;
+      overflow-y: auto; /* nếu dài thì cuộn riêng */
+      background: var(--army-dark);
+    }
+
+    /* Item menu */
+    #sidebar-menu .list-group-item{
+      background: transparent;
+      color: #f8f9fa;
+      border: none;
+      transition: background-color .2s ease, color .2s ease, padding-left .2s ease, box-shadow .2s ease;
+      border-radius: .5rem;
+      margin: 2px 0;
+      font-size: 1rem;       /* đồng nhất cỡ chữ */
+      font-weight: 500;      /* mặc định vừa phải */
+      padding: .65rem .75rem;
+    }
+    /* Hover: sáng nhẹ */
+    #sidebar-menu .list-group-item:hover{
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      padding-left: .95rem;
+    }
+    /* Active: vàng nhấn – loại bỏ xanh dương mặc định */
+    #sidebar-menu .list-group-item.active,
+    #sidebar-menu .list-group-item:focus,
+    #sidebar-menu .list-group-item:active{
+      background: var(--accent) !important;
+      color: #1b2b1b !important; /* chữ xanh đậm cho tương phản tốt */
+      box-shadow: 0 0 0 1px rgba(0,0,0,.08) inset;
+      font-weight: 700;
+      padding-left: .95rem;
+    }
+
+    /* Icon đồng bộ màu */
+    #sidebar-menu .list-group-item i{
+      width: 20px; text-align:center;
+      color: #cfe7cf !important;
+      transition: color .2s ease;
+    }
+    #sidebar-menu .list-group-item:hover i{ color:#fff; }
+    #sidebar-menu .list-group-item.active i{ color:#1b2b1b; }
+
+    /* Footer */
+    #sidebar-footer{
+      padding: 10px 16px 14px;
+      font-size: .85rem;
+      color: rgba(255,255,255,.8);
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: var(--army-dark);
+    }
+
+    /* Đẩy nội dung trang sang phải */
+    #page-content-wrapper, .content-wrapper, main{
+      margin-left: var(--sidebar-w);
+    }
+   #sidebar-menu .list-group-item:hover {
+    box-shadow: 0 0 6px rgba(255,255,255,0.15) inset;
+  }
+
+  /* 🔹 Ripple effect (gợn sóng khi click) */
+  #sidebar-menu .list-group-item {
+    position: relative;
+    overflow: hidden; /* để ripple không tràn ra ngoài */
+  }
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-animation .6s linear;
+    background-color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+  }
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  // 🔸 Thêm ripple động khi click
+  document.addEventListener("DOMContentLoaded", () => {
+    const items = document.querySelectorAll("#sidebar-menu .list-group-item");
+    items.forEach(item => {
+      item.addEventListener("click", function(e) {
+        const ripple = document.createElement("span");
+        ripple.classList.add("ripple");
+        this.appendChild(ripple);
+
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + "px";
+        ripple.style.left = e.clientX - rect.left - size / 2 + "px";
+        ripple.style.top = e.clientY - rect.top - size / 2 + "px";
+
+        ripple.addEventListener("animationend", () => ripple.remove());
+      });
+    });
+  });
+</script>
+</head>
+
+<body>
+  <!-- SIDEBAR CỐ ĐỊNH -->
+  <aside id="sidebar-wrapper">
+    
+    <!-- Phần tiêu đề (sáng hơn) -->
+    <div id="sidebar-header" class="sidebar-heading fs-4 fw-bold">
+        <div class="sidebar-logo mb-2">
+            <img src="{{ url_for('static', filename='image/favicon.png') }}" alt="Logo" class="logo-img">
+        </div>
+      <span>Hệ thống</span>
+      <span>Huấn luyện</span>
     </div>
-</div>
+
+    <!-- Phần menu (đậm hơn) -->
+    <div id="sidebar-menu">
+      <div class="list-group list-group-flush my-2">
+        <a href="{{ url_for('index') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='index' %}active{% endif %}">
+          <i class="fas fa-tachometer-alt me-2"></i> Trang chủ
+        </a>
+
+        <a href="{{ url_for('livestream') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='livestream' %}active{% endif %}">
+          <i class="fas fa-video me-2"></i> Hiệu chỉnh
+        </a>
+
+        <a href="{{ url_for('training') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='training' %}active{% endif %}">
+          <i class="fas fa-bullseye me-2"></i> Tập luyện
+        </a>
+
+        <a href="{{ url_for('report') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='report' or request.endpoint=='report_page' %}active{% endif %}">
+          <i class="fas fa-chart-line me-2"></i> Báo cáo
+        </a>
+
+        <a href="{{ url_for('list_page') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='list_page' %}active{% endif %}">
+          <i class="fas fa-list me-2"></i> Danh sách
+        </a>
+
+        <a href="{{ url_for('logout') }}"
+           class="list-group-item list-group-item-action">
+          <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer dưới chân sidebar -->
+    <div id="sidebar-footer" class="text-center">
+      &copy; 2025 <strong>Nguyễn Thanh Tùng</strong> • Hệ thống huấn luyện
+    </div>
+  </aside>
+</body>

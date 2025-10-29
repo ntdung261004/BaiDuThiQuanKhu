@@ -343,6 +343,10 @@ def forgot_password():
             flash('Tên người dùng hoặc Mã khôi phục không chính xác.', 'danger')
 
     return render_template('forgot_password.html')
+@app.route("/list", endpoint="list_page")
+@login_required
+def list_page():
+    return render_template("list.html")
 
 @app.route('/logout')
 @login_required

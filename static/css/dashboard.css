@@ -66,12 +66,14 @@ h3.fs-4, h3.fs-3 {
 
 /* Modal thêm/sửa chiến sĩ */
 .modal-content {
+    
+    border: 2px solid #0089ac;
     border-radius: 10px;
     overflow: hidden;
 }
 
 .modal-header {
-    background-color: #0d6efd;
+    background-color: #0089ac;
     color: white;
 }
 
@@ -80,14 +82,14 @@ h3.fs-4, h3.fs-3 {
 }
 
 .modal-footer .btn-primary {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background-color: #00a8c2;
+    border-color: #027e91;
     font-weight: bold;
 }
 
 .modal-footer .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
+    background-color: #00a8c2;
+    border-color: #027e91;
 }
 
 /* Nút "Thêm chiến sĩ" */
@@ -97,4 +99,52 @@ h3.fs-4, h3.fs-3 {
 
 .btn-primary {
     font-weight: 600;
+}
+.bgcard{
+    background: linear-gradient(180deg, #ffffff, #f7fbf7);
+    border: 1px solid rgba(47,109,47,.15);
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+}
+.bgcard1{
+    background: linear-gradient(180deg, #ffffff, #f7fbf7);
+    border: 2px solid #327532;
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+}
+
+.form-check-input {
+  border: 2px solid #198754 !important;
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+}
+.form-check-input:hover {
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.2);
+}
+.form-check-input:checked {
+  background-color: #198754 !important;
+  border-color: #198754 !important;
+}
+
+/* viền & glow khi focus */
+.form-select:focus {
+  border-color: #2f6d2f;
+  box-shadow: 0 0 0 0.2rem rgba(47,109,47,.2);
+  outline:0;
+}
+.form-control:focus {
+  border-color: #2f6d2f;
+  box-shadow: 0 0 0 0.2rem rgba(47,109,47,.2);
+  outline:0;
+}
+#sessions-list.center-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;  /* chiếm phần giữa viewport */
+}
+.dropdown-item:hover{
+    background-color:#ffc107;
+}
+.dropdown-item:active{
+    background-color:#ffc107;
 }

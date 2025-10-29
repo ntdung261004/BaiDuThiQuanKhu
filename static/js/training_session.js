@@ -1,3 +1,165 @@
+// ==== GLOBAL TOAST (TOP-CENTER, SLIDE DOWN) ====
+
+  // ==== GLOBAL TOAST (TOP-CENTER, SLIDE DOWN) ====
+window.showToast = function (message = "Thao tác thành công!", type = "success") {
+  // Tạo container nếu chưa có
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    Object.assign(container.style, {
+  position: "fixed",
+  top: "20px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 1080,
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  alignItems: "center",
+  pointerEvents: "none" // để không chặn click dưới
+});
+
+    document.body.appendChild(container);
+  }
+
+  // Màu theo loại
+  let color = "#2f6d2f"; // xanh lá bộ đội
+  if (type === "error") color = "#d9534f";
+  else if (type === "warn") color = "#f0ad4e";
+  else if (type === "info") color = "#5bc0de";
+
+  // Toast wrapper
+  const toast = document.createElement("div");
+  Object.assign(toast.style, {
+    background: "#fff",
+    color: "#212529",
+    borderRadius: "12px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    padding: "12px 14px",
+    minWidth: "280px",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    opacity: "0",
+transform: "translateY(-20px)",
+transition: "opacity .35s ease, transform .35s ease"
+
+  });
+
+  // Icon tròn xanh với dấu check (SVG inline)
+  const iconWrap = document.createElement("div");
+  iconWrap.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="9" fill="${color}"></circle>
+      <path d="M6 10.3l2.3 2.5L14 7.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+
+  // Nội dung
+  const msg = document.createElement("div");
+  msg.textContent = message;
+  Object.assign(msg.style, {
+    flex: "1",
+    fontSize: "15px"
+  });
+
+  // Nút đóng
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "×";
+  Object.assign(closeBtn.style, {
+    background: "transparent",
+    border: "none",
+    fontSize: "18px",
+    color: "#777",
+    cursor: "pointer",
+    lineHeight: "1"
+  });
+  closeBtn.onmouseenter = () => (closeBtn.style.color = "#000");
+  closeBtn.onmouseleave = () => (closeBtn.style.color = "#777");
+  closeBtn.onclick = () => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(12px)";
+    setTimeout(() => toast.remove(), 250);
+  };
+
+  toast.appendChild(iconWrap);
+  toast.appendChild(msg);
+  toast.appendChild(closeBtn);
+  container.appendChild(toast);
+
+  // Hiệu ứng xuất hiện
+  requestAnimationFrame(() => {
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+  });
+
+  // Tự ẩn sau 3 giây
+  setTimeout(() => {
+    if (!toast.isConnected) return;
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(12px)";
+    setTimeout(() => toast.remove(), 250);
+  }, 3000);}
+
+
+// ==== GLOBAL CENTER CONFIRM MODAL (Bootstrap) ====
+if (!window.confirmCenter) {
+  window.confirmCenter = function ({
+    title = "Xác nhận",
+    message = "Bạn có chắc chắn muốn thực hiện thao tác này không?",
+    confirmText = "Đồng ý",
+    cancelText = "Hủy",
+    type = "danger" // primary | warning | danger | info | success
+  } = {}) {
+    return new Promise((resolve) => {
+      const modalEl = document.createElement("div");
+      modalEl.className = "modal fade";
+      modalEl.tabIndex = -1;
+      modalEl.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow">
+            <div class="modal-header ">
+              <h5 class="modal-title">${title}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body pt-3">
+              <div class="d-flex align-items-start">
+                <div class="me-3">
+                  <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                        style="width:40px;height:40px;background: var(--bs-${type}-subtle, #f8d7da);">
+                    <i class="fas fa-exclamation-triangle"
+                       style="color: var(--bs-${type}, #dc3545);"></i>
+                  </span>
+                </div>
+                <div class="flex-grow-1">
+                  <p class="mb-0">${message}</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">${cancelText}</button>
+              <button type="button" class="btn btn-${type}" id="__confirmCenterOk">${confirmText}</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modalEl);
+      const bsModal = new bootstrap.Modal(modalEl, { backdrop: "static", keyboard: true });
+
+      modalEl.querySelector("#__confirmCenterOk").addEventListener("click", () => {
+        resolve(true);
+        bsModal.hide();
+      });
+      modalEl.addEventListener("hidden.bs.modal", () => {
+        resolve(false);
+        modalEl.remove();
+      });
+      bsModal.show();
+    });
+  };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // --- KHAI BÁO BIẾN ---
     const createSessionForm = document.getElementById('create-session-form');
@@ -158,93 +320,86 @@ document.addEventListener('DOMContentLoaded', function() {
             // ============================
 
             if (sessions.length === 0) {
-                sessionsList.innerHTML = `
-                    <div class="col-12 text-center mt-5" style="min-height: 50vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
-                        <h4>Không có phiên tập nào phù hợp</h4>
-                        <p class="text-muted">Hãy thử thay đổi bộ lọc hoặc tạo một phiên tập mới.</p>
-                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createSessionModal">
-                            <i class="fas fa-plus me-2"></i> Tạo Phiên Mới
-                        </button>
-                    </div>
-                `;
-            } else {
-                sessions.forEach(session => {
-                    let topBorderColor, statusText, actionMenuItemHtml, statusBgColor;
+  sessionsList.classList.add('center-empty');
+  sessionsList.innerHTML = `
+    <div class="text-center">
+      <div class="d-flex flex-column align-items-center justify-content-center">
+        <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+        <h4>Không có phiên tập nào phù hợp</h4>
+        <p class="text-muted">Hãy thử thay đổi bộ lọc hoặc tạo một phiên tập mới.</p>
+        <button class="btn btn-warning mt-3" data-bs-toggle="modal" data-bs-target="#createSessionModal">
+          <i class="fas fa-plus me-2"></i> Tạo Phiên Mới
+        </button>
+      </div>
+    </div>
+  `;
+} else {
+  sessionsList.classList.remove('center-empty');
+  sessionsList.innerHTML = ''; // dọn sạch trước khi render mới
 
-                    switch (session.status) {
-                        case 'IN_PROGRESS':
-                            topBorderColor = 'var(--bs-success)';
-                            statusText = 'Đang huấn luyện';
-                            statusBgColor = 'bg-success-subtle text-success-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-arrow-right fa-fw me-2"></i> Tiếp tục</a></li>`;
-                            break;
-                        case 'COMPLETED':
-                            topBorderColor = 'var(--bs-primary)';
-                            statusText = 'Đã huấn luyện';
-                            statusBgColor = 'bg-primary-subtle text-primary-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/report/session/${session.id}"><i class="fas fa-chart-bar fa-fw me-2"></i> Xem báo cáo</a></li>`;
-                            break;
-                        case 'NOT_STARTED':
-                        default:
-                            topBorderColor = 'var(--bs-danger)';
-                            statusText = 'Chưa huấn luyện';
-                            statusBgColor = 'bg-danger-subtle text-danger-emphasis';
-                            actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
-                            break;
-                    }
-                    // Logic để định dạng ngày tháng
-                    const date_created = new Date(session.date_created);
-                    const formattedDate = `${date_created.getDate().toString().padStart(2, '0')}/${(date_created.getMonth() + 1).toString().padStart(2, '0')}/${date_created.getFullYear()}`;
-                    // ===================================
-                    const cardHtml = `
-                        <div class="col">
-                            <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid ${topBorderColor};">
-                                
-                                <div class="card-header ${statusBgColor} py-2 text-center small fw-bold">
-                                    ${statusText}
-                                </div>
+  sessions.forEach(session => {
+    let topBorderColor, statusText, actionMenuItemHtml, statusBgColor;
 
-                                <div class="card-body" p-3>
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div class="flex-grow-1">
-                                            <h5 class="card-title mb-1">${session.session_name || `Phiên Tập #${session.id}`}</h5>
-                                            <hr class="card-divider my-2">
-                                            <p class="card-text text-muted small mb-0">
-                                                Bài tập: <strong>${session.exercise_name}</strong>
-                                            </p>
+    switch (session.status) {
+      case 'IN_PROGRESS':
+        topBorderColor = 'var(--bs-success)';
+        statusText = 'Đang huấn luyện';
+        statusBgColor = 'bg-success-subtle text-success-emphasis';
+        actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-arrow-right fa-fw me-2"></i> Tiếp tục</a></li>`;
+        break;
+      case 'COMPLETED':
+        topBorderColor = 'var(--bs-primary)';
+        statusText = 'Đã huấn luyện';
+        statusBgColor = 'bg-primary-subtle text-primary-emphasis';
+        actionMenuItemHtml = `<li><a class="dropdown-item" href="/report/session/${session.id}"><i class="fas fa-chart-bar fa-fw me-2"></i> Xem báo cáo</a></li>`;
+        break;
+      case 'NOT_STARTED':
+      default:
+        topBorderColor = 'var(--bs-danger)';
+        statusText = 'Chưa huấn luyện';
+        statusBgColor = 'bg-danger-subtle text-danger-emphasis';
+        actionMenuItemHtml = `<li><a class="dropdown-item" href="/session/${session.id}"><i class="fas fa-play fa-fw me-2"></i> Bắt đầu</a></li>`;
+        break;
+    }
 
-                                            <div class="d-flex justify-content-between small text-muted mb-3">
-                                                <span title="Ngày tạo">
-                                                    <i class="far fa-calendar-alt me-1"></i>
-                                                    ${formattedDate}
-                                                </span>
-                                                <span title="Số chiến sĩ đã tập">
-                                                    <i class="fas fa-check-circle me-1"></i>
-                                                    Đã tập: <strong>${session.completed_soldier_count}/${session.total_soldier_count}</strong>
-                                                </span>
-                                            </div>
+    const date_created = new Date(session.date_created);
+    const formattedDate = `${date_created.getDate().toString().padStart(2, '0')}/${(date_created.getMonth() + 1).toString().padStart(2, '0')}/${date_created.getFullYear()}`;
 
-                                        </div>
-                                        <div class="dropdown" style="position: relative; z-index: 2;">
-                                            <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="fas fa-ellipsis-v text-muted"></i>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                ${actionMenuItemHtml}
-                                                <li><a class="dropdown-item edit-session-btn" href="#" data-session-id="${session.id}" data-session-name="${session.session_name || `Phiên Tập #${session.id}`}"><i class="fas fa-edit fa-fw me-2"></i> Sửa tên</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item text-danger delete-session-btn" href="#" data-session-id="${session.id}"><i class="fas fa-trash-alt fa-fw me-2"></i> Xóa phiên</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    sessionsList.insertAdjacentHTML('beforeend', cardHtml);
-                });
-            }
+    const cardHtml = `
+      <div class="col">
+        <div class="card h-100 shadow-sm card-session" style="border-top: 14px solid ${topBorderColor};">
+          <div class="card-header ${statusBgColor} py-2 text-center small fw-bold">${statusText}</div>
+          <div class="card-body" p-3>
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <h5 class="card-title mb-1">${session.session_name || `Phiên Tập #${session.id}`}</h5>
+                <hr class="card-divider my-2">
+                <p class="card-text text-muted small mb-0">Bài tập: <strong>${session.exercise_name}</strong></p>
+                <div class="d-flex justify-content-between small text-muted mb-3">
+                  <span><i class="far fa-calendar-alt me-1"></i>${formattedDate}</span>
+                  <span><i class="fas fa-check-circle me-1"></i>Đã tập: <strong>${session.completed_soldier_count}/${session.total_soldier_count}</strong></span>
+                </div>
+              </div>
+              <div class="dropdown" style="position: relative; z-index: 2;">
+                <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-ellipsis-v text-muted"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  ${actionMenuItemHtml}
+                  <li><a class="dropdown-item edit-session-btn" href="#" data-session-id="${session.id}" data-session-name="${session.session_name || `Phiên Tập #${session.id}`}"><i class="fas fa-edit fa-fw me-2"></i> Sửa tên</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger delete-session-btn" href="#" data-session-id="${session.id}"><i class="fas fa-trash-alt fa-fw me-2"></i> Xóa phiên</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    sessionsList.insertAdjacentHTML('beforeend', cardHtml);
+  });
+}
+
         } catch (error) {
             console.error('Lỗi khi tải phiên tập:', error);
 
@@ -261,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const sessionId = document.getElementById('edit-session-id').value;
         const newSessionName = document.getElementById('edit-session-name').value;
         if (!newSessionName) {
-            alert('Tên phiên không được để trống.');
+            showToast('Tên phiên không được để trống.');
             return;
         }
         try {
@@ -274,35 +429,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 const editModal = bootstrap.Modal.getInstance(document.getElementById('editSessionModal'));
                 editModal.hide();
                 loadSessions();
-                alert('Cập nhật thành công!');
+                showToast('Cập nhật thành công!');
             } else {
-                alert('Có lỗi xảy ra khi cập nhật.');
+                showToast('Có lỗi xảy ra khi cập nhật.','danger');
             }
         } catch (error) {
             console.error('Lỗi khi cập nhật:', error);
-            alert('Lỗi mạng, không thể cập nhật.');
+            showToast('Lỗi mạng, không thể cập nhật.','danger');
         }
     });
 
     sessionsList.addEventListener('click', async function(e) {
         if (e.target.closest('.delete-session-btn')) {
-            e.preventDefault();
-            const button = e.target.closest('.delete-session-btn');
-            const sessionId = button.dataset.sessionId;
-            if (confirm(`Bạn có chắc chắn muốn xóa Phiên Tập #${sessionId} không?`)) {
-                try {
-                    const response = await fetch(`/api/training_sessions/${sessionId}`, { method: 'DELETE' });
-                    if (response.ok) {
-                        loadSessions(); 
-                    } else {
-                        alert('Có lỗi xảy ra khi xóa phiên tập.');
-                    }
-                } catch (error) {
-                    console.error('Lỗi khi xóa phiên tập:', error);
-                    alert('Lỗi mạng, không thể xóa.');
-                }
-            }
-        }
+  e.preventDefault();
+  const button = e.target.closest('.delete-session-btn');
+  const sessionId = button.dataset.sessionId;
+
+  const ok = await window.confirmCenter({
+    title: "Xác nhận xoá",
+    message: `Thao tác này sẽ xoá vĩnh viễn Phiên Tập #${sessionId}. Bạn có chắc chắn không?`,
+    confirmText: "Xoá ngay",
+    cancelText: "Hủy",
+    type: "danger"
+  });
+  if (!ok) return;
+
+  try {
+    const response = await fetch(`/api/training_sessions/${sessionId}`, { method: 'DELETE' });
+    if (response.ok) {
+      await loadSessions();
+      showToast('Đã xoá phiên tập!', 'success');
+    } else {
+      showToast('Có lỗi xảy ra khi xoá phiên tập.', 'danger');
+    }
+  } catch (error) {
+    console.error('Lỗi khi xóa phiên tập:', error);
+    showToast('Lỗi mạng, không thể xoá.', 'danger');
+  }
+}
+
         
         if (e.target.closest('.edit-session-btn')) {
             e.preventDefault();
@@ -312,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const editModal = new bootstrap.Modal(document.getElementById('editSessionModal'));
             document.getElementById('edit-session-id').value = sessionId;
             document.getElementById('edit-session-name').value = sessionName;
-            document.getElementById('editSessionModalLabel').textContent = `Sửa Tên cho Phiên Tập #${sessionId}`;
+            document.getElementById('editSessionModalLabel').textContent = `Sửa Tên Cho Phiên Tập #${sessionId}`;
             editModal.show();
         }
     });
@@ -353,11 +518,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadSessions();
                 showToast('Tạo phiên tập thành công!', 'success');
             } else {
-                alert('Có lỗi xảy ra khi tạo phiên tập.');
+                showToast('Có lỗi xảy ra khi tạo phiên tập.','danger');
             }
         } catch (error) {
             console.error('Lỗi khi tạo phiên tập:', error);
-            alert('Lỗi mạng. Vui lòng thử lại.');
+            showToast('Lỗi mạng. Vui lòng thử lại.','danger');
         }
     });
 

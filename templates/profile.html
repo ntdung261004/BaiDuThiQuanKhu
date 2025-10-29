@@ -4,32 +4,32 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <nav class="navbar navbar-light bg-light py-3 px-4 shadow-sm">
+    <nav id="topbar-profile" class="navbar navbar-expand-lg py-3 px-4 shadow-sm">
         <div class="d-flex align-items-center">
-            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-3" title="Quay về trang chủ">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-warning me-3" title="Quay về trang chủ">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <h2 class="fs-2 m-0">Hồ sơ cá nhân</h2>
+            <h2 class="fs-3 m-0">Hồ sơ cá nhân</h2>
         </div>
     </nav>
 
-    <div class="container py-4 px-4">
-        <div class="row my-4 justify-content-center d-flex align-items-stretch">
+    <div class="container px-4">
+        <div class="row my-2 justify-content-center d-flex align-items-stretch">
             
-            <div class="col-lg-4 col-md-12 mb-4">
+            <div class="col-lg-4 col-md-12">
                 <div class="card shadow-sm h-100">
                     <div class="card-body text-center p-4 d-flex flex-column justify-content-center">
-                        <h5 class="card-title mb-4">Ảnh đại diện</h5>
+                        <h5 class="card-title mb-4 fw-bold">Ảnh đại diện</h5>
                         
                         <div class="avatar-upload-container mb-3 d-flex flex-column align-items-center">
                             <img id="avatar-preview" 
-                                src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/default_avatar.png') }}"
+                                src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}"
                                  class="rounded-circle mb-3" 
                                  width="200" height="200" 
                                  style="object-fit: cover; border: 5px solid #dee2e6;">
                             
-                            <button type="button" id="change-avatar-btn" class="btn btn-outline-primary">
-                                <i class="fas fa-camera me-2"></i>Đổi ảnh
+                            <button type="button" id="change-avatar-btn" class="btn btn-outline-warning">
+                                <i class="fas fa-camera me-2 "></i>Đổi ảnh
                             </button>
                         </div>
                         
@@ -39,10 +39,10 @@
                 </div>
             </div>
 
-            <div class="col-lg-8 col-md-12 mb-4">
+            <div class="col-lg-8 col-md-12">
                 <div class="card shadow-sm h-100">
-                    <div class="card-body p-4">
-                        <h5 class="card-title mb-4">Chỉnh sửa thông tin</h5>
+                    <div class="card-body p-2">
+                        <h5 class="card-title mb-4 fw-bold">Chỉnh sửa thông tin</h5>
                         <form id="edit-profile-form" enctype="multipart/form-data">
                             <input type="file" id="avatar-input" name="avatar" class="d-none" accept="image/*">
 
@@ -56,7 +56,7 @@
                             </div>
                             <div class="mb-3"><label for="profile-unit" class="form-label">Đơn vị</label><input type="text" class="form-control" id="profile-unit" name="unit" value="{{ current_user.unit or '' }}" required></div>
                             <hr>
-                            <h6 class="text-muted">Đổi mật khẩu</h6>
+                            <h5 class=" card-title mb-4 fw-bold">Đổi mật khẩu</h5>
                             <div class="row">
                                 <div class="col-md-6 mb-3"><label for="profile-new_password" class="form-label">Mật khẩu mới</label><input type="password" class="form-control" id="profile-new_password" name="new_password" placeholder="Để trống nếu không đổi" autocomplete="new-password"></div>
                                 <div class="col-md-6 mb-3"><label for="profile-confirm_password" class="form-label">Xác nhận mật khẩu</label><input type="password" class="form-control" id="profile-confirm_password" name="confirm_password" autocomplete="new-password"></div>
@@ -69,6 +69,9 @@
         </div>
     </div>
 </div>
+<footer class="text-center py-3 mt-1 border-top small">
+        © 2025 <strong>Nguyễn Thanh Tùng</strong> • Hệ thống huấn luyện
+    </footer>
 {% endblock %}
 
 {% block scripts %}

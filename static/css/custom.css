@@ -45,3 +45,107 @@
     text-overflow: ellipsis;  /* Hiển thị dấu "..." */
     max-width: 0;             /* Cần thiết để text-overflow hoạt động đúng */
 }
+/* Header: tô trực tiếp vào TH */
+.table-soldiers thead th {
+  background-color: #0045ff4f !important;
+}
+
+/* Body: xen kẽ – tô vào TD/TH của từng hàng */
+.table-soldiers tbody tr:nth-child(odd) > td,
+.table-soldiers tbody tr:nth-child(odd) > th {
+  background-color: #f9f9f9 !important;
+}
+
+.table-soldiers tbody tr:nth-child(even) > td,
+.table-soldiers tbody tr:nth-child(even) > th {
+  background-color: #ffffff !important;
+}
+
+/* Hover: cũng tô vào cell */
+.table-soldiers tbody tr:hover > td,
+.table-soldiers tbody tr:hover > th {
+  background-color: #e9f5e9 !important;
+  transition: background-color 0.2s ease-in-out;
+}
+/* Nút chỉnh sửa */
+.btn-edit {
+  background-color: #d6b44e !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.btn-edit:hover {
+  background-color: #caa944 !important;
+}
+
+/* Nút xem báo cáo */
+.btn-report {
+  background-color: #429f6b !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.btn-report:hover {
+  background-color: #3d8b5f !important;
+}
+
+/* Nút xóa */
+.btn-delete {
+  background-color: #c64040 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.btn-delete:hover {
+  background-color: #b63f3f !important;
+}
+
+/* Nhẹ nhàng hơn khi hover tổng thể */
+.btn {
+  transition: all 0.15s ease-in-out;
+  border-radius: 6px;
+}
+.btn-loc {
+  background-color: #008bbe !important;
+  border: none !important;
+  color: #fafafa !important;
+}
+.btn-loc:hover {
+  background-color: #03769f !important;
+}
+
+/* Đồng nhất chiều cao của các input và select trong cùng hàng */
+.input-group .form-control,
+.input-group .form-select {
+  height: 42px; /* hoặc 45px tùy bạn muốn */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Giữ icon không bị lệch */
+.input-group-text {
+ background: #d4d4d4ee !important;
+  border: 1px solid #ccc;
+  border-right: none; /* tránh viền đôi với input */
+}
+
+/* Nút tìm kiếm cùng chiều cao */
+.btn-loc {
+  height: 42px;
+  background-color: #4c9f70;
+  border: none;
+  color: #fff;
+  font-weight: 500;
+  transition: 0.2s;
+}
+.btn-loc:hover {
+  background-color: #3d8b5f;
+}
+
+/* Làm cho tất cả viền khớp nhau */
+.form-control:focus,
+.form-select:focus {
+  border-color: #4c9f70;
+  box-shadow: 0 0 0 0.15rem rgba(76, 159, 112, 0.25);
+}
+.form-select {
+    border: 1px solid #bdbcbc !important;
+    border-radius: 6px;
+}

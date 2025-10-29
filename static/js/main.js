@@ -110,3 +110,38 @@ document.addEventListener('DOMContentLoaded', function() {
     handleProfileUpdateModal();
     handleProfileFormSubmit();
 });
+
+
+  document.addEventListener('scroll', () => {
+    const tb = document.getElementById('topbar');
+    if(!tb) return;
+    if(window.scrollY > 2) tb.classList.add('scrolled');
+    else tb.classList.remove('scrolled');
+  });
+
+  // Hiệu ứng reveal vào viewport
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('is-visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // Ripple cho các nút có class .has-ripple
+  document.addEventListener('click', function(e){
+    const target = e.target.closest('.has-ripple');
+    if(!target) return;
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    target.appendChild(r);
+    const rect = target.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size/2) + 'px';
+    r.style.top  = (e.clientY - rect.top  - size/2) + 'px';
+    r.addEventListener('animationend', ()=> r.remove());
+  });
+
