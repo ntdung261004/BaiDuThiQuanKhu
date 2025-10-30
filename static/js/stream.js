@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let isCalibrating = false;
     const STREAM_SIZE = { width: 480, height: 640 };
 
-    // Tạo canvas để vẽ
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (videoFeed) {
@@ -42,12 +41,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (config && config.zoom) {
                 console.log("Nhận được cấu hình từ server:", config);
                 const zoomValue = parseFloat(config.zoom);
-                if (zoomSlider) {
-                    zoomSlider.value = zoomValue;
-                }
-                if (zoomValueDisplay) {
-                    updateZoomValueDisplay();
-                }
+                if (zoomSlider) zoomSlider.value = zoomValue;
+                if (zoomValueDisplay) updateZoomValueDisplay();
             }
         } catch (error) {
             console.error("Không thể đồng bộ cấu hình:", error);
@@ -60,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // === SỬA ĐỔI: Thay thế alert bằng toast trong hàm sendZoomCommand ===
     async function sendZoomCommand() {
         const zoomValue = zoomSlider.value;
         try {
@@ -70,10 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ zoom: parseFloat(zoomValue) }),
             });
             if (!response.ok) throw new Error('Phản hồi từ server không hợp lệ.');
-            
             await response.json();
             showToast(`Đã tinh chỉnh zoom: ${zoomValue}x`);
-
         } catch (error) {
             console.error('Lỗi khi gửi lệnh zoom:', error);
             showToast('Gửi lệnh zoom thất bại!', 'danger');
@@ -85,9 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const containerWidth = videoFeed.clientWidth;
         const containerHeight = videoFeed.clientHeight;
         const containerAspectRatio = containerWidth / containerHeight;
-        
         let renderedWidth, renderedHeight, offsetX, offsetY;
-
         if (containerAspectRatio > videoAspectRatio) {
             renderedHeight = containerHeight;
             renderedWidth = renderedHeight * videoAspectRatio;
@@ -99,7 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
             offsetX = 0;
             offsetY = (containerHeight - renderedHeight) / 2;
         }
-        
         return { renderedWidth, renderedHeight, offsetX, offsetY };
     }
 
@@ -128,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         if (mouseX >= offsetX && mouseX <= offsetX + renderedWidth &&
             mouseY >= offsetY && mouseY <= offsetY + renderedHeight) {
             const relativeMouseX = mouseX - offsetX;
@@ -137,19 +125,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const scaleY = STREAM_SIZE.height / renderedHeight;
             const realX = Math.round(relativeMouseX * scaleX);
             const realY = Math.round(relativeMouseY * scaleY);
-            
             ctx.beginPath();
             ctx.moveTo(mouseX, offsetY);
             ctx.lineTo(mouseX, offsetY + renderedHeight);
             ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
             ctx.lineWidth = 1;
             ctx.stroke();
-
             ctx.beginPath();
             ctx.moveTo(offsetX, mouseY);
             ctx.lineTo(offsetX + renderedWidth, mouseY);
             ctx.stroke();
-
             const coordsText = `X: ${realX}, Y: ${realY}`;
             ctx.fillStyle = 'white';
             ctx.font = '14px Arial';
@@ -160,24 +145,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // === SỬA ĐỔI: Thay thế alert bằng toast trong hàm handleVideoClick ===
     async function handleVideoClick(event) {
         if (!isCalibrating) return;
         const { renderedWidth, renderedHeight, offsetX, offsetY } = getRenderedVideoSize();
         const rect = videoFeed.getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
-
         if (mouseX >= offsetX && mouseX <= offsetX + renderedWidth &&
             mouseY >= offsetY && mouseY <= offsetY + renderedHeight) {
-            
             const relativeMouseX = mouseX - offsetX;
             const relativeMouseY = mouseY - offsetY;
             const scaleX = STREAM_SIZE.width / renderedWidth;
             const scaleY = STREAM_SIZE.height / renderedHeight;
             const calibratedX = Math.round(relativeMouseX * scaleX);
             const calibratedY = Math.round(relativeMouseY * scaleY);
-            
             try {
                 const response = await fetch('/set_center', {
                     method: 'POST',
@@ -185,11 +166,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({ center: { x: calibratedX, y: calibratedY } }),
                 });
                 if (!response.ok) throw new Error('Phản hồi từ server không hợp lệ.');
-
                 await response.json();
                 showToast('Đã hiệu chỉnh tâm ngắm mới');
                 toggleCalibrationMode();
-
             } catch (error) {
                 console.error('Lỗi khi gửi tọa độ:', error);
                 showToast('Gửi tọa độ thất bại!', 'danger');
@@ -197,76 +176,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateDisplay(isConnected) {
-        if (isConnected) {
-            statusMessage.style.display = 'none';
-            videoFeed.style.display = 'block';
-            infoPlaceholder.style.display = 'none';
-            infoDisplay.style.display = 'block';
-            connectionBanner.classList.remove('disconnected');
-            connectionBanner.classList.add('connected');
-            connectionText.innerHTML = '<i class="fas fa-check-circle"></i> Thiết bị đã kết nối';
-            videoFeed.src = "/video_feed";
-            if (controlsContainer) controlsContainer.style.display = 'block';
-            syncUiWithPiConfig(); // Đồng bộ ngay khi có kết nối
-        } else {
-            statusMessage.style.display = 'flex';
-            videoFeed.style.display = 'none';
-            infoPlaceholder.style.display = 'block';
-            infoDisplay.style.display = 'none';
-            connectionBanner.classList.remove('connected');
-            connectionBanner.classList.add('disconnected');
-            connectionText.innerHTML = '<i class="fas fa-times-circle"></i> Mất kết nối với thiết bị';
-            videoFeed.src = "";
-            if (controlsContainer) controlsContainer.style.display = 'none';
-            if (isCalibrating) toggleCalibrationMode();
-        }
-    }
+    // === BẮT ĐẦU THAY ĐỔI ĐỂ GỠ LỖI ===
 
-    function updateProcessedData() {
-        fetch('/data_feed')
-            .then(response => {
-                if (response.status === 204 || response.headers.get('content-length') === '0') return {};
-                return response.json();
-            })
-            .then(data => {
-                if (data && Object.keys(data).length > 0) {
-                    document.getElementById('shot-time').innerText = data.time;
-                    document.getElementById('target').innerText = data.target;
-                    document.getElementById('shot-score').innerText = data.score;
-                    const targetImage = document.getElementById('target-image');
-                    if (data.image_data) {
-                        targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
-                    } else {
-                        targetImage.src = 'https://i.imgur.com/G5T5j92.png';
-                    }
-                }
-            })
-            .catch(error => console.error('Lỗi khi lấy dữ liệu đã xử lý:', error));
+    // Hàm này được đơn giản hóa để luôn hiển thị giao diện "Đã kết nối"
+    function forceShowConnectedUI() {
+        statusMessage.style.display = 'none';
+        videoFeed.style.display = 'block';
+        infoPlaceholder.style.display = 'none';
+        infoDisplay.style.display = 'block';
+        connectionBanner.classList.remove('disconnected');
+        connectionBanner.classList.add('connected');
+        connectionText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Đang tải luồng video...';
+        if (controlsContainer) controlsContainer.style.display = 'block';
     }
-
-    function checkConnectionStatus() {
-        fetch('/connection-status')
-            .then(response => response.json())
-            .then(data => {
-                const newStatus = data.status === 'connected';
-                if (newStatus !== isConnected) {
-                    isConnected = newStatus;
-                    updateDisplay(isConnected);
-                }
-                if (isConnected) {
-                    updateProcessedData();
-                }
-            })
-            .catch(error => {
-                console.error("Lỗi khi kiểm tra trạng thái kết nối:", error);
-                if (isConnected) {
-                    isConnected = false;
-                    updateDisplay(isConnected);
-                }
-            });
-    }
-
+    
     // --- GÁN SỰ KIỆN ---
     if (zoomSlider) zoomSlider.addEventListener('input', updateZoomValueDisplay);
     if (zoomApplyBtn) zoomApplyBtn.addEventListener('click', sendZoomCommand);
@@ -276,19 +199,46 @@ document.addEventListener('DOMContentLoaded', function() {
         videoFeed.addEventListener('click', handleVideoClick);
         videoFeed.addEventListener('mousemove', drawCrosshair);
         videoFeed.addEventListener('mouseleave', () => {
-            if (isCalibrating) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
+            if (isCalibrating) ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
+
+        // Sự kiện khi tải video thành công
+        videoFeed.addEventListener('load', function() {
+            console.log("Tải luồng video thành công!");
+            connectionText.innerHTML = '<i class="fas fa-check-circle"></i> Thiết bị đã kết nối';
+            syncUiWithPiConfig();
+        });
+
+        // Sự kiện khi có lỗi (ví dụ: server không thể proxy)
         videoFeed.addEventListener('error', function() {
-            if (isConnected) {
-                isConnected = false;
-                updateDisplay(isConnected);
-            }
+            console.error("Lỗi khi tải luồng video từ /video_feed");
+            connectionBanner.classList.remove('connected');
+            connectionBanner.classList.add('disconnected');
+            connectionText.innerHTML = '<i class="fas fa-times-circle"></i> Lỗi khi tải luồng video';
+            statusMessage.style.display = 'flex';
         });
     }
 
-    checkConnectionStatus();
-    setInterval(checkConnectionStatus, 3000);
-    syncUiWithPiConfig();
+    // Luôn luôn hiển thị giao diện và cố gắng tải video
+    forceShowConnectedUI();
+    videoFeed.src = "/video_feed"; // Trực tiếp yêu cầu tải video
+    
+    // Vẫn kiểm tra kết nối để lấy dữ liệu điểm bắn, nhưng không thay đổi UI chính
+    setInterval(() => {
+        fetch('/data_feed')
+            .then(response => response.ok ? response.json() : {})
+            .then(data => {
+                if (data && Object.keys(data).length > 0) {
+                    document.getElementById('shot-time').innerText = data.time;
+                    document.getElementById('target').innerText = data.target;
+                    document.getElementById('shot-score').innerText = data.score;
+                    const targetImage = document.getElementById('target-image');
+                    if (data.image_data) {
+                        targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
+                    }
+                }
+            }).catch(error => console.error('Lỗi khi lấy dữ liệu đã xử lý:', error));
+    }, 3000);
+
+    // === KẾT THÚC THAY ĐỔI ===
 });
