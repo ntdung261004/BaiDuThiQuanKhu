@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const zoomValueDisplay = document.getElementById('zoom-value-display');
     const zoomApplyBtn = document.getElementById('zoom-apply-btn');
 
+// **BIẾN MỚI CHO ẢNH KẾT QUẢ**
+    const targetImage = document.getElementById('target-image');
+    const targetImagePlaceholder = document.getElementById('target-image-placeholder');
+
     let isUiConnected = false;
     let isCalibrating = false;
     let reconnectInterval = null;
@@ -176,7 +180,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 
     // --- CÁC HÀM TIỆN ÍCH (Không thay đổi) ---
-    setInterval(() => { if (isUiConnected) { fetch('/data_feed').then(r => r.ok ? r.json() : {}).then(data => { if (data && data.score !== '--.-') { document.getElementById('shot-time').innerText = data.time; document.getElementById('target').innerText = data.target; document.getElementById('shot-score').innerText = data.score; if (data.image_data) document.getElementById('target-image').src = `data:image/jpeg;base64,${data.image_data}`; } }).catch(() => {}); } }, 3000);
+    setInterval(() => {
+        if (isUiConnected) {
+            fetch('/data_feed').then(r => r.ok ? r.json() : {}).then(data => {
+                if (data && Object.keys(data).length > 0) {
+                    document.getElementById('shot-time').innerText = data.time || '--:--';
+                    document.getElementById('target').innerText = data.target || '--';
+                    document.getElementById('shot-score').innerText = data.score || '--';
+
+                    // Logic mới để xử lý ảnh kết quả
+                    const placeholder_1x1_pixel = 'iVBORw0KGgoAAAANSUEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+                    if (data.image_data && data.image_data !== placeholder_1x1_pixel) {
+                        targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
+                        targetImage.style.display = 'block';
+                        targetImagePlaceholder.style.display = 'none';
+                    } else {
+                        targetImage.style.display = 'none';
+                        targetImagePlaceholder.style.display = 'block';
+                    }
+                }
+            }).catch(() => {});
+        }
+    }, 3000);
     async function syncUiWithPiConfig(){try{const r=await fetch('/get_current_config');const c=await r.json();if(c&&c.zoom){const z=parseFloat(c.zoom);if(zoomSlider)zoomSlider.value=z;if(zoomValueDisplay)updateZoomValueDisplay();}}catch(e){}}
     function updateZoomValueDisplay(){if(zoomSlider&&zoomValueDisplay){zoomValueDisplay.innerText=parseFloat(zoomSlider.value).toFixed(1)+'x';}}
     async function sendZoomCommand(){const z=zoomSlider.value;try{const r=await fetch('/set_zoom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({zoom:parseFloat(z)})});if(!r.ok)throw new Error('!');await r.json();showToast(`Đã tinh chỉnh zoom: ${z}x`);}catch(e){showToast('Gửi lệnh zoom thất bại!','danger');}}
