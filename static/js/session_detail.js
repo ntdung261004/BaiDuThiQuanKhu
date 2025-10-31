@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         videoFeed.style.display = 'block';
         videoFeed.style.opacity = '0';
-        statusMessage.style.display = 'flex';
+        statusMessage.style.display = 'none';
         
         connectionBanner.className = 'ms-auto fw-bold connected';
         connectionText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Đang xác thực luồng...';
@@ -357,8 +357,29 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             const recenterBtn = document.getElementById('recenter-btn');
             const zoomSlider = document.getElementById('zoom-slider');
-            const zoomValueDisplay = document.getElementById('zoom-value-display');
+            // === THAY ĐỔI 1: Sửa lại ID cho đúng với HTML ===
+            const zoomValueDisplay = document.getElementById('zoom-value-display'); 
             let isCenteringMode = false;
+
+            // === THAY ĐỔI 2: Thêm hàm đồng bộ trạng thái Pi ===
+            async function syncPiStatus() {
+                try {
+                    // Chỉ thực hiện khi đã kết nối và người dùng không kéo thanh trượt
+                    if (isUiConnected && !isUserDraggingZoom) {
+                        const response = await fetch('/get_current_config');
+                        if (response.ok) {
+                            const config = await response.json();
+                            if (config.zoom) {
+                                const zoomValue = parseFloat(config.zoom);
+                                if (zoomSlider) zoomSlider.value = zoomValue;
+                                if (zoomValueDisplay) zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi đồng bộ trạng thái Pi:', error);
+                }
+            }
             
             async function sendPiCommand(endpoint, body, successMessage = null) {
                 try {
@@ -397,7 +418,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     isUserDraggingZoom = true;
                     const zoomValue = parseFloat(zoomSlider.value);
                     sendPiCommand('/set_zoom', { zoom: zoomValue }); 
-                    zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
+                    // Sửa lại để dùng biến đã được khai báo đúng
+                    if (zoomValueDisplay) zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
                 });
                 zoomSlider.addEventListener('mouseup', () => { isUserDraggingZoom = false; });
                 zoomSlider.addEventListener('touchend', () => { isUserDraggingZoom = false; });
@@ -410,6 +432,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                      videoFeed.src = `/video_feed?timestamp=${new Date().getTime()}`;
                 }
             }, 1000);
+
+            // === THAY ĐỔI 3: Bắt đầu chạy hàm đồng bộ định kỳ ===
+            setInterval(syncPiStatus, 2500);
         }
     })();
 });

@@ -207,4 +207,58 @@
     color: #842029;
 }
 
+.shot-history-item {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0.6rem; /* Giảm padding dọc */
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.shot-history-item:last-child {
+    border-bottom: none;
+}
+
+.shot-history-item:hover {
+    background-color: #f8f9fa;
+}
+
+.shot-history-number {
+    font-size: 0.8rem; /* Thu nhỏ cỡ chữ */
+    font-weight: bold;
+    color: #6c757d;
+    background-color: #e9ecef;
+    border-radius: 50%;
+    width: 24px; /* Thu nhỏ vòng tròn */
+    height: 24px; /* Thu nhỏ vòng tròn */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.7rem; /* Giảm khoảng cách */
+}
+
+.shot-history-details {
+    flex-grow: 1;
+    line-height: 1.2; /* Giảm chiều cao dòng */
+}
+
+.shot-history-soldier {
+    font-weight: 600;
+    font-size: 0.8rem; /* Thu nhỏ cỡ chữ */
+    color: #212529;
+}
+
+.shot-history-meta {
+    font-size: 0.7rem; /* Thu nhỏ cỡ chữ */
+    color: #6c757d;
+}
+
+.shot-history-score {
+    font-size: 1.3rem; /* Thu nhỏ điểm số */
+    font-weight: bold;
+    min-width: 30px; /* Giảm chiều rộng tối thiểu */
+    text-align: right;
+    margin-left: 0.7rem; /* Giảm khoảng cách */
+}
+
 
