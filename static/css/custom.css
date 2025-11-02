@@ -44,4 +44,316 @@
     overflow: hidden;         /* Ẩn nội dung bị tràn */
     text-overflow: ellipsis;  /* Hiển thị dấu "..." */
     max-width: 0;             /* Cần thiết để text-overflow hoạt động đúng */
+<<<<<<< Updated upstream
 }
+=======
+}
+/* Header: tô trực tiếp vào TH */
+.table-soldiers thead th {
+  background-color: #0045ff4f !important;
+}
+
+/* Body: xen kẽ – tô vào TD/TH của từng hàng */
+.table-soldiers tbody tr:nth-child(odd) > td,
+.table-soldiers tbody tr:nth-child(odd) > th {
+  background-color: #f9f9f9 !important;
+}
+
+.table-soldiers tbody tr:nth-child(even) > td,
+.table-soldiers tbody tr:nth-child(even) > th {
+  background-color: #ffffff !important;
+}
+
+/* Hover: cũng tô vào cell */
+.table-soldiers tbody tr:hover > td,
+.table-soldiers tbody tr:hover > th {
+  background-color: #e9f5e9 !important;
+  transition: background-color 0.2s ease-in-out;
+}
+/* Nút chỉnh sửa */
+.btn-edit {
+  background-color: #d6b44e !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.btn-edit:hover {
+  background-color: #caa944 !important;
+}
+
+/* Nút xem báo cáo */
+.btn-report {
+  background-color: #429f6b !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.btn-report:hover {
+  background-color: #3d8b5f !important;
+}
+
+/* Nút xóa */
+.btn-delete {
+  background-color: #c64040 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.btn-delete:hover {
+  background-color: #b63f3f !important;
+}
+
+/* Nhẹ nhàng hơn khi hover tổng thể */
+.btn {
+  transition: all 0.15s ease-in-out;
+  border-radius: 6px;
+}
+.btn-loc {
+  background-color: #008bbe !important;
+  border: none !important;
+  color: #fafafa !important;
+}
+.btn-loc:hover {
+  background-color: #03769f !important;
+}
+
+/* Đồng nhất chiều cao của các input và select trong cùng hàng */
+.input-group .form-control,
+.input-group .form-select {
+  height: 60px; 
+  font-size: 18px;
+  color: #4a4d50;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Giữ icon không bị lệch */
+.input-group-text {
+ background: #d4d4d4ee !important;
+  border: 1px solid #ccc;
+  border-right: none; /* tránh viền đôi với input */
+}
+
+/* Nút tìm kiếm cùng chiều cao */
+.btn-loc {
+  height: 42px;
+  background-color: #4c9f70;
+  border: none;
+  color: #fff;
+  font-weight: 500;
+  transition: 0.2s;
+}
+.btn-loc:hover {
+  background-color: #3d8b5f;
+}
+
+/* Làm cho tất cả viền khớp nhau */
+.form-control:focus,
+.form-select:focus {
+  border-color: #4c9f70;
+  box-shadow: 0 0 0 0.15rem rgba(76, 159, 112, 0.25);
+}
+.form-select {
+    border: 1px solid #ccc !important;
+    border-radius: 6px;
+}
+.soldier-panel{
+  border-radius: 14px;
+  overflow: hidden;
+  background:#fff;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06);
+  border:1px solid rgba(47,109,47,.12);
+}
+
+/* Header có nền nhẹ & blur */
+.soldier-panel__head{
+  padding: 14px 18px;
+  background: linear-gradient(180deg, rgba(233,242,234,.85), rgba(233,242,234,.65));
+  backdrop-filter: blur(2px);
+  border-bottom: 1px solid rgba(47,109,47,.12);
+}
+
+/* Icon trước tiêu đề */
+.soldier-panel__icon{
+  width: 36px; height:36px;
+  border-radius: 10px;
+  display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(circle at 30% 30%, #eef6ef, #ffffff 60%);
+  color: var(#2f6d2f);
+  box-shadow: inset 0 0 0 2px #e0eee2;
+  font-size: 18px;
+}
+
+
+
+
+/* Nút lọc (xanh “bộ đội”) */
+.btn-filter{
+  background: linear-gradient(90deg, #4caf50 0%, #43a047 50%, #388e3c 100%);
+
+  
+  border: 1px solid var(--army-600);
+  color:#fff;
+  border-radius:6px;
+  padding:10px 14px;
+  font-weight:600;
+}
+.btn-filter:hover{
+  background: linear-gradient(145deg, #1c6a2a 0%, #4fab5d 40%, #114517 100%);
+  border-color: var(--army-600);
+}
+
+/* Input-group có icon: bo tròn đều */
+
+.input-group-with-icon .input-group-text{
+  background:#f7faf8;
+  color: var(#2f6d2f);
+  border:1px solid #ccc;
+}
+.input-group-with-icon .form-control,
+.input-group-with-icon .form-select{
+  border:1px solid #ccc;
+}
+.input-group-with-icon .form-control:focus,
+.input-group-with-icon .form-select:focus{
+  border-color: var(#2f6d2f);
+  box-shadow: 0 0 0 .2rem rgba(47,109,47,.15);
+}
+
+/* Responsive tinh tế */
+@media (max-width: 991.98px){
+  .soldier-panel__head{ row-gap:10px; }
+}
+
+/* --- Header gradient style giống hình bạn gửi --- */
+.soldier-header {
+  background: linear-gradient(90deg, #4158d0 0%, #6c5ce7 50%, #3b82f6 100%);
+  border-radius: 10px;
+  color: #fff;
+}
+
+/* Icon tròn bên trái */
+.soldier-header .header-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #fff;
+}
+
+/* Nút thêm mới */
+.soldier-header .btn-add {
+  width:15.7%;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: linear-gradient(90deg, #f9d423 0%, #ffcc00 50%, #ffb400 100%);
+
+ 
+
+  border: 1px solid var(--gold-600);
+  color:#4d3b09;
+}
+
+.soldier-header .btn-add:hover {
+  background: linear-gradient(135deg,
+  #b8860b 0%, 
+  #ffd700 25%, 
+  #fff5cc 50%, 
+  #e0ac00 75%, 
+  #b8860b 100%
+);
+  border-color: var(--gold-600);
+  color: #4d3b09;
+}
+.soldier-panel__body label.form-label {
+  font-weight: 600;
+  color: #f3f3f3;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.soldier-panel__body .form-select,
+.soldier-panel__body .form-control {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: box-shadow 0.2s ease;
+}
+
+.soldier-panel__body .form-select:focus,
+.soldier-panel__body .form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(47, 109, 47, 0.25);
+  border-color: #2f6d2f;
+}
+.filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-icon {
+  background: #e0e0e0;
+  color: #333;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.custom-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: #ffffff;
+  border-radius: 12px;
+  color: #888888;
+  cursor: pointer;
+  padding-left: 12px;
+  user-select: none;
+}
+
+.select-arrow{
+  position:absolute;
+  right:12px;
+}
+
+.custom-select .options {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  width: 100%;
+  background: #efefef;
+  color: #000;
+  border-radius: 0px 0px 10px 10px;
+  box-shadow: 0px 4px 16px rgb(0 0 0 / 61%);
+  display: none;
+  z-index: 999;
+}
+
+.custom-select.active .options {
+  display: block;
+}
+
+.custom-select .options div {
+  padding: 10px 14px;
+  border-bottom: 1px solid #dedede;
+  transition: background 0.2s;
+}
+
+.custom-select .options div:hover {
+  background: #00b700;
+  color: #fff;
+}
+.card-session {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-session:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+>>>>>>> Stashed changes

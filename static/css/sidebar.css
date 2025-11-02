@@ -1,0 +1,319 @@
+
+
+/* ===== Sidebar Wrapper ===== */
+#sidebar-wrapper {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-collapsed-w);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: var(--text);
+  z-index: 1030;
+  border-right: 1px solid rgba(0,0,0,.06);
+  transition: width 0.35s cubic-bezier(0.25, 1, 0.3, 1),
+              box-shadow 0.35s ease;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transform-origin: left center;
+  will-change: width;
+}
+
+/* Khi sidebar mở */
+body.sb-open #sidebar-wrapper {
+  width: var(--sidebar-w);
+      box-shadow: 3px 0px 10px #aaaaaa;
+
+}
+body:not(.sb-open) #sidebar-wrapper {
+  
+  box-shadow: 3px 0px 10px #aaaaaa;
+  opacity: 0.98;
+}
+body.sb-open #sidebar-wrapper {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* ===== Header ===== */
+#sidebar-header {
+  background: #fff;
+  padding: 16px 14px;
+  text-align: left;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.06);
+  display: flex; align-items: center; gap: 12px;
+  overflow: hidden;
+}
+
+#sidebar-header .sidebar-logo {
+  display: grid; align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: #f3f5f3;
+  flex-shrink: 0;
+}
+
+#sidebar-header .logo-img {
+  width: 40px; height: 40px; object-fit: contain;
+}
+
+#sidebar-header .brand-text {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  will-change: opacity, transform;
+  transition: opacity .25s ease, transform .25s ease;
+}
+#sidebar-header .brand-text span:first-of-type { margin-bottom: 2px; }
+
+/* Ẩn mượt khi thu */
+body:not(.sb-open) #sidebar-header .brand-text {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(.97);
+}
+/* Hiện mượt khi mở */
+body.sb-open #sidebar-header .brand-text {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  align-items: center;
+  
+}
+
+/* ===== Menu Container ===== */
+#sidebar-menu {
+  flex: 1 1 auto;
+  padding: 12px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+/* ===== Item Menu ===== */
+#sidebar-menu .list-group-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px; /* cố định chiều cao mỗi dòng */
+  line-height: 1;
+  padding: 0 16px;
+  transition: background 0.25s ease, color 0.25s ease, padding 0.25s ease;
+  border: none;
+  font-weight: 600;
+}
+
+
+/* Icon */
+#sidebar-menu .list-group-item .item-icon {
+  font-size: 20px;
+  width: 30px;
+  min-width: 30px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+#sidebar-menu .list-group-item .item-label {
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+  flex-grow: 1;
+  transition: opacity 0.3s ease;
+}
+
+
+/* Hover: phóng to nhẹ, mượt mà */
+#sidebar-menu .list-group-item:hover {
+     border-radius: 10px;
+  background: rgba(47, 109, 47, 0.08);
+  color: var(--army);
+  transform: scale(1.05);
+}
+#sidebar-menu .list-group-item:hover .item-icon {
+  color: var(--army);
+  transform: scale(1.15);
+}
+
+/* Active */
+#sidebar-menu .list-group-item.active {
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+  background: var(--accent) !important;
+  color: #fff !important;
+
+}
+#sidebar-menu .list-group-item.active .item-icon { color: #fff !important; }
+
+/* Footer */
+#sidebar-footer {
+  padding: 10px 14px 14px;
+  font-size: .85rem;
+  color: #667085;
+  border-top: 1px solid rgba(0,0,0,.06);
+  background: #fff;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ===== Thu gọn: ẩn label khi không hover ===== */
+body:not(.sb-open) .item-label {
+  display: none;
+}
+body:not(.sb-open) #sidebar-menu .list-group-item {
+  justify-content: center;
+  gap: 0;
+  padding: .65rem 0;
+}
+
+/* ===== Đẩy nội dung sang phải ===== */
+#page-content-wrapper, .content-wrapper, main {
+  margin-left: var(--sidebar-collapsed-w);
+  transform: none !important;
+  transition:
+    margin-left 0.35s cubic-bezier(0.25, 1, 0.3, 1),
+    opacity 0.35s ease;
+  will-change: margin-left, opacity;
+  min-width: 0;
+}
+body:not(.sb-open) #sidebar-menu .item-label {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+body.sb-open #sidebar-menu .item-label {
+    
+  opacity: 1;
+  width: auto;
+}
+
+
+body.page-loaded #page-content-wrapper {
+  opacity: 1;
+}
+body.sb-open #page-content-wrapper,
+body.sb-open .content-wrapper,
+body.sb-open main {
+  margin-left: var(--sidebar-w);
+}
+
+/* ===== Sidebar & content đứng yên khi khóa ===== */
+body.sb-lock #sidebar-wrapper {
+  transition: none !important;
+  width: var(--sidebar-w) !important;
+}
+body.sb-lock #page-content-wrapper {
+  transition: none !important;
+  margin-left: var(--sidebar-w) !important;
+}
+
+/* ===== Scrollbar ===== */
+#sidebar-menu::-webkit-scrollbar { width: 8px; }
+#sidebar-menu::-webkit-scrollbar-thumb { background: rgba(0,0,0,.08); border-radius: 8px; }
+#sidebar-menu::-webkit-scrollbar-track { background: transparent; }
+/* Vùng hover đệm 12px bên phải sidebar để không bị tụt khi rê qua rìa */
+#sidebar-wrapper {
+  position: fixed;
+}
+#sidebar-wrapper::after{
+  content:"";
+  position:absolute;
+  top:0; right:-12px;
+  width:12px; height:100%;
+  /* vô hình nhưng vẫn bắt hover */
+}
+
+
+
+#loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.788);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999 !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+#loader-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+/* From Uiverse.io by bociKond */ 
+.loader {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  display: inline-block;
+  color: #b12323; /* đỏ chiến đấu */
+  background: radial-gradient(12px, #e23d3d 94%, transparent);
+}
+
+/* Vòng trong */
+.loader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(13px at bottom right, transparent 94%, #e23d3d) top left,
+    radial-gradient(13px at bottom left , transparent 94%, #e23d3d) top right,
+    radial-gradient(13px at top right, transparent 94%, #e23d3d) bottom left,
+    radial-gradient(13px at top left , transparent 94%, #e23d3d) bottom right,
+    radial-gradient(0px at 85% 50%, transparent 94%, #b12323) left center,
+    radial-gradient(0px at 15% 50%, transparent 94%, #b12323) right center,
+    radial-gradient(0px at 50% 85%, transparent 94%, #b12323) center top,
+    radial-gradient(0px at 50% 15%, transparent 94%, #b12323) center bottom;
+  background-size:
+    30px 30px, 30px 30px, 30px 30px, 30px 30px,
+    30px 15px, 30px 15px, 15px 30px, 15px 30px;
+  background-repeat: no-repeat;
+  background-position:
+    top left, top right, bottom left, bottom right,
+    left center, right center, center top, center bottom;
+  animation: spin-inner 2s infinite cubic-bezier(0.3,1,0,1);
+  z-index: 2;
+  filter: drop-shadow(0 0 8px rgba(226,61,61,0.6));
+}
+
+/* Vòng ngoài */
+.loader::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  opacity: 0.7;
+  background:
+    radial-gradient(13px at bottom right, transparent 94%, #4ca64c) top left,
+    radial-gradient(13px at bottom left , transparent 94%, #4ca64c) top right,
+    radial-gradient(13px at top right, transparent 94%, #4ca64c) bottom left,
+    radial-gradient(13px at top left , transparent 94%, #4ca64c) bottom right;
+  background-size: 38px 38px;
+  background-repeat: no-repeat;
+  animation: pulse-outer 2s infinite ease-in-out;
+  filter: drop-shadow(0 0 10px rgba(255,60,60,0.6));
+}
+
+@keyframes spin-inner {
+  0% { inset: -25px; transform: rotate(0deg); }
+  25% {inset:-25px; transform: rotate(90deg);}
+  50% { inset: -25px; transform: rotate(180deg); }
+  100% { inset: 5px; transform: rotate(180deg); }
+}
+
+@keyframes pulse-outer {
+  0% { inset: -10px; opacity: 0.7; }
+  50% { inset: -10px;  opacity: 0.7; }
+  100% { inset: -1px; opacity: 0.7; }
+}
+
+
