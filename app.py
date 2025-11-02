@@ -14,6 +14,12 @@ from controllers.soldier_controller import soldier_bp
 from controllers.pi_controller import pi_bp
 from controllers.training_controller import training_bp
 from controllers.report_controller import report_bp
+import sys
+import io
+
+# Đặt stdout thành UTF-8 để in tiếng Việt không lỗi
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 app = Flask(__name__)
 
@@ -163,7 +169,7 @@ def login():
     """
     # --- Logic "Người Gác Cổng" ---
     if not User.query.first():
-        flash('Chào mừng! Vui lòng tạo tài khoản quản trị viên đầu tiên.', 'info')
+        flash('Chào mừng! Vui lòng tạo tài khoản quản trị viên đầu tiên.', 'success')
         return redirect(url_for('setup'))
     # -----------------------------
 
@@ -343,7 +349,18 @@ def forgot_password():
             flash('Tên người dùng hoặc Mã khôi phục không chính xác.', 'danger')
 
     return render_template('forgot_password.html')
+<<<<<<< Updated upstream
 
+=======
+@app.route("/list", endpoint="list_page")
+@login_required
+def list_page():
+    return render_template("list.html")
+@app.route('/guide')
+@login_required
+def guide():
+    return render_template('guide.html')
+>>>>>>> Stashed changes
 @app.route('/logout')
 @login_required
 def logout():

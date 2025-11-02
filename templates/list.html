@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Danh sách Chiến sĩ{% endblock %}
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper">
+       <nav id="topbar" class="navbar navbar-expand-lg py-3 px-5">
+  <div class="d-flex align-items-center">
+    <h2 class="fs-3 m-0">Danh sách chiến sĩ</h2>
+  </div>
+  <div class="ms-auto">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <img id="navbar-avatar" 
+               src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}" 
+               class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+          <span id="navbar-greeting">Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}</span>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+        <div class="container-fluid px-4">
+            
+
+            <!-- Toàn bộ phần table + filter form bạn đã có -->
+            <div class="row my-3">
+                <div class="soldier-header shadow-sm mb-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap  py-3">
+    <div class="d-flex align-items-center gap-3 px-4">
+      <div class="header-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <h4 class="m-0 fw-bold text-white">Tổng số chiến sĩ: 
+          <span id="soldier-count" class="fw-bold text-warning" style=" font-size: larger;">{{ total_soldiers or 0 }}</span>
+        </h4>
+        <small class="text-light opacity-75">Quản lý, thêm mới và tìm kiếm chiến sĩ trong đơn vị</small>
+      </div>
+    </div>
+    <button type="button" class="btn btn-light btn-add px-4 py-2"
+            data-bs-toggle="modal" data-bs-target="#addSoldierModal">
+      <i class="fas fa-user-plus me-2 py-2"></i><strong>Thêm chiến sĩ</strong>
+    </button>
+  </div>
+  <div class="soldier-panel__body px-4 pb-4">
+  <form id="filter-form" class="row g-3 align-items-center">
+
+    <!-- Ô tìm kiếm -->
+    <div class="col-lg-6">
+      <label class="form-label text-white">Tìm kiếm:</label>
+      <div class="input-group with-icon">
+        <span class="input-group-text" style="height:50px;"><i class="fas fa-search"></i></span>
+        <input type="text" class="form-control" name="search" placeholder="Nhập tên chiến sĩ..." style="height:50px;">
+      </div>
+    </div>
+
+    <!-- Đơn vị -->
+    <div class="col-lg-4">
+      <label for="filter-unit" class="form-label text-white">Đơn vị:</label>
+      <div class="input-group with-icon">
+        <span class="input-group-text" style="height:50px;"><i class="fas fa-sitemap"></i></span>
+        <div id="filter-unit" class="custom-select">
+          <div class="selected" data-value="">Tất cả</div>
+          <i class="fas fa-chevron-down select-arrow"></i>
+          <div class="options">
+            <div data-value="">Tất cả</div>
+            {% for unit in unit_list %}
+              <div data-value="{{ unit }}" {% if unit == unit_filter %}class="active"{% endif %}>{{ unit }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nút lọc -->
+    <div class="col-lg-2 d-flex align-items-end">
+      <button type="submit" class="btn btn-filter w-100"><i class="fas fa-filter me-2"></i>Lọc</button>
+    </div>
+  </form>
+</div>
+
+
+
+  
+</div>
+<div class="dropdown px-3 d-flex justify-content-end"> 
+    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sort-button" data-bs-toggle="dropdown" aria-expanded="false"> 
+        <i class="fas fa-sort-amount-down me-2"></i>Sắp xếp theo </button> 
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sort-button" id="sort-options"> 
+            <li><a class="dropdown-item" href="#" data-sortby="created_at" data-order="desc">Mới nhất</a></li> 
+            <li><a class="dropdown-item" href="#" data-sortby="name" data-order="asc">Tên (A-Z)</a></li> 
+            <li><a class="dropdown-item" href="#" data-sortby="name" data-order="desc">Tên (Z-A)</a></li> 
+            <li><a class="dropdown-item" href="#" data-sortby="unit" data-order="asc">Đơn vị</a></li> 
+            <li><a class="dropdown-item" href="#" data-sortby="rank" data-order="asc">Cấp bậc</a></li> </ul> 
+        </div>
+
+                <div class="table-responsive">
+                    <table class="table bg-white rounded shadow-sm table-hover table-soldiers">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="col-stt">#</th>
+                                <th scope="col" class="col-name">Tên Chiến sĩ</th>
+                                <th scope="col" class="col-unit">Đơn vị</th>
+                                <th scope="col" class="col-rank">Cấp bậc</th>
+                                <th scope="col" class="col-notes">Ghi chú</th>
+                                <th scope="col" class="col-actions">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="soldier-tbody">
+                            </tbody>
+                    </table>
+                <div id="loading-spinner" class="text-center mt-4" style="display:none;">
+  <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+  <p class="text-muted mt-2">Đang tải danh sách chiến sĩ...</p>
+</div>
+    
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination" id="pagination-controls">
+                            </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'partials/add_soldier_modal.html' %}
+            {% include 'partials/edit_soldier_modal.html' %}
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/root.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+<script>
+window.SOLDIER_API = {
+  list: "{{ url_for('soldier_bp.get_soldiers') }}",
+  create: "{{ url_for('soldier_bp.create_soldier') }}",
+  update_template: "{{ url_for('soldier_bp.update_soldier', soldier_id=0) }}",
+  delete_template: "{{ url_for('soldier_bp.delete_soldier', soldier_id=0) }}",
+  count: "{{ url_for('soldier_bp.get_soldier_count') }}",
+  report_template: "{{ url_for('report_page', report_type='soldier', report_id=0) }}"
+};
+</script>
+<script src="{{ url_for('static', filename='js/soldiers.js') }}"></script>
+{% endblock %}

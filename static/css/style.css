@@ -12,12 +12,20 @@ body {
 
 /* Các kiểu dáng chung cho card và form */
 .card {
+<<<<<<< Updated upstream
     background-color: #fff;
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     width: 100%;
     border: 1px solid rgba(0, 0, 0, 0.1);
+=======
+  background-color: #fff;
+  padding: 1.7rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+>>>>>>> Stashed changes
 }
 
 .form-control {
@@ -37,6 +45,7 @@ body {
 }
 
 .btn-primary:hover {
+<<<<<<< Updated upstream
     background-color: #0b5ed7;
     border-color: #0a58ca;
 }
@@ -46,6 +55,101 @@ body {
     min-height: 100vh;
     transition: margin 0.25s ease-out;
 }
+=======
+  background-color: #327532;
+  border-color: #327532;
+}
+.btn-primary:active { transform: translateY(1px); }
+
+.btn-success {
+  background-color: #2f7d2f;
+  border-color: #2f7d2f;
+  font-weight: 700;
+}
+.btn-success:hover {
+  background-color: #2b732b;
+  border-color: #2b732b;
+}
+.btn-info {
+  background-color: #3b8b3b;
+  border-color: #3b8b3b;
+  color: #fff;
+}
+.btn-info:hover {
+  background-color: #357d35;
+  border-color: #357d35;
+}
+.btn-secondary {
+  background-color: #4b5b4b;
+  border-color: #4b5b4b;
+}
+
+/* Topbar cố định */
+#topbar {
+  position:fixed;
+  width: -webkit-fill-available;
+  top: 0;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  background: rgb(255, 255, 255);
+  color: black;
+  z-index: 1040;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(6px);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 0px 1px 1px #aaaaaa;
+
+
+  transition: box-shadow .2s ease, background .2s ease;
+}
+#topbar h2, #topbar .nav-link { color: black !important; }
+#topbar.scrolled { box-shadow: 0 6px 16px rgba(0,0,0,.15); }
+#topbar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 10px;
+  background-color: #d6b25e;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Page content */
+#page-content-wrapper {
+  min-width: 0;
+  width: 100%;
+}
+.container-fluid {
+  padding-top: calc(72px + 12px);
+}
+
+/* Icon màu xanh lá */
+.icon-army { color: #2f6d2f !important; }
+.icon-army-accent { color: #327532 !important; }
+.icon-army-soft { color: #9fd09f !important; }
+.list-group .fa-crosshairs,
+.list-group .fa-chart-bar {
+  color: #ff0707 !important;
+}
+
+/* Reveal hiệu ứng mượt */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Sidebar */
+
+>>>>>>> Stashed changes
 
 /* Kiểu dáng cho các danh mục */
 #sidebar-wrapper .list-group-item {
@@ -155,9 +259,57 @@ body {
         font-size: 1.2rem;
     }
 
+<<<<<<< Updated upstream
     /* Các nút bấm */
     .btn {
         font-size: 0.85rem;
         padding: 6px 10px;
     }
 }
+=======
+#topbar-profile{
+  top: 0;
+  width: 100%;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  background: rgb(24 93 24);
+  color: #fff;
+  z-index: 1040;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(6px);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+
+  transition: box-shadow .2s ease, background .2s ease;
+}
+
+#topbar-profile h2, #topbar-profile .nav-link { color: #fff !important; }
+#topbar-profile.scrolled { box-shadow: 0 6px 16px rgba(0,0,0,.15); }
+#topbar-profile::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 10px;
+  background-color: #d6b25e;
+  border-radius: 0 4px 4px 0;
+}
+footer {
+  margin-top:20px;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  background: rgb(24 93 24);
+  color: black;
+}
+.quick-menu {
+  animation: fadeInUp 0.25s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+>>>>>>> Stashed changes

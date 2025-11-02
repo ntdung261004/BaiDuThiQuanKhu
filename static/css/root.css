@@ -1,0 +1,16 @@
+:root{
+      --army: #08b408;           /* xanh chuẩn ( hover) */
+      --accent: #2f6d2f;         /* dùng chung cho active */
+      --text: #282828;              /* chữ mặc định */
+      --muted: #777;             /* màu icon mặc định */
+      --sidebar-w: 260px;        /* rộng khi mở */
+      --sidebar-collapsed-w: 78px; /* rộng khi thu */
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,.06);
+      --tr-fast: .2s ease;
+      --tr-slow: .25s cubic-bezier(.2,.6,.2,1);
+      --army-600:#245523;
+      --army-50:#e9f2ea;
+      --gold-500:#b5901e;
+      --gold-600:#9b7d18;
+}

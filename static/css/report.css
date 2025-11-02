@@ -19,5 +19,51 @@
     padding: 1rem;
     background-color: #fff;
     border-radius: 0.5rem;
+<<<<<<< Updated upstream
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+=======
+    box-shadow: 0 4px 6px rgb(0 0 0 / 25%)
+}
+.bgcard{
+    background: linear-gradient(180deg, #ffffff, #f7fbf7);
+    border: 2px solid #327532;
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+}
+.form-select:focus {
+  border-color: #2f6d2f;
+  box-shadow: 0 0 0 0.2rem rgba(47,109,47,.2);
+  outline:0;
+}
+.form-control:focus {
+  border-color: #2f6d2f;
+  box-shadow: 0 0 0 0.2rem rgba(47,109,47,.2);
+  outline:0;
+}
+
+.modal-header {
+    background: linear-gradient(90deg, #006b86 0%, #009ec2 50%, #00b4d8 100%);
+
+    color: white;
+}
+.table-striped thead th {
+  background-color: #0045ff4f !important;
+}
+
+/* Body: xen kẽ – tô vào TD/TH của từng hàng */
+.table-striped tbody tr:nth-child(odd) > td,
+.table-striped tbody tr:nth-child(odd) > th {
+  background-color: #f9f9f9 !important;
+}
+
+.table-striped tbody tr:nth-child(even) > td,
+.table-striped tbody tr:nth-child(even) > th {
+  background-color: #ffffff !important;
+}
+
+/* Hover: cũng tô vào cell */
+.table-striped tbody tr:hover > td,
+.table-striped tbody tr:hover > th {
+  background-color: #e9f5e9 !important;
+  transition: background-color 0.2s ease-in-out;
+>>>>>>> Stashed changes
 }

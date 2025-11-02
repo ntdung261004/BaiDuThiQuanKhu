@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Giới thiệu & Hướng dẫn sử dụng{% endblock %}
+
+
+
+
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper" style="width: 85%;">
+        <nav id="topbar" class="navbar navbar-expand-lg py-3 px-5">
+  <div class="d-flex align-items-center">
+    <h2 class="fs-3 m-0">Hướng dẫn sử dụng</h2>
+  </div>
+  <div class="ms-auto">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <img id="navbar-avatar" 
+               src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}" 
+               class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+          <span id="navbar-greeting">Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}</span>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/root.css') }}">
+{% endblock %}

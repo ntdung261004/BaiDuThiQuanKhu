@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <div class="bg-dark text-white p-4" id="sidebar-wrapper" style="width: 15%;">
     <div class="sidebar-heading fs-4 fw-bold text-center border-bottom pb-3 mb-4"><div>Hệ thống</div><div>Huấn luyện</div></div>
     <div class="list-group list-group-flush my-3">
@@ -12,13 +13,109 @@
         <a href="{{ url_for('training') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0">
             <i class="fas fa-bullseye me-2"></i> Tập luyện
         </a>
+=======
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sidebar</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/root.css') }}">
+>>>>>>> Stashed changes
 
         <a href="{{ url_for('report') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0">
             <i class="fas fa-chart-line me-2"></i> Báo cáo
         </a>
 
+<<<<<<< Updated upstream
         <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action bg-transparent text-white border-0">
             <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
         </a>
     </div>
 </div>
+=======
+
+
+</head>
+
+<body>
+  <!-- SIDEBAR CỐ ĐỊNH -->
+  <aside id="sidebar-wrapper">
+    <!-- Header -->
+    <div id="sidebar-header" class="sidebar-heading fs-6 fw-bold">
+      <div class="sidebar-logo">
+        <img src="{{ url_for('static', filename='image/favicon.png') }}" alt="Logo" class="logo-img">
+      </div>
+      <div class="brand-text">
+        <span>Hệ thống</span>
+        <span>Huấn luyện</span>
+      </div>
+    </div>
+
+    <!-- Menu -->
+    <div id="sidebar-menu">
+      <div class="list-group list-group-flush my-2">
+       
+        
+        <a href="{{ url_for('index') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='index' %}active{% endif %}" data-spa="off">
+          <i class="fas fa-tachometer-alt item-icon"></i>
+          <span class="item-label">Trang chủ</span>
+        </a>
+        <a href="{{ url_for('list_page') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='list_page' %}active{% endif %}" data-spa="off">
+          <i class="fas fa-list item-icon"></i>
+          <span class="item-label">Danh sách</span>
+        </a>
+
+        <a href="{{ url_for('livestream') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='livestream' %}active{% endif %}" data-spa="off">
+          <i class="fas fa-video item-icon"></i>
+          <span class="item-label">Hiệu chỉnh</span>
+        </a>
+
+        <a href="{{ url_for('training') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='training' %}active{% endif %}" data-spa="off">
+          <i class="fas fa-bullseye item-icon"></i>
+          <span class="item-label">Tập luyện</span>
+        </a>
+
+        <a href="{{ url_for('report') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint in ['report','report_page'] %}active{% endif %}" data-spa="off">
+          <i class="fas fa-chart-line item-icon"></i>
+          <span class="item-label">Báo cáo</span>
+        </a>
+        <a href="{{ url_for('guide') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='guide' %}active{% endif %}" data-spa="off">
+          <i class="fas fa-book-open item-icon"></i>
+          <span class="item-label">Hướng dẫn sử dụng</span>
+        </a> 
+
+        <a href="{{ url_for('logout') }}"
+   class="list-group-item list-group-item-action"
+   data-spa="off">
+  <i class="fas fa-sign-out-alt item-icon"></i>
+  <span class="item-label">Đăng xuất</span>
+</a>
+
+      </div>
+    </div>
+
+    
+  </aside>
+<div id="loader-overlay" class="loader-overlay">
+  <div class="loader"></div>
+</div>
+<script src="{{ url_for('static', filename='js/loader.js') }}" defer></script>
+
+
+
+
+</body>
+
+
+</html>
+>>>>>>> Stashed changes
