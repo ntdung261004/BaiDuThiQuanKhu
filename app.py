@@ -349,9 +349,6 @@ def forgot_password():
             flash('Tên người dùng hoặc Mã khôi phục không chính xác.', 'danger')
 
     return render_template('forgot_password.html')
-<<<<<<< Updated upstream
-
-=======
 @app.route("/list", endpoint="list_page")
 @login_required
 def list_page():
@@ -360,7 +357,6 @@ def list_page():
 @login_required
 def guide():
     return render_template('guide.html')
->>>>>>> Stashed changes
 @app.route('/logout')
 @login_required
 def logout():
@@ -410,33 +406,8 @@ def profile_page():
 @app.route('/session/<int:session_id>')
 @login_required
 def session_details(session_id):
-    training_session = TrainingSession.query.get_or_404(session_id)
-
-    # Lấy bài tập gắn với session
-    exercise = Exercise.query.get(training_session.exercise_id)
-
-    # Kiểm tra theo tên bài tập
-    if exercise.exercise_name.startswith("Bài 1"):
-        return render_template(
-            'session_details.html',
-            session=training_session,
-            exercise=exercise
-        )
-    elif exercise.exercise_name.startswith("Bài 2"):
-        return render_template(
-            'session_bai2.html',
-            session=training_session,
-            exercise=exercise
-        )
-    else:
-        # mặc định nếu không thuộc Bài 1 hay Bài 2
-        return render_template(
-            'session_default.html',
-            session=training_session,
-            exercise=exercise
-        )
-
-
+    # Chúng ta chỉ cần render trang, JavaScript sẽ tự tải dữ liệu
+    return render_template('session_details.html', session_id=session_id)
 
 # ROUTE XỬ LÝ CẬP NHẬT PROFILE ===
 @app.route('/profile/update', methods=['POST'])

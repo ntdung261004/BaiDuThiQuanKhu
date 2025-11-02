@@ -66,16 +66,14 @@ h3.fs-4, h3.fs-3 {
 
 /* Modal thêm/sửa chiến sĩ */
 .modal-content {
+    
+    border: 2px solid #0089ac;
     border-radius: 10px;
     overflow: hidden;
 }
 
 .modal-header {
-<<<<<<< Updated upstream
-    background-color: #0d6efd;
-=======
     background: linear-gradient(90deg, #006b86 0%, #009ec2 50%, #00b4d8 100%);
->>>>>>> Stashed changes
     color: white;
 }
 
@@ -84,14 +82,14 @@ h3.fs-4, h3.fs-3 {
 }
 
 .modal-footer .btn-primary {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+    background-color: #00a8c2;
+    border-color: #027e91;
     font-weight: bold;
 }
 
 .modal-footer .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
+    background-color: #00a8c2;
+    border-color: #027e91;
 }
 
 /* Nút "Thêm chiến sĩ" */
@@ -101,9 +99,6 @@ h3.fs-4, h3.fs-3 {
 
 .btn-primary {
     font-weight: 600;
-<<<<<<< Updated upstream
-}
-=======
 }
 .bgcard{
     background: #ffffff;
@@ -491,4 +486,3 @@ color: #342714 }
 }
 .stat-card{ z-index:1; } /* tránh tạo stacking cao */
 #page-content-wrapper, .row, section, .bgcard{ overflow:visible; }
->>>>>>> Stashed changes

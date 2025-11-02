@@ -44,9 +44,6 @@
     overflow: hidden;         /* Ẩn nội dung bị tràn */
     text-overflow: ellipsis;  /* Hiển thị dấu "..." */
     max-width: 0;             /* Cần thiết để text-overflow hoạt động đúng */
-<<<<<<< Updated upstream
-}
-=======
 }
 /* Header: tô trực tiếp vào TH */
 .table-soldiers thead th {
@@ -356,4 +353,3 @@
   transform: translateY(-4px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
 }
->>>>>>> Stashed changes
