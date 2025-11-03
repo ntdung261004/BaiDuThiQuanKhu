@@ -45,7 +45,7 @@
         <small class="text-light opacity-75">Quản lý, thêm mới và tìm kiếm chiến sĩ trong đơn vị</small>
       </div>
     </div>
-    <button type="button" class="btn btn-light btn-add px-4 py-2"
+    <button type="button" class="btn btn-light btn-add px-4 py-3 me-4"
             data-bs-toggle="modal" data-bs-target="#addSoldierModal">
       <i class="fas fa-user-plus me-2 py-2"></i><strong>Thêm chiến sĩ</strong>
     </button>
@@ -56,17 +56,17 @@
     <!-- Ô tìm kiếm -->
     <div class="col-lg-6">
       <label class="form-label text-white">Tìm kiếm:</label>
-      <div class="input-group with-icon">
-        <span class="input-group-text" style="height:50px;"><i class="fas fa-search"></i></span>
-        <input type="text" class="form-control" name="search" placeholder="Nhập tên chiến sĩ..." style="height:50px;">
+      <div class="input-group with-icon" style="height:45px;">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input type="text" class="form-control" name="search" placeholder="Nhập tên chiến sĩ..." >
       </div>
     </div>
 
     <!-- Đơn vị -->
     <div class="col-lg-4">
       <label for="filter-unit" class="form-label text-white">Đơn vị:</label>
-      <div class="input-group with-icon">
-        <span class="input-group-text" style="height:50px;"><i class="fas fa-sitemap"></i></span>
+      <div class="input-group with-icon" style="height:45px;">
+        <span class="input-group-text"><i class="fas fa-sitemap"></i></span>
         <div id="filter-unit" class="custom-select">
           <div class="selected" data-value="">Tất cả</div>
           <i class="fas fa-chevron-down select-arrow"></i>
@@ -81,7 +81,7 @@
     </div>
 
     <!-- Nút lọc -->
-    <div class="col-lg-2 d-flex align-items-end">
+    <div class="col-lg-2 d-flex align-items-end" style="place-self: flex-end;">
       <button type="submit" class="btn btn-filter w-100"><i class="fas fa-filter me-2"></i>Lọc</button>
     </div>
   </form>
