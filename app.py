@@ -282,6 +282,15 @@ def forgot_password():
 def list_page():
     return render_template("list.html")
 
+# === THÊM MỚI ROUTE NÀY VÀO CUỐI TỆP ===
+@app.route('/hdsd')
+@login_required
+def hdsd():
+    """
+    Hiển thị trang hướng dẫn sử dụng.
+    """
+    return render_template('hdsd.html')
+# === KẾT THÚC PHẦN THÊM MỚI ===
 @app.route('/logout')
 @login_required
 def logout():

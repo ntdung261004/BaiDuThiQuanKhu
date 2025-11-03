@@ -185,6 +185,11 @@
            class="list-group-item list-group-item-action {% if request.endpoint=='index' %}active{% endif %}">
           <i class="fas fa-tachometer-alt me-2"></i> Trang chủ
         </a>
+        <a href="{{ url_for('hdsd') }}" 
+           class="list-group-item list-group-item-action bg-transparent second-text fw-bold 
+           {% if request.endpoint == 'hdsd' %}active{% endif %}">
+            <i class="fas fa-book me-2"></i>Hướng dẫn sử dụng
+        </a>
 
         <a href="{{ url_for('livestream') }}"
            class="list-group-item list-group-item-action {% if request.endpoint=='livestream' %}active{% endif %}">

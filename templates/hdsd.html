@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Hướng dẫn sử dụng{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hdsd.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex" id="wrapper">
+    {% include 'sidebar.html' %}
+    <div id="page-content-wrapper">
+        <nav id="topbar" class="navbar navbar-expand-lg py-3 px-5">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-align-left primary-text fs-4 me-3" id="menu-toggle"></i>
+                <h2 class="fs-3 m-0">Hướng dẫn sử dụng</h2>
+            </div>
+            <div class="ms-auto">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img id="navbar-avatar" 
+                        src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}" 
+                        class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                    <span id="navbar-greeting">Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
+                    </ul>
+                </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="container-fluid px-5 py-4">
+            <div class="row align-items-start">
+                <nav id="documentation-nav" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#section-intro">
+                                    <i class="fas fa-rocket me-2"></i> Giới thiệu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#section-hardware">
+                                    <i class="fas fa-microchip me-2"></i> 1. Phần cứng
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#section-assembly">
+                                    <i class="fas fa-tools me-2"></i> 2. Lắp đặt
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#section-connection">
+                                    <i class="fas fa-wifi me-2"></i> 3. Kết nối
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#section-software">
+                                    <i class="fas fa-desktop me-2"></i> 4. Sử dụng phần mềm
+                                </a>
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-dashboard">Tổng quan</a></li>
+                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-soldiers">Quản lý xạ thủ</a></li>
+                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-session">Tạo phiên tập</a></li>
+                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-training">Huấn luyện</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <div data-bs-spy="scroll" data-bs-target="#documentation-nav" data-bs-offset="0" class="scrollspy-example" tabindex="0">
+                        
+                        <section id="section-intro" class="doc-section">
+                            <h2 class="pb-2 border-bottom">Giới thiệu</h2>
+                            <p>Đây là tài liệu hướng dẫn vận hành Hệ thống Huấn luyện Bắn súng Thông minh...</p>
+                            <p>(Bạn có thể thêm nội dung giới thiệu chung về dự án ở đây).</p>
+                        </section>
+
+                        <section id="section-hardware" class="doc-section">
+                            <h2 class="pb-2 border-bottom">1. Chuẩn bị Phần cứng</h2>
+                            <p>Để hệ thống hoạt động, bạn cần chuẩn bị các thành phần sau:</p>
+                            <ul>
+                                <li><strong>Thiết bị trung tâm (Pi):</strong> 1x Raspberry Pi 4 (hoặc Pi 5).</li>
+                                <li><strong>Camera:</strong> 1x Module Camera cho Pi (hoặc Camera USB).</li>
+                                <li><strong>Nguồn điện:</strong> Nguồn USB-C 5V-3A cho Pi.</li>
+                                <li><strong>Thiết bị kích hoạt (Trigger):</strong> (Ví dụ: Nút bấm Bluetooth).</li>
+                                <li><strong>Hệ thống máy chủ:</strong> 1x PC hoặc Laptop chạy Windows/macOS/Linux.</li>
+                                <li><strong>Mạng:</strong> 1x Bộ phát WiFi.</li>
+                            </ul>
+                            <p>(Bạn có thể thêm hình ảnh các thiết bị ở đây).</p>
+                        </section>
+
+                        <section id="section-assembly" class="doc-section">
+                            <h2 class="pb-2 border-bottom">2. Hướng dẫn Lắp đặt</h2>
+                            <p>Quy trình lắp đặt tại bệ bắn:</p>
+                            <ol>
+                                <li><strong>Gắn Camera:</strong> Cắm cáp camera vào bo mạch Raspberry Pi...</li>
+                                <li><strong>Gắn Pi:</strong> Đặt Pi vào hộp bảo vệ và cố định tại vị trí...</li>
+                                <li><strong>Cấp nguồn:</strong> Kết nối nguồn 5V-3A cho Pi.</li>
+                            </ol>
+                            <p>(Bạn có thể thêm hình ảnh minh họa các bước lắp đặt).</p>
+                        </section>
+
+                        <section id="section-connection" class="doc-section">
+                            <h2 class="pb-2 border-bottom">3. Kết nối Hệ thống</h2>
+                            <p>Đảm bảo cả Máy chủ (PC) và Raspberry Pi đều kết nối vào **cùng một mạng WiFi**.</p>
+                            <ol>
+                                <li><strong>Khởi động Pi:</strong> Cắm nguồn cho Pi, Pi sẽ tự động khởi động và chạy chương trình.</li>
+                                <li><strong>Khởi động Máy chủ:</strong> Chạy file `run.py` trên máy chủ để khởi động trung tâm điều khiển.</li>
+                                <li><strong>Tìm IP của Pi:</strong> Sử dụng lệnh `ping raspberrypi.local`...</li>
+                                <li><strong>Cấu hình IP:</strong> (Bạn có thể hướng dẫn người dùng cập nhật IP của Pi trong file cấu hình của server nếu cần).</li>
+                            </ol>
+                        </section>
+
+                        <section id="section-software" class="doc-section">
+                            <h2 class="pb-2 border-bottom">4. Sử dụng Phần mềm</h2>
+                            <p>Truy cập vào địa chỉ `http://127.0.0.1:5000` trên trình duyệt của máy chủ để bắt đầu.</p>
+                            
+                            <h4 id="subsection-software-dashboard">Tổng quan</h4>
+                            <p>Đây là trang chủ, hiển thị thống kê nhanh...</p>
+
+                            <h4 id="subsection-software-soldiers">Quản lý Xạ thủ</h4>
+                            <p>Tại mục "Danh sách Xạ thủ", bạn có thể Thêm, Sửa, Xóa thông tin...</p>
+
+                            <h4 id="subsection-software-session">Tạo phiên tập</h4>
+                            <p>Tại mục "Quản lý Huấn luyện", nhấn "Tạo phiên mới"...</p>
+
+                            <h4 id="subsection-software-training">Huấn luyện (Chi tiết phiên)</h4>
+                            <p>Đây là giao diện chính khi huấn luyện.
+                                <ul>
+                                    <li><strong>Chọn xạ thủ:</strong> Nhấn "Chọn" bên cạnh tên xạ thủ để kích hoạt.</li>
+                                    <li><strong>Livestream:</strong> Video trực tiếp từ Pi sẽ hiển thị.</li>
+                                    <li><strong>Lịch sử bắn:</strong> Kết quả bắn sẽ tự động cập nhật ở đây.</li>
+                                </ul>
+                            </p>
+                        </section>
+
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

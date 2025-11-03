@@ -14,7 +14,7 @@ from models import db, Shot, TrainingSession, SessionStatus
 pi_bp = Blueprint('pi_bp', __name__)
 
 # --- Cấu hình cho kết nối đến Raspberry Pi ---
-PI_HOSTNAME = os.environ.get('PI_HOSTNAME', '192.168.1.207')
+PI_HOSTNAME = os.environ.get('PI_HOSTNAME', '192.168.1.71')
 PI_STREAMING_PORT = 8000
 PI_STREAM_URL = f"http://{PI_HOSTNAME}:{PI_STREAMING_PORT}/stream.mjpg"
 
