@@ -38,6 +38,11 @@
           <i class="fas fa-tachometer-alt item-icon"></i>
           <span class="item-label">Trang chủ</span>
         </a>
+        <a href="{{ url_for('guide') }}"
+           class="list-group-item list-group-item-action {% if request.endpoint=='guide' %}active{% endif %}" data-spa="off">
+          <i class="fas fa-book-open item-icon"></i>
+          <span class="item-label">Hướng dẫn sử dụng</span>
+        </a> 
         <a href="{{ url_for('list_page') }}"
            class="list-group-item list-group-item-action {% if request.endpoint=='list_page' %}active{% endif %}" data-spa="off">
           <i class="fas fa-list item-icon"></i>
@@ -61,12 +66,6 @@
           <i class="fas fa-chart-line item-icon"></i>
           <span class="item-label">Báo cáo</span>
         </a>
-        <a href="{{ url_for('guide') }}"
-           class="list-group-item list-group-item-action {% if request.endpoint=='guide' %}active{% endif %}" data-spa="off">
-          <i class="fas fa-book-open item-icon"></i>
-          <span class="item-label">Hướng dẫn sử dụng</span>
-        </a> 
-
         <a href="{{ url_for('logout') }}"
    class="list-group-item list-group-item-action"
    data-spa="off">

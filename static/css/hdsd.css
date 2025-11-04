@@ -1,0 +1,62 @@
+/* CSS cho trang Hướng dẫn */
+
+/* === BẮT BUỘC: Neo (sticky) menu bên trái === */
+#documentation-nav {
+    /* 1. Bật chế độ "dính" */
+    position: sticky;
+    
+    /* 2. Vị trí dính: 1rem (16px) bên dưới mép trên CỦA KHUNG CUỘN */
+    /* (Khung cuộn của bạn là #page-content-wrapper) */
+    top: 1rem; 
+    
+    /* 3. Thêm cuộn cho menu nếu BẢN THÂN MENU quá dài */
+    max-height: 95vh; /* Chiều cao tối đa là 95% chiều cao màn hình */
+    overflow-y: auto;
+}
+
+/* === CÁC ĐỊNH DẠNG CŨ GIỮ NGUYÊN === */
+
+/* Định dạng cho danh sách UL bên trong */
+#documentation-nav .nav-link {
+    font-size: 0.9rem;
+    padding: 0.35rem 1rem;
+    color: #555;
+    border-left: 3px solid transparent;
+}
+
+#documentation-nav .nav-link:hover {
+    color: #000;
+    background-color: #f8f9fa;
+}
+
+/* Định dạng cho mục đang active (được cuộn tới) */
+#documentation-nav .nav-link.active {
+    color: var(--primary-color, #0d6efd); /* Dùng màu chính của bạn */
+    font-weight: 600;
+    border-left: 3px solid var(--primary-color, #0d6efd);
+}
+
+/* Định dạng cho các mục con */
+#documentation-nav .nav .nav-link.small {
+    font-size: 0.8rem;
+    padding-left: 2.5rem;
+}
+
+/* Định dạng cho các khối nội dung */
+.doc-section {
+    padding-top: 5rem; /* Quan trọng: offset này để không bị che bởi topbar */
+    margin-top: -3.5rem; /* Bù lại phần offset */
+    padding-bottom: 2rem;
+}
+
+.doc-section h2 {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--primary-text, #333);
+}
+
+.doc-section h4 {
+    margin-top: 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
