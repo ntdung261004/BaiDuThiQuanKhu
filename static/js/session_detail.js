@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    // --- KHAI BÁO CÁC BIẾN GIAO DIỆN ---
+    // --- KHAI BÁO BIẾN GỐC CỦA TRANG (GIỮ NGUYÊN) ---
     const pathParts = window.location.pathname.split('/');
     const sessionId = pathParts.length > 2 ? pathParts[pathParts.length - 1] : null;
 
@@ -7,10 +7,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const exerciseNameDisplay = document.getElementById('exercise-name-display');
     const soldiersList = document.getElementById('soldiers-list');
     const shooterCountBadge = document.getElementById('shooter-count-badge');
-    const connectionStatusBanner = document.getElementById('connection-status-banner');
-    const connectionText = document.getElementById('connection-text');
-    const videoFeed = document.getElementById('video-feed');
-    const statusMessage = document.getElementById('status-message');
     const currentShooterName = document.getElementById('current-shooter-name');
     const shotTime = document.getElementById('shot-time');
     const targetName = document.getElementById('target-name');
@@ -21,46 +17,148 @@ document.addEventListener('DOMContentLoaded', async function() {
     const totalShotsEl = document.getElementById('total-shots');
     const hitRateEl = document.getElementById('hit-rate');
     const averageScoreEl = document.getElementById('average-score');
-
     let activeShooterId = null;
     let lastProcessedShotId = null;
-    let connectionInterval;
-    let dataFeedInterval;
     let soldiers = [];
     let isUserDraggingZoom = false;
 
+
+    // --- KHỐI LOGIC VIDEO ĐÚNG (TỪ STREAM.JS) ---
+    const connectionBanner = document.getElementById('connection-status-banner');
+    const connectionText = document.getElementById('connection-text');
+    const videoFeed = document.getElementById('video-feed');
+    const statusMessage = document.getElementById('status-message');
+    const livestreamControls = document.getElementById('livestream-controls');
+    let isUiConnected = false;
+    let reconnectInterval = null;
+    const canvas = document.createElement('canvas');
+
+    if (videoFeed) {
+        canvas.style.display = 'none'; 
+        videoFeed.parentElement.appendChild(canvas);
+    }
+
+    const freezeDetector = {
+        canvas: document.createElement('canvas'),
+        timeout: null,
+        lastImageDataUrl: '',
+        consecutiveMatches: 0,
+        start: function() {
+            this.stop();
+            this.timeout = setInterval(this.check.bind(this), 2500);
+        },
+        stop: function() {
+            clearInterval(this.timeout);
+            this.timeout = null; this.consecutiveMatches = 0; this.lastImageDataUrl = '';
+        },
+        check: function() {
+             if (videoFeed.naturalWidth === 0) return;
+             try {
+                const isAuthenticating = !isUiConnected;
+                this.canvas.width = videoFeed.naturalWidth;
+                this.canvas.height = videoFeed.naturalHeight;
+                const context = this.canvas.getContext('2d');
+                context.drawImage(videoFeed, 0, 0, this.canvas.width, this.canvas.height);
+                const currentData = this.canvas.toDataURL('image/jpeg', 0.5);
+                
+                if (this.lastImageDataUrl && this.lastImageDataUrl !== currentData) {
+                    if (isAuthenticating) {
+                        handleConnectionSuccess();
+                    }
+                    this.consecutiveMatches = 0;
+                } else {
+                    this.consecutiveMatches++;
+                    if (this.consecutiveMatches >= 2 && isUiConnected) {
+                        handleDisconnection();
+                    }
+                }
+                this.lastImageDataUrl = currentData;
+             } catch(e) { if(isUiConnected) handleDisconnection(); }
+        }
+    };
+
+    function handleConnectionSuccess() {
+        if (isUiConnected) return;
+        isUiConnected = true;
+        clearInterval(reconnectInterval);
+        reconnectInterval = null;
+
+        videoFeed.style.opacity = '1';
+        statusMessage.style.display = 'none'; // **SỬA LỖI: Luôn ẩn thông báo khi kết nối thành công**
+        if (livestreamControls) livestreamControls.style.display = 'flex';
+        
+        connectionBanner.className = 'ms-auto fw-bold connected';
+        connectionText.innerHTML = '<i class="fas fa-check-circle"></i> Đã kết nối';
+        
+        freezeDetector.start();
+    }
+
+    function handleDisconnection() {
+        if (!isUiConnected && reconnectInterval) return;
+        isUiConnected = false;
+        freezeDetector.stop();
+        videoFeed.src = '';
+        videoFeed.style.display = 'none';
+
+        statusMessage.style.display = 'flex'; // **SỬA LỖI: Luôn hiện thông báo khi ngắt kết nối**
+        if (livestreamControls) livestreamControls.style.display = 'none';
+        connectionBanner.className = 'ms-auto fw-bold disconnected';
+        connectionText.innerHTML = '<i class="fas fa-plug"></i> Mất kết nối, đang thử lại...';
+        
+        if (reconnectInterval) clearInterval(reconnectInterval);
+        reconnectInterval = setInterval(() => {
+            videoFeed.src = `/video_feed?timestamp=${new Date().getTime()}`;
+        }, 5000);
+    }
+
+    function handleConnectionAttempt() {
+        clearInterval(reconnectInterval);
+        reconnectInterval = null;
+        
+        videoFeed.style.display = 'block';
+        videoFeed.style.opacity = '0';
+        statusMessage.style.display = 'none';
+        
+        connectionBanner.className = 'ms-auto fw-bold connected';
+        connectionText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Đang xác thực luồng...';
+        
+        freezeDetector.start();
+
+        setTimeout(() => {
+            if (!isUiConnected) {
+                handleDisconnection();
+            }
+        }, 7000);
+    }
+    
+    if (videoFeed) {
+        videoFeed.addEventListener('load', handleConnectionAttempt);
+        videoFeed.addEventListener('error', () => {
+            if (isUiConnected || !reconnectInterval) {
+                handleDisconnection();
+            }
+        });
+    }
+
+    // --- LOGIC GỐC CỦA BẠN (GIỮ NGUYÊN VÀ CẬP NHẬT) ---
     const finishSessionBtn = document.getElementById('end-session-btn');
     const endSessionModalEl = document.getElementById('endSessionConfirmModal');
-
     if (finishSessionBtn && endSessionModalEl) {
         const endSessionModal = new bootstrap.Modal(endSessionModalEl);
         const confirmEndSessionBtn = document.getElementById('confirmEndSessionBtn');
-
-        finishSessionBtn.addEventListener('click', () => {
-            endSessionModal.show();
-        });
-
+        finishSessionBtn.addEventListener('click', () => endSessionModal.show());
         confirmEndSessionBtn.addEventListener('click', async () => {
             confirmEndSessionBtn.disabled = true;
             confirmEndSessionBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...`;
-
             try {
-                const response = await fetch(`/api/training_sessions/${sessionId}/finish`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                const response = await fetch(`/api/training_sessions/${sessionId}/finish`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
                 const result = await response.json();
                 if (response.ok) {
                     endSessionModal.hide();
                     showToast('Phiên tập đã kết thúc thành công!');
-                    setTimeout(() => {
-                        window.location.href = '/training';
-                    }, 2000);
-                } else {
-                    throw new Error(result.message || 'Có lỗi không xác định.');
-                }
+                    setTimeout(() => { window.location.href = '/training'; }, 2000);
+                } else { throw new Error(result.message || 'Có lỗi không xác định.'); }
             } catch (error) {
-                console.error('Lỗi khi kết thúc phiên:', error);
                 endSessionModal.hide();
                 showToast(`Lỗi: ${error.message}`, 'danger');
             } finally {
@@ -69,49 +167,25 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     }
-
-    window.addEventListener('beforeunload', function(event) {
-        if (navigator.sendBeacon) {
-            navigator.sendBeacon('/api/deactivate_shooter', new Blob());
-        }
-    });
-
-    function updateConnectionStatus(isConnected) {
-        if (isConnected) {
-            connectionStatusBanner.className = 'mb-2 fw-bold alert alert-success';
-            connectionText.textContent = 'Thiết bị đã kết nối';
-            videoFeed.style.display = 'block';
-            statusMessage.style.display = 'none';
-            videoFeed.src = '/video_feed';
-        } else {
-            connectionStatusBanner.className = 'mb-2 fw-bold alert alert-danger';
-            connectionText.textContent = 'Thiết bị ngắt kết nối';
-            videoFeed.style.display = 'none';
-            statusMessage.style.display = 'flex';
-            videoFeed.src = '';
-        }
-    }
-
+    window.addEventListener('beforeunload', function(event) { if (navigator.sendBeacon) { navigator.sendBeacon('/api/deactivate_shooter', new Blob()); } });
     function toggleResultPanel(state, message = 'Vui lòng chọn một xạ thủ để bắt đầu!') {
         const resultList = document.querySelector('#current-shooter-name').closest('.list-group');
         const targetImageContainer = document.getElementById('target-image-container');
         const existingNotice = document.getElementById('shooter-notice');
         if (existingNotice) existingNotice.remove();
-        
         if (state === 'show') {
-            resultList.style.display = 'block';
-            targetImageContainer.style.display = 'flex';
+            if(resultList) resultList.style.display = 'block';
+            if(targetImageContainer) targetImageContainer.style.display = 'flex';
         } else {
-            resultList.style.display = 'none';
-            targetImageContainer.style.display = 'none';
+            if(resultList) resultList.style.display = 'none';
+            if(targetImageContainer) targetImageContainer.style.display = 'none';
             const noticeElement = document.createElement('div');
             noticeElement.id = 'shooter-notice';
             noticeElement.className = 'd-flex flex-column justify-content-center align-items-center text-center h-100 text-muted';
             noticeElement.innerHTML = `<i class="fas fa-hand-pointer fa-2x mb-3"></i><p>${message}</p>`;
-            targetImageContainer.parentNode.insertBefore(noticeElement, targetImageContainer.nextSibling);
+            if(targetImageContainer) targetImageContainer.parentNode.insertBefore(noticeElement, targetImageContainer.nextSibling);
         }
     }
-
     function resetLatestResultPanel() {
         shotTime.textContent = '--:--:--';
         targetName.textContent = '--';
@@ -119,42 +193,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         targetImage.style.display = 'none';
         targetImageNotice.style.display = 'flex';
     }
-
-    async function checkConnectionStatus() {
-        try {
-            const response = await fetch('/connection_status');
-            const data = await response.json();
-            updateConnectionStatus(response.ok && data.status === 'connected');
-            if (response.ok && data.status === 'connected' && !isUserDraggingZoom) {
-                const currentZoom = data.zoom || 1.0;
-                const zoomSlider = document.getElementById('zoom-slider');
-                const zoomValueDisplay = document.getElementById('zoom-value-display');
-                if (zoomSlider && zoomValueDisplay) {
-                    zoomSlider.value = currentZoom;
-                    zoomValueDisplay.textContent = `${parseFloat(currentZoom).toFixed(1)}x`;
-                }
-            }
-        } catch (error) {
-            updateConnectionStatus(false);
-        }
-    }
-
     async function updateProcessedData() {
         try {
             const response = await fetch('/data_feed');
             if (!response.ok) return;
             const data = await response.json();
-            
-            shotTime.textContent = data.time;
-            targetName.textContent = data.target;
-            shotScore.textContent = data.score;
-            
+            shotTime.textContent = data.time || '--:--:--';
+            targetName.textContent = data.target || '--';
+            shotScore.textContent = data.score || '--.-';
             if (data.shot_id && data.shot_id !== lastProcessedShotId) {
-                if (!activeShooterId) {
-                    console.log("Bỏ qua phát bắn vì chưa chọn xạ thủ.");
-                    lastProcessedShotId = data.shot_id;
-                    return;
-                }
+                if (!activeShooterId) { lastProcessedShotId = data.shot_id; return; }
                 lastProcessedShotId = data.shot_id;
                 if (data.image_data) {
                     targetImage.src = `data:image/jpeg;base64,${data.image_data}`;
@@ -167,16 +215,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (shooterListItem) {
                     const shotCountBadge = shooterListItem.querySelector('.badge');
                     if (shotCountBadge) {
-                        const currentCount = parseInt(shotCountBadge.innerText.trim().replace(/<[^>]*>/g, '')) || 0;
+                        const currentCount = parseInt(shotCountBadge.innerText.trim().replace('<i class="fas fa-bullseye me-1"></i>', '')) || 0;
                         shotCountBadge.innerHTML = `<i class="fas fa-bullseye me-1"></i>${currentCount + 1}`;
                     }
                 }
             }
-        } catch (error) {
-            console.error("Lỗi khi cập nhật dữ liệu:", error);
-        }
+        } catch (error) {}
     }
-
     async function loadSessionDetails() {
         if (!sessionId) return 'ERROR';
         try {
@@ -185,13 +230,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const data = await response.json();
             sessionNameHeader.textContent = data.session_name || `Phiên Tập #${data.id}`;
             if (data.status === 'COMPLETED') {
-                document.getElementById('session-dashboard-grid').innerHTML = `
-                    <div class="text-center p-5" style="grid-column: 1 / -1;">
-                        <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
-                        <h2 class="display-6">Phiên tập này đã kết thúc.</h2>
-                        <p class="lead text-muted">Mọi thao tác đã được vô hiệu hóa.</p>
-                        <a href="/training" class="btn btn-primary mt-3">Quay lại trang quản lý</a>
-                    </div>`;
+                document.getElementById('session-dashboard-grid').innerHTML = `<div class="text-center p-5" style="grid-column: 1 / -1;"><i class="fas fa-check-circle fa-5x text-success mb-4"></i><h2 class="display-6">Phiên tập này đã kết thúc.</h2><p class="lead text-muted">Mọi thao tác đã được vô hiệu hóa.</p><a href="/training" class="btn btn-primary mt-3">Quay lại trang quản lý</a></div>`;
                 return 'COMPLETED';
             }
             exerciseNameDisplay.textContent = `Bài tập: ${data.exercise_name}`;
@@ -202,27 +241,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const soldierItem = document.createElement('div');
                 soldierItem.dataset.soldierItemId = soldier.id;
                 soldierItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                soldierItem.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <button class="btn btn-sm btn-outline-primary select-shooter-btn me-3" data-soldier-id="${soldier.id}">Chọn</button>
-                        <span>${soldier.rank} ${soldier.name}</span>
-                    </div>
-                    <span class="badge bg-secondary" title="Số phát bắn"><i class="fas fa-bullseye me-1"></i>${soldier.shot_count}</span>
-                `;
+                soldierItem.innerHTML = `<div class="d-flex align-items-center"><button class="btn btn-sm btn-outline-primary select-shooter-btn me-3" data-soldier-id="${soldier.id}">Chọn</button><span>${soldier.rank} ${soldier.name}</span></div><span class="badge bg-secondary" title="Số phát bắn"><i class="fas fa-bullseye me-1"></i>${soldier.shot_count}</span>`;
                 soldiersList.appendChild(soldierItem);
             });
-            if (!await syncActiveShooterState()) {
-                toggleResultPanel('hide');
-            }
+            if (!await syncActiveShooterState()) { toggleResultPanel('hide'); }
             await loadShotHistory();
             return data.status;
         } catch (error) {
-            console.error('Lỗi khi tải chi tiết phiên tập:', error);
             sessionNameHeader.textContent = 'Lỗi tải dữ liệu';
             return 'ERROR';
         }
     }
-
     async function handleSelectShooter(event) {
         const button = event.target.closest('.select-shooter-btn');
         if (!button) return;
@@ -234,25 +263,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         currentShooterName.textContent = selectedSoldier ? `${selectedSoldier.rank} ${selectedSoldier.name}` : 'Không xác định';
         document.querySelectorAll('#soldiers-list .list-group-item').forEach(item => item.classList.remove('active'));
         button.closest('.list-group-item').classList.add('active');
-        try {
-            await fetch('/api/activate_shooter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: sessionId, soldier_id: activeShooterId })
-            });
-        } catch (error) {
-            console.error("Lỗi khi kích hoạt xạ thủ:", error);
-        }
-        await updateSessionOverview();
+        try { await fetch('/api/activate_shooter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: sessionId, soldier_id: activeShooterId }) });
+        } catch (error) {}
+        await updateSessionOverview(); 
     }
-
     async function updateSessionOverview() {
-        if (!activeShooterId) {
-            totalShotsEl.textContent = '0';
-            hitRateEl.textContent = '0%';
-            averageScoreEl.textContent = '0.0';
-            return 0;
-        }
+        if (!activeShooterId) { totalShotsEl.textContent = '0'; hitRateEl.textContent = '0%'; averageScoreEl.textContent = '0.0'; return 0; }
         try {
             const response = await fetch(`/api/sessions/${sessionId}/soldier_stats/${activeShooterId}`);
             if (!response.ok) throw new Error('Lỗi tải thành tích.');
@@ -260,42 +276,53 @@ document.addEventListener('DOMContentLoaded', async function() {
             totalShotsEl.textContent = stats.total_shots;
             hitRateEl.textContent = stats.hit_rate;
             averageScoreEl.textContent = stats.average_score;
-            return stats.total_shots;
-        } catch (error) {
-            console.error("Lỗi khi cập nhật thành tích:", error);
-            return 0;
-        }
+            return stats.total_shots; 
+        } catch (error) { return 0; }
     }
 
+    // === YÊU CẦU 2: CẬP NHẬT HÀM ĐỂ TẠO GIAO DIỆN LỊCH SỬ BẮN MỚI ===
     async function loadShotHistory() {
         if (!sessionId) return;
         try {
             const response = await fetch(`/api/sessions/${sessionId}/shots`);
             const shots = await response.json();
             shotStatusList.innerHTML = '';
+
             if (shots.length === 0) {
-                shotStatusList.innerHTML = '<p class="text-muted p-3 text-center">Chưa có phát bắn nào.</p>';
+                shotStatusList.innerHTML = '<p class="text-muted p-3 text-center mb-0">Chưa có phát bắn nào.</p>';
                 return;
             }
-            let shotCounter = shots.length;
-            shots.forEach(shot => {
-                const statusItem = document.createElement('div');
-                statusItem.className = 'd-flex justify-content-between align-items-center small py-1 border-bottom';
-                statusItem.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <span class="badge bg-secondary me-3">${shotCounter}</span>
-                        <span class="me-4">${shot.soldier_name}</span>
-                        <span>Mục tiêu: <strong>${shot.target_name}</strong></span>
+            
+            shots.forEach((shot, index) => {
+                const shotNumber = shots.length - index;
+                const shotItem = document.createElement('div');
+                shotItem.className = 'shot-history-item';
+
+                let scoreClass = 'text-dark';
+                if (shot.score >= 9) scoreClass = 'text-success fw-bold';
+                else if (shot.score >= 7) scoreClass = 'text-primary';
+                else if (shot.score > 0) scoreClass = 'text-warning';
+                else scoreClass = 'text-danger';
+
+                shotItem.innerHTML = `
+                    <div class="shot-history-number">${shotNumber}</div>
+                    <div class="shot-history-details">
+                        <div class="shot-history-soldier">${shot.soldier_name || 'Không rõ'}</div>
+                        <div class="shot-history-meta">
+                            <span>${shot.target_name || 'Không có'}</span> &bull; <span>${shot.timestamp || '--:--:--'}</span>
+                        </div>
                     </div>
-                    <span>Điểm: <strong class="text-danger">${shot.score}</strong></span>
+                    <div class="shot-history-score ${scoreClass}">
+                        ${shot.score}
+                    </div>
                 `;
-                shotStatusList.appendChild(statusItem);
-                shotCounter--;
+                shotStatusList.appendChild(shotItem);
             });
         } catch (error) {
             console.error("Lỗi khi tải lịch sử bắn:", error);
         }
     }
+    // === KẾT THÚC CẬP NHẬT ===
 
     async function syncActiveShooterState() {
         if (!sessionId) return false;
@@ -305,65 +332,62 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (data.active_soldier_id) {
                 activeShooterId = data.active_soldier_id;
                 const selectedSoldier = soldiers.find(s => s.id === activeShooterId);
-                if (selectedSoldier) {
-                    currentShooterName.textContent = `${selectedSoldier.rank} ${selectedSoldier.name}`;
-                }
+                if (selectedSoldier) { currentShooterName.textContent = `${selectedSoldier.rank} ${selectedSoldier.name}`; }
                 document.querySelectorAll('#soldiers-list .list-group-item').forEach(item => item.classList.remove('active'));
                 const shooterListItem = soldiersList.querySelector(`[data-soldier-item-id="${activeShooterId}"]`);
                 if (shooterListItem) shooterListItem.classList.add('active');
                 toggleResultPanel('show');
-                await updateSessionOverview();
+                await updateSessionOverview(); 
                 return true;
             }
-        } catch (error) {
-            console.error("Lỗi đồng bộ trạng thái:", error);
-        }
+        } catch (error) {}
         return false;
     }
+    async function startTrainingSession() { if (!sessionId) return; try { await fetch(`/api/training_sessions/${sessionId}/start`, { method: 'POST' }); } catch (error) {} }
 
-    async function startTrainingSession() {
-        if (!sessionId) return;
-        try {
-            await fetch(`/api/training_sessions/${sessionId}/start`, { method: 'POST' });
-            console.log(`Đã gửi yêu cầu bắt đầu cho phiên #${sessionId}`);
-        } catch (error) {
-            console.error('Lỗi khi gửi yêu cầu bắt đầu phiên:', error);
-        }
-    }
-    
-    // ===================================================================
-    // === HÀM ĐÃ SỬA LỖI ==============================================
-    // ===================================================================
-    async function sendPiCommand(endpoint, body) {
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Lệnh không thành công');
-            }
-        } catch (error) {
-            console.error(`Lỗi khi gửi lệnh đến ${endpoint}:`, error);
-            showToast('Không thể gửi lệnh đến thiết bị.', 'error');
-        }
-    }
-
-    async function initialize() {
+    // --- KHỞI CHẠY ---
+    (async () => {
         const sessionStatus = await loadSessionDetails();
         if (sessionStatus !== 'COMPLETED') {
-            startTrainingSession();
-            updateSessionOverview();
-            connectionInterval = setInterval(checkConnectionStatus, 3000);
-            dataFeedInterval = setInterval(updateProcessedData, 1000);
+            await startTrainingSession();
+            await updateSessionOverview();
+            
+            setInterval(updateProcessedData, 1000);
             soldiersList.addEventListener('click', handleSelectShooter);
-
+            
             const recenterBtn = document.getElementById('recenter-btn');
             const zoomSlider = document.getElementById('zoom-slider');
-            const zoomValueDisplay = document.getElementById('zoom-value-display');
+            // === THAY ĐỔI 1: Sửa lại ID cho đúng với HTML ===
+            const zoomValueDisplay = document.getElementById('zoom-value-display'); 
             let isCenteringMode = false;
+
+            // === THAY ĐỔI 2: Thêm hàm đồng bộ trạng thái Pi ===
+            async function syncPiStatus() {
+                try {
+                    // Chỉ thực hiện khi đã kết nối và người dùng không kéo thanh trượt
+                    if (isUiConnected && !isUserDraggingZoom) {
+                        const response = await fetch('/get_current_config');
+                        if (response.ok) {
+                            const config = await response.json();
+                            if (config.zoom) {
+                                const zoomValue = parseFloat(config.zoom);
+                                if (zoomSlider) zoomSlider.value = zoomValue;
+                                if (zoomValueDisplay) zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi đồng bộ trạng thái Pi:', error);
+                }
+            }
+            
+            async function sendPiCommand(endpoint, body, successMessage = null) {
+                try {
+                    const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    if (response.ok) { if (successMessage) showToast(successMessage); }
+                    else { const result = await response.json(); showToast(result.message || 'Lệnh không thành công', 'danger'); }
+                } catch (error) {}
+            }
 
             if (recenterBtn) {
                 recenterBtn.addEventListener('click', () => {
@@ -382,8 +406,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const nativeWidth = 480; const nativeHeight = 640;
                     const scaledX = Math.round((x / videoFeed.clientWidth) * nativeWidth);
                     const scaledY = Math.round((y / videoFeed.clientHeight) * nativeHeight);
-                    showToast("Đã hiệu chỉnh tâm ngắm mới");
-                    sendPiCommand('/set_center', { center: { x: scaledX, y: scaledY } });
+                    sendPiCommand('/set_center', { center: { x: scaledX, y: scaledY } }, "Đã hiệu chỉnh tâm ngắm mới");
                     isCenteringMode = false;
                     recenterBtn.classList.remove('btn-success');
                     recenterBtn.classList.add('btn-secondary');
@@ -392,17 +415,26 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             if (zoomSlider) {
                 zoomSlider.addEventListener('input', () => {
+                    isUserDraggingZoom = true;
                     const zoomValue = parseFloat(zoomSlider.value);
-                    sendPiCommand('/set_zoom', { zoom: zoomValue });
-                    zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
+                    sendPiCommand('/set_zoom', { zoom: zoomValue }); 
+                    // Sửa lại để dùng biến đã được khai báo đúng
+                    if (zoomValueDisplay) zoomValueDisplay.textContent = `${zoomValue.toFixed(1)}x`;
                 });
-                zoomSlider.addEventListener('change', () => {
-                    const zoomValue = parseFloat(zoomSlider.value);
-                    showToast(`Đã tinh chỉnh zoom ${zoomValue.toFixed(1)}x`);
-                });
+                zoomSlider.addEventListener('mouseup', () => { isUserDraggingZoom = false; });
+                zoomSlider.addEventListener('touchend', () => { isUserDraggingZoom = false; });
             }
-        }
-    }
 
-    initialize();
+            // KHỞI ĐỘNG LOGIC VIDEO
+            handleDisconnection();
+            setTimeout(() => {
+                if (!isUiConnected) {
+                     videoFeed.src = `/video_feed?timestamp=${new Date().getTime()}`;
+                }
+            }, 1000);
+
+            // === THAY ĐỔI 3: Bắt đầu chạy hàm đồng bộ định kỳ ===
+            setInterval(syncPiStatus, 2500);
+        }
+    })();
 });
