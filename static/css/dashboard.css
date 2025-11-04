@@ -73,7 +73,7 @@ h3.fs-4, h3.fs-3 {
 }
 
 .modal-header {
-    background: linear-gradient(90deg, #006b86 0%, #009ec2 50%, #00b4d8 100%);
+    background: linear-gradient(90deg, #006b86 0%, #0483a0 50%, #047d95 100%);
     color: white;
 }
 
@@ -288,7 +288,6 @@ h3.fs-4, h3.fs-3 {
   bottom: -1px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(145deg, #6275af 0%, #b1bdc7 100%);
   color: #ffff;
   padding: 0.4rem 1.2rem;
   border-radius: 30px;

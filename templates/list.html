@@ -64,21 +64,19 @@
 
     <!-- Đơn vị -->
     <div class="col-lg-4">
-      <label for="filter-unit" class="form-label text-white">Đơn vị:</label>
-      <div class="input-group with-icon" style="height:45px;">
-        <span class="input-group-text"><i class="fas fa-sitemap"></i></span>
-        <div id="filter-unit" class="custom-select">
-          <div class="selected" data-value="">Tất cả</div>
-          <i class="fas fa-chevron-down select-arrow"></i>
-          <div class="options">
-            <div data-value="">Tất cả</div>
-            {% for unit in unit_list %}
-              <div data-value="{{ unit }}" {% if unit == unit_filter %}class="active"{% endif %}>{{ unit }}</div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
+  <label for="filter-unit" class="form-label text-white">Đơn vị:</label>
+  <div class="input-group input-group-with-icon" style="height:45px;">
+    <span class="input-group-text"><i class="fas fa-sitemap"></i></span>
+    <select id="filter-unit" name="unit" class="form-select" style="height:45px;">
+      <option value="" {% if not unit_filter %}selected{% endif %}>Tất cả</option>
+      {% for unit in unit_list %}
+        <option value="{{ unit }}" {% if unit == unit_filter %}selected{% endif %}>{{ unit }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+
 
     <!-- Nút lọc -->
     <div class="col-lg-2 d-flex align-items-end" style="place-self: flex-end;">

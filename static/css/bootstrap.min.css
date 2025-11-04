@@ -2268,7 +2268,7 @@ progress {
     appearance: none;
     background-color: var(--bs-body-bg);
     background-clip: padding-box;
-    border: var(--bs-border-width) solid var(--bs-border-color);
+    border: 1px solid vv#ccc;
     border-radius: var(--bs-border-radius);
     transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out
 }
@@ -5916,7 +5916,7 @@ textarea.form-control-lg {
     width: 100%;
     color: var(--bs-modal-color);
     pointer-events: auto;
-    background-color: var(--bs-modal-bg);
+    background-color: #e9ecef;
     background-clip: padding-box;
     border: var(--bs-modal-border-width) solid var(--bs-modal-border-color);
     border-radius: var(--bs-modal-border-radius);

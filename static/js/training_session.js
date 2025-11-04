@@ -101,6 +101,66 @@ transition: "opacity .35s ease, transform .35s ease"
     toast.style.transform = "translateY(12px)";
     setTimeout(() => toast.remove(), 250);
   }, 3000);}
+// ==== GLOBAL CENTER ALERT (Success / Info / Warning / Danger) ====
+window.alertCenter = function ({
+  title   = "Success alert",
+  message = "Your work has been saved",
+  okText  = "OK",
+  variant = "success" // success | info | warning | danger
+} = {}) {
+  return new Promise((resolve) => {
+    const COLORS = {
+      success: { ring: "#22c55e", fill: "#22c55e", icon: "check" },
+      info:    { ring: "#3b82f6", fill: "#3b82f6", icon: "info"  },
+      warning: { ring: "#f59e0b", fill: "#f59e0b", icon: "warn"  },
+      danger:  { ring: "#ef4444", fill: "#ef4444", icon: "x"     },
+    };
+    const C = COLORS[variant] || COLORS.success;
+
+    const svgIcon =
+      C.icon === "check" ? `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <path d="M14 24.5l6 6L34 17" fill="none" stroke="${C.fill}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      : C.icon === "x" ? `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <path d="M16 16l16 16M32 16L16 32" fill="none" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
+        </svg>`
+      : C.icon === "warn" ? `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <path d="M24 13v16" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="24" cy="35" r="2.5" fill="${C.fill}"/>
+        </svg>`
+      : `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <circle cx="24" cy="16" r="3" fill="${C.fill}"/>
+          <path d="M24 22v12" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
+        </svg>`;
+
+    const wrap = document.createElement("div");
+    wrap.className = "modal fade";
+    wrap.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow:0 10px 30px rgba(0,0,0,.15);">
+          <div class="modal-body text-center p-4">
+            <div class="d-flex justify-content-center mb-2">${svgIcon}</div>
+            <h5 class="fw-bold mb-1">${title}</h5>
+            <div class="text-muted mb-3">${message}</div>
+            <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">${okText}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+    const bs = new bootstrap.Modal(wrap, { backdrop: "static", keyboard: true });
+    wrap.addEventListener("hidden.bs.modal", () => { wrap.remove(); resolve(true); });
+    bs.show();
+  });
+};
 
 
 // ==== GLOBAL CENTER CONFIRM MODAL (Bootstrap) ====
@@ -426,13 +486,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ session_name: newSessionName })
             });
             if (response.ok) {
-                const editModal = bootstrap.Modal.getInstance(document.getElementById('editSessionModal'));
-                editModal.hide();
-                loadSessions();
-                showToast('Cập nhật thành công!');
-            } else {
-                showToast('Có lỗi xảy ra khi cập nhật.','danger');
-            }
+  const editModal = bootstrap.Modal.getInstance(document.getElementById('editSessionModal'));
+  editModal.hide();
+  await alertCenter({
+    title: "Cập nhật thành công",
+    message: "Tên phiên tập đã được lưu.",
+    variant: "success"
+  });
+  loadSessions();
+} else {
+  await alertCenter({
+    title: "Lỗi",
+    message: "Có lỗi xảy ra khi cập nhật.",
+    variant: "danger"
+  });
+}
+
         } catch (error) {
             console.error('Lỗi khi cập nhật:', error);
             showToast('Lỗi mạng, không thể cập nhật.','danger');
@@ -444,10 +513,10 @@ document.addEventListener('DOMContentLoaded', function() {
   e.preventDefault();
   const button = e.target.closest('.delete-session-btn');
   const sessionId = button.dataset.sessionId;
-
+  const cardTitle = button.closest('.card-session')?.querySelector('.card-title')?.textContent?.trim() || `Phiên Tập #${sessionId}`;
   const ok = await window.confirmCenter({
     title: "Xác nhận xoá",
-    message: `Thao tác này sẽ xoá vĩnh viễn Phiên Tập #${sessionId}. Bạn có chắc chắn không?`,
+    message: `Thao tác này sẽ xoá vĩnh viễn Phiên Tập <strong>${cardTitle}</strong>. Bạn có chắc chắn không?`,
     confirmText: "Xoá ngay",
     cancelText: "Hủy",
     type: "danger"
@@ -457,11 +526,19 @@ document.addEventListener('DOMContentLoaded', function() {
   try {
     const response = await fetch(`/api/training_sessions/${sessionId}`, { method: 'DELETE' });
     if (response.ok) {
-      await loadSessions();
-      showToast('Đã xoá phiên tập!', 'success');
-    } else {
-      showToast('Có lỗi xảy ra khi xoá phiên tập.', 'danger');
-    }
+  // Lấy tên phiên hiển thị (nếu có)
+  const cardTitle = button.closest('.card-session')?.querySelector('.card-title')?.textContent?.trim() || `Phiên Tập #${sessionId}`;
+
+  await loadSessions();
+
+  await alertCenter({
+    title: `Đã xoá: ${cardTitle}`,
+    message: "Phiên tập này đã được xoá khỏi hệ thống.",
+    variant: "success"
+  });
+}
+
+
   } catch (error) {
     console.error('Lỗi khi xóa phiên tập:', error);
     showToast('Lỗi mạng, không thể xoá.', 'danger');
@@ -477,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const editModal = new bootstrap.Modal(document.getElementById('editSessionModal'));
             document.getElementById('edit-session-id').value = sessionId;
             document.getElementById('edit-session-name').value = sessionName;
-            document.getElementById('editSessionModalLabel').textContent = `Sửa Tên Cho Phiên Tập #${sessionId}`;
+            document.getElementById('editSessionModalLabel').textContent = `Sửa Tên Cho Phiên Tập`;
             editModal.show();
         }
     });
@@ -513,13 +590,22 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             if (response.ok) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('createSessionModal'));
-                modal.hide();
-                loadSessions();
-                showToast('Tạo phiên tập thành công!', 'success');
-            } else {
-                showToast('Có lỗi xảy ra khi tạo phiên tập.','danger');
-            }
+  const modal = bootstrap.Modal.getInstance(document.getElementById('createSessionModal'));
+  modal.hide();
+  await alertCenter({
+    title: "Tạo phiên tập thành công",
+    message: "Phiên tập mới đã được tạo.",
+    variant: "success"
+  });
+  loadSessions();
+} else {
+  await alertCenter({
+    title: "Lỗi",
+    message: "Có lỗi xảy ra khi tạo phiên tập.",
+    variant: "danger"
+  });
+}
+
         } catch (error) {
             console.error('Lỗi khi tạo phiên tập:', error);
             showToast('Lỗi mạng. Vui lòng thử lại.','danger');

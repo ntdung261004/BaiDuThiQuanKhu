@@ -52,7 +52,7 @@
       </div>
 
       <!-- Nút tạo mới: giữ style giống “Thêm chiến sĩ” -->
-      <button type="button" class="btn btn-light btn-add px-4 py-3"
+      <button type="button" class="btn btn-light btn-add px-3 py-3 me-2"
               data-bs-toggle="modal" data-bs-target="#createSessionModal">
         <i class="fas fa-plus me-2"></i><strong>Tạo phiên mới</strong>
       </button>
@@ -60,14 +60,14 @@
 
     <!-- Body form: cùng layout, chỉ thay field/id -->
     <div class="soldier-panel__body">
-      <form id="session-filter-form" class="row g-3 align-items-center">
+      <form id="session-filter-form" class="row g-3 px-3 align-items-center">
         <!-- Trạng thái -->
         <div class="col-lg-4">
             <label for="filter-status" class="form-label">Trạng thái:</label>
-          <div class="input-group with-icon">
-            <span class="input-group-text" style="height:50px;">
+          <div class="input-group with-icon" style="height:45px;">
+            <span class="input-group-text" >
       <i class="fas fa-traffic-light"></i></span>
-  <select id="filter-status" class="form-select" style="height:50px;">
+  <select id="filter-status" class="form-select">
 
 
     <option value="">Tất cả</option>
@@ -81,10 +81,10 @@
         <!-- Bài tập -->
         <div class="col-lg-4">
             <label for="filter-exercise" class="form-label">Bài tập:</label>
-          <div class="input-group input-group-with-icon">
-            <span class="input-group-text" style="height:50px;"><i class="fas fa-bullseye"></i></span>
+          <div class="input-group input-group-with-icon" style="height:45px;">
+            <span class="input-group-text"><i class="fas fa-bullseye"></i></span>
             
-            <select id="filter-exercise" class="form-select" style="height:50px;">
+            <select id="filter-exercise" class="form-select" >
               <option value="">Tất cả</option>
               <!-- option bài tập sẽ được JS fill -->
             </select>
@@ -94,10 +94,10 @@
         <!-- Sắp xếp -->
         <div class="col-lg-4">
             <label for="sort-by-select" class="form-label">Thời gian:</label>
-          <div class="input-group input-group-with-icon">
-            <span class="input-group-text" style="height:50px;"><i class="fas fa-sort-amount-down"></i></span>
+          <div class="input-group input-group-with-icon" style="height:45px;">
+            <span class="input-group-text"><i class="fas fa-sort-amount-down"></i></span>
             
-            <select id="sort-by-select" class="form-select" style="height:50px;">
+            <select id="sort-by-select" class="form-select">
               <option value="date_created_desc">Ngày tạo (mới nhất)</option>
               <option value="date_created_asc">Ngày tạo (cũ nhất)</option>
             </select>

@@ -121,12 +121,7 @@
   border-radius: 6px;
 }
 
-/* Giữ icon không bị lệch */
-.input-group-text {
- background: #d4d4d4ee !important;
-  border: 1px solid #ccc;
-  border-right: none; /* tránh viền đôi với input */
-}
+
 
 /* Nút tìm kiếm cùng chiều cao */
 .btn-loc {
@@ -192,17 +187,14 @@
   font-weight:600;
 }
 .btn-filter:hover{
-  background: linear-gradient(145deg, #1c6a2a 0%, #4fab5d 40%, #114517 100%);
+  background: linear-gradient(90deg, #388e3c 0%, #2e7d32 50%, #1b5e20 100%);
+
   border-color: var(--army-600);
 }
 
 /* Input-group có icon: bo tròn đều */
 
-.input-group-with-icon .input-group-text{
-  background:#f7faf8;
-  color: var(#2f6d2f);
-  border:1px solid #ccc;
-}
+
 .input-group-with-icon .form-control,
 .input-group-with-icon .form-select{
   border:1px solid #ccc;
@@ -250,13 +242,8 @@
 }
 
 .soldier-header .btn-add:hover {
-  background: linear-gradient(135deg,
-  #b8860b 0%, 
-  #ffd700 25%, 
-  #fff5cc 50%, 
-  #e0ac00 75%, 
-  #b8860b 100%
-);
+  background: linear-gradient(90deg, #f5b700 0%, #e6a800 50%, #e39c02 100%);
+
   border-color: var(--gold-600);
   color: #4d3b09;
 }
@@ -351,15 +338,14 @@
 }
 /* ===== Skins cho custom options (không đụng HTML cũ) ===== */
 .select-skin-trigger {
-  height: 50px;
+  flex: 1;
   width: 100%;
   background: #fff;
   border: 1px solid #cdd4d8;
   border-left: 0;                   /* khớp input-group-text */
   border-radius: 0 .5rem .5rem 0;
   padding: 0.5rem 2.25rem 0.5rem 0.75rem;
-  font-weight: 600;
-  color: #2b2f32;
+  color: #494b4d;
   text-align: left;
   position: relative;
   cursor: pointer;
@@ -386,7 +372,7 @@
   background: #fff;
   border: 1px solid #cdd4d8;
   border-radius: .5rem;
-  box-shadow: 0 12px 30px rgba(0,0,0,.14);
+  box-shadow: 0px 3px 15px rgb(0 0 0 / 59%);
   padding: .25rem;
   opacity: 0; transform: translateY(-4px);
   pointer-events: none;
@@ -400,15 +386,15 @@
   cursor: pointer; user-select: none; white-space: nowrap;
   color: #2b2f32;
 }
-.select-option:hover { background: #e9f3eb; }               /* <- màu hover */
-.select-option.active { background: #d8e9dc; font-weight: 700; }
+.select-option:hover { background: #dff0e2; }               /* <- màu hover */
+.select-option.active { background: #b6e9c2; font-weight: 700; }
 .select-option .opt-icon { width: 20px; text-align: center; opacity: .9; }
 
 /* đồng bộ icon trái của input-group */
 .input-group .input-group-text {
-  background: #e9f3eb !important;
-  border: 1px solid #cdd4d8; border-right: 0;
-  color: #2f6d2f; height: 50px; display: inline-flex; align-items: center;
+  background: #dee2e6 !important;
+  border: 1px solid #ccc; border-right: 0;
+  color: #0c0f0d; display: inline-flex; align-items: center;
 }
 
 /* Ẩn select native (vẫn giữ trong DOM để dispatch change) */
@@ -416,3 +402,5 @@
   position: absolute !important; opacity: 0 !important;
   pointer-events: none !important; width: 0 !important; height: 0 !important;
 }
+
+

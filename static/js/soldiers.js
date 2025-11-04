@@ -71,6 +71,68 @@ window.showToast = function (message = "Thao tác thành công!", type = "succes
     }
   }, 3000);
 };
+// ===== CENTER ALERT (Success/Info/Warning/Error) =====
+window.alertCenter = function ({
+  title   = "Success alert",
+  message = "Your work has been saved",
+  okText  = "OK",
+  variant = "success" // success | info | warning | danger
+} = {}) {
+  return new Promise((resolve) => {
+    const COLORS = {
+      success: { ring: "#22c55e",  fill: "#22c55e",  icon: "check" },
+      info:    { ring: "#3b82f6",  fill: "#3b82f6",  icon: "info"  },
+      warning: { ring: "#f59e0b",  fill: "#f59e0b",  icon: "warn"  },
+      danger:  { ring: "#ef4444",  fill: "#ef4444",  icon: "x"     },
+    };
+    const C = COLORS[variant] || COLORS.success;
+
+    const svgIcon =
+      C.icon === "check" ? `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <path d="M14 24.5l6 6L34 17" fill="none" stroke="${C.fill}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`
+      : C.icon === "x" ? `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <path d="M16 16l16 16M32 16L16 32" fill="none" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
+        </svg>`
+      : C.icon === "warn" ? `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <path d="M24 13v16" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="24" cy="35" r="2.5" fill="${C.fill}"/>
+        </svg>`
+      : `
+        <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
+          <circle cx="24" cy="16" r="3" fill="${C.fill}"/>
+          <path d="M24 22v12" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
+        </svg>`;
+
+    const wrap = document.createElement("div");
+    wrap.className = "modal fade";
+    wrap.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow:0 10px 30px rgba(0,0,0,.15);">
+          <div class="modal-body text-center p-4">
+            <div class="d-flex justify-content-center mb-2">${svgIcon}</div>
+            
+            <h5 class="fw-bold mb-1">${title}</h5>
+            
+            <div class="text-muted mb-3">${message}</div>
+            <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">${okText}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+    const bs = new bootstrap.Modal(wrap, { backdrop: "static", keyboard: true });
+    wrap.addEventListener("hidden.bs.modal", () => { wrap.remove(); resolve(true); });
+    bs.show();
+  });
+};
 
 // ===== MODAL XÁC NHẬN =====
 window.confirmCenter = function ({
@@ -83,6 +145,7 @@ window.confirmCenter = function ({
   return new Promise(resolve => {
     const modalEl = document.createElement("div");
     modalEl.className = "modal fade";
+    modalEl.tabIndex = -1;
     modalEl.innerHTML = `
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow">
@@ -91,7 +154,11 @@ window.confirmCenter = function ({
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <p>${message}</p>
+            <p><span class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                        style="width:40px;height:40px;background: var(--bs-${type}-subtle, #f8d7da);">
+                    <i class="fas fa-exclamation-triangle"
+                       style="color: var(--bs-${type}, #dc3545);"></i>
+                  </span>  ${message}</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">${cancelText}</button>
@@ -249,9 +316,14 @@ window.confirmCenter = function ({
     try {
       const res = await API.create(data);
       if (res.error) throw new Error(res.error);
-      addModal?.hide();
-      showToast("Thêm chiến sĩ thành công!", "success");
-      await loadTable(currentPage);
+addModal?.hide();
+await alertCenter({
+  title: "Thành công",
+  message: "Chiến sĩ mới đã được lưu.",
+  variant: "success"
+});
+await loadTable(currentPage);
+
     } catch (err) {
       showToast(err.message, "error");
     } finally {
@@ -290,9 +362,14 @@ window.confirmCenter = function ({
     try {
       const res = await API.update(currentSoldierId, data);
       if (res.error) throw new Error(res.error);
-      editModal?.hide();
-      showToast("Cập nhật thành công!", "success");
-      await loadTable(currentPage);
+editModal?.hide();
+await alertCenter({
+  title: "Cập nhật thành công",
+  message: "Thông tin chiến sĩ đã được lưu.",
+  variant: "success"
+});
+await loadTable(currentPage);
+
     } catch (err) {
       showToast(err.message, "error");
     } finally {
@@ -306,9 +383,11 @@ window.confirmCenter = function ({
     const btn = e.target.closest(".btn-delete");
     if (!btn) return;
     const id = btn.closest("tr").dataset.id;
+    const nameCell = btn.closest("tr")?.querySelector("td:nth-child(2)");
+const soldierName = nameCell ? nameCell.textContent.trim() : `Chiến sĩ #${id}`;
     const ok = await confirmCenter({
       title: "Xác nhận xoá",
-      message: "Bạn có chắc muốn xoá chiến sĩ này?",
+      message: `Bạn có chắc muốn xoá chiến sĩ <strong>${soldierName}</strong} ?`,
       confirmText: "Xoá ngay",
       cancelText: "Hủy",
       type: "danger"
@@ -317,8 +396,21 @@ window.confirmCenter = function ({
     try {
       const res = await API.delete(id);
       if (res.error) throw new Error(res.error);
-      showToast("Đã xoá chiến sĩ!", "success");
-      await loadTable(currentPage);
+
+// Lấy tên chiến sĩ từ dòng đang xoá
+const nameCell = btn.closest("tr")?.querySelector("td:nth-child(2)");
+const soldierName = nameCell ? nameCell.textContent.trim() : `Chiến sĩ #${id}`;
+
+await loadTable(currentPage);
+
+await alertCenter({
+  title: `Đã xoá: ${soldierName}`,
+  message: "Chiến sĩ này đã được xoá khỏi hệ thống.",
+  variant: "success"
+});
+
+await loadTable(currentPage);
+
     } catch (err) {
       showToast("Không thể xoá: " + err.message, "error");
     }
@@ -345,3 +437,119 @@ window.confirmCenter = function ({
   // === Khởi tạo lần đầu ===
   loadTable(1);
 })();
+
+
+(function () {
+  // Tái dùng bộ icon nếu cần mở rộng sau này
+  const ICONS = { default: "fa-circle" };
+
+  // tạo 1 menu portal dùng lại
+  let sharedMenu = null;
+  function ensureMenu() {
+    if (sharedMenu) return sharedMenu;
+    const el = document.createElement('div');
+    el.className = 'select-skin-menu';
+    document.body.appendChild(el);
+    sharedMenu = el;
+    return el;
+  }
+  function placeMenu(menu, trigger) {
+    const r = trigger.getBoundingClientRect();
+    menu.style.top = (r.bottom + 6) + 'px';
+    menu.style.left = r.left + 'px';
+    menu.style.minWidth = r.width + 'px';
+  }
+
+  function skinSelect(select) {
+    if (!select) return;
+
+    // Ẩn select native (để soldiers.js vẫn đọc value bình thường)
+    select.classList.add('select-hidden'); // class này chỉ cần { display:none } trong css “skin”
+
+    // Tạo trigger ngay sau select để không phá layout input-group
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'select-skin-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    const label = select.selectedOptions[0]?.textContent || select.options[0]?.textContent || 'Chọn';
+    trigger.innerHTML = `<span class="select-skin-text">${label}</span>`;
+
+    // chèn sau select
+    select.parentElement.insertBefore(trigger, select.nextSibling);
+
+    // mở menu
+    function openMenu() {
+      const menu = ensureMenu();
+      menu.innerHTML = '';
+
+      // render options
+      Array.from(select.options).forEach(opt => {
+        const item = document.createElement('div');
+        item.className = 'select-option' + (opt.selected ? ' active' : '');
+        item.innerHTML = `<span>${opt.textContent}</span>`;
+        item.addEventListener('click', () => {
+          // cập nhật select + label
+          select.value = opt.value;
+          trigger.querySelector('.select-skin-text').textContent = opt.textContent;
+          // active state
+          menu.querySelectorAll('.select-option.active').forEach(el => el.classList.remove('active'));
+          item.classList.add('active');
+          // đóng và bắn sự kiện change để soldiers.js loadTable()
+          closeMenu();
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        menu.appendChild(item);
+      });
+
+      placeMenu(menu, trigger);
+      menu.classList.add('on');
+      trigger.setAttribute('aria-expanded', 'true');
+
+      // đóng khi click ngoài / ESC / scroll/resize
+      const onDocClick = (e) => { if (!menu.contains(e.target) && e.target !== trigger) closeMenu(); };
+      const onEsc = (e) => { if (e.key === 'Escape') closeMenu(); };
+      const onReflow = () => { if (menu.classList.contains('on')) placeMenu(menu, trigger); };
+
+      document.addEventListener('click', onDocClick, { once: true });
+      document.addEventListener('keydown', onEsc, { once: true });
+      window.addEventListener('scroll', onReflow, { passive: true });
+      window.addEventListener('resize', onReflow);
+
+      // lưu cleanup
+      menu._cleanup = () => {
+        document.removeEventListener('click', onDocClick);
+        document.removeEventListener('keydown', onEsc);
+        window.removeEventListener('scroll', onReflow);
+        window.removeEventListener('resize', onReflow);
+      };
+    }
+
+    function closeMenu() {
+      if (!sharedMenu) return;
+      sharedMenu.classList.remove('on');
+      sharedMenu._cleanup && sharedMenu._cleanup();
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    // toggle
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (sharedMenu && sharedMenu.classList.contains('on')) closeMenu(); else openMenu();
+    });
+
+    // nếu value bị đổi từ code khác => sync label
+    select.addEventListener('change', () => {
+      const txt = select.selectedOptions[0]?.textContent || '';
+      if (txt) trigger.querySelector('.select-skin-text').textContent = txt;
+    });
+  }
+
+  // Khởi tạo cho select Đơn vị
+  document.addEventListener('DOMContentLoaded', () => {
+    const unitSelect = document.getElementById('filter-unit');
+    if (unitSelect) skinSelect(unitSelect);
+  });
+})();
+
