@@ -1,62 +1,114 @@
-/* CSS cho trang Hướng dẫn */
-
-/* === BẮT BUỘC: Neo (sticky) menu bên trái === */
-#documentation-nav {
-    /* 1. Bật chế độ "dính" */
-    position: sticky;
+/* Định nghĩa biến màu của dự án (Lấy từ root.css và sidebar.css)
+  Chúng ta sẽ sử dụng các màu này cho slide tiêu đề.
+*/
+:root {
+    /* Màu xanh dương chính của hệ thống (lấy từ sidebar.css) */
+    --primary-color: #4e73df;
     
-    /* 2. Vị trí dính: 1rem (16px) bên dưới mép trên CỦA KHUNG CUỘN */
-    /* (Khung cuộn của bạn là #page-content-wrapper) */
-    top: 1rem; 
+    /* Màu xanh đậm chính cho văn bản (lấy từ root.css) */
+    --primary-text: #1d3557; 
     
-    /* 3. Thêm cuộn cho menu nếu BẢN THÂN MENU quá dài */
-    max-height: 95vh; /* Chiều cao tối đa là 95% chiều cao màn hình */
-    overflow-y: auto;
+    /* Màu xám cho văn bản phụ (lấy từ root.css) */
+    --secondary-text: #495057;
+
+    /* Màu nền của slide tiêu đề (giữ nguyên màu xám/xanh nhạt) */
+    --hero-bg-color: #f0f2f7; 
 }
 
-/* === CÁC ĐỊNH DẠNG CŨ GIỮ NGUYÊN === */
-
-/* Định dạng cho danh sách UL bên trong */
-#documentation-nav .nav-link {
-    font-size: 0.9rem;
-    padding: 0.35rem 1rem;
-    color: #555;
-    border-left: 3px solid transparent;
+/* === BẮT BUỘC: Ghi đè CSS từ layout chính === */
+#page-content-wrapper.showcase-wrapper {
+    height: 100vh;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
-#documentation-nav .nav-link:hover {
-    color: #000;
-    background-color: #f8f9fa;
+/* === ĐỊNH NGHĨA "SLIDE" === */
+.slide {
+    width: 100%;
+    min-height: 90vh;
+    padding: 5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #e9ecef;
 }
 
-/* Định dạng cho mục đang active (được cuộn tới) */
-#documentation-nav .nav-link.active {
-    color: var(--primary-color, #0d6efd); /* Dùng màu chính của bạn */
+/* === SLIDE ĐẦU TIÊN (HERO-SLIDE) - Đã Tinh Chỉnh === */
+.hero-slide {
+    min-height: 95vh;
+    background-color: var(--hero-bg-color); /* Nền xám/xanh nhạt */
+    text-align: center;
+    
+    /* Tinh chỉnh 1: Canh lề trên (thay vì căn giữa) */
+    align-items: flex-start;
+    padding-top: 8rem; /* Đẩy nội dung xuống 1 khoảng xa hơn */
+}
+
+.hero-subheading {
+    /* Tinh chỉnh 2: Chữ nhỏ lại */
+    font-size: 1rem; 
     font-weight: 600;
-    border-left: 3px solid var(--primary-color, #0d6efd);
+    letter-spacing: 0.1em; /* Giữ khoảng cách ký tự */
+    
+    /* Tinh chỉnh 3: Dùng màu xanh chính của app */
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
 }
 
-/* Định dạng cho các mục con */
-#documentation-nav .nav .nav-link.small {
-    font-size: 0.8rem;
-    padding-left: 2.5rem;
+.hero-title {
+    font-family: 'Arial', sans-serif; 
+    
+    /* Tinh chỉnh 2: Chữ nhỏ lại */
+    font-size: 3.2rem; 
+    font-weight: 800;
+    line-height: 1.25; /* Giảm khoảng cách dòng */
+    
+    /* Tinh chỉnh 3: Dùng màu xanh đậm (màu text chính) của app */
+    color: var(--primary-text); 
+    max-width: 800px;
+    margin: 0 auto 1.5rem auto;
 }
 
-/* Định dạng cho các khối nội dung */
-.doc-section {
-    padding-top: 5rem; /* Quan trọng: offset này để không bị che bởi topbar */
-    margin-top: -3.5rem; /* Bù lại phần offset */
-    padding-bottom: 2rem;
+.hero-authors {
+    /* Tinh chỉnh 1: Tăng lề trên (do đã bỏ căn giữa) */
+    margin-top: 3rem; 
+    line-height: 1.7;
+    
+    /* Tinh chỉnh 3: Dùng màu xám (màu text phụ) của app */
+    color: var(--secondary-text); 
 }
 
-.doc-section h2 {
-    font-size: 2rem;
+.hero-authors .author-title {
+    /* Tinh chỉnh 2: Chữ nhỏ lại */
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.hero-authors .author-name {
+    /* Tinh chỉnh 2: Chữ nhỏ lại */
+    font-size: 0.95rem;
     font-weight: 500;
-    color: var(--primary-text, #333);
 }
 
-.doc-section h4 {
-    margin-top: 1.5rem;
-    font-size: 1.3rem;
-    font-weight: 500;
+
+/* === CSS CHO HIỆU ỨNG "ĐỘNG" (FADE-IN) === */
+.fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-in.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Tinh chỉnh nhỏ cho card */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
 }

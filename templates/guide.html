@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Hướng dẫn sử dụng{% endblock %}
+{% block title %}Giới thiệu Giải pháp{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/hdsd.css') }}">
@@ -9,185 +9,60 @@
 {% block content %}
 <div class="d-flex" id="wrapper">
     {% include 'sidebar.html' %}
-    <div id="page-content-wrapper">
+    
+    <div id="page-content-wrapper" class="showcase-wrapper">
         <nav id="topbar" class="navbar navbar-expand-lg py-3 px-5">
             <div class="d-flex align-items-center">
                 <i class="fas fa-align-left primary-text fs-4 me-3" id="menu-toggle"></i>
-                <h2 class="fs-3 m-0">Hướng dẫn sử dụng</h2>
+                <h2 class="fs-3 m-0">Giới thiệu Giải pháp</h2>
             </div>
             <div class="ms-auto">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+              <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <img id="navbar-avatar" 
                         src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}" 
                         class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
                     <span id="navbar-greeting">Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}</span>
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  </a>
+                  <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
                     <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
-                    </ul>
+                  </ul>
                 </li>
-                </ul>
+              </ul>
             </div>
         </nav>
 
-        <div class="container-fluid px-5 py-4">
-            <div class="row align-items-start">
-                <nav id="documentation-nav" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                    <div class="position-sticky pt-3">
-                        <ul class="nav flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#section-intro">
-                                    <i class="fas fa-rocket me-2"></i> Giới thiệu
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#section-hardware">
-                                    <i class="fas fa-microchip me-2"></i> 1. Phần cứng
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#section-assembly">
-                                    <i class="fas fa-tools me-2"></i> 2. Lắp đặt
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#section-connection">
-                                    <i class="fas fa-wifi me-2"></i> 3. Kết nối
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#section-software">
-                                    <i class="fas fa-desktop me-2"></i> 4. Sử dụng phần mềm
-                                </a>
-                                <ul class="nav flex-column ms-3">
-                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-dashboard">Tổng quan</a></li>
-                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-soldiers">Quản lý xạ thủ</a></li>
-                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-session">Tạo phiên tập</a></li>
-                                    <li class="nav-item"><a class="nav-link small" href="#subsection-software-training">Huấn luyện</a></li>
-                                </ul>
-                            </li>
-                        </ul>
+<section class="slide hero-slide d-flex align-items-center justify-content-center text-center">
+            <div class="container text-center py-5">
+                <div class="fade-in">
+                    <p class="hero-subheading text-uppercase mb-2">Sáng kiến</p>
+                    <h1 class="hero-title display-3 fw-bold mb-4">
+                        Thiết bị tập luyện <br>
+                        bắn súng ứng dụng <br>
+                        camera AI DA01
+                    </h1>
+                    <div class="hero-authors mt-5 pt-3">
+                        <p class="author-title mb-1">Đồng tác giả:</p>
+                        <p class="author-name mb-1">Thượng tá Lê Công Danh</p>
+                        <p class="author-name mb-1">Thượng úy Nguyễn Duy Anh</p>
+                        <p class="author-name mb-0">Thượng úy Nguyễn Minh Luân</p>
                     </div>
-                </nav>
-
-                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                    <div data-bs-spy="scroll" data-bs-target="#documentation-nav" data-bs-offset="0" class="scrollspy-example" tabindex="0">
-                        
-                        <section id="section-intro" class="doc-section">
-                            <h2 class="pb-2 border-bottom">Giới thiệu</h2>
-                            <p>Đây là tài liệu hướng dẫn sử dụng</p>
-                            <p>Thiết bị tập luyện bắn súng ứng dụng camera AI Camera DA01</p>
-                        </section>
-
-                        <section id="section-hardware" class="doc-section">
-                            <h2 class="pb-2 border-bottom">1. Chuẩn bị Phần cứng</h2>
-                            <p>Để hệ thống hoạt động, bạn cần chuẩn bị các thành phần đồng bộ sau:</p>
-                            <ul>
-                                <li><strong>Thiết bị xử lý AI (Raspberry Pi) và bộ nguồn:</strong> x2</li>
-                                <figure class="figure text-center my-3">
-                                  <img src="{{ url_for('static', filename='image/pi.png') }}" 
-                                      class="figure-img img-fluid rounded shadow-sm" >
-                                  <figcaption class="figure-caption">Hình 1: Bo mạch máy tính nhúng Raspberry Pi.</figcaption>
-                                </figure>
-                                <li><strong>Thiết bị Camera AI:</strong> x2</li>
-                                <figure class="figure text-center my-3">
-                                    <img src="{{ url_for('static', filename='image/camera.png') }}" 
-                                        class="figure-img img-fluid rounded shadow-sm" 
-                                        alt="Minh họa Camera">
-                                    <figcaption class="figure-caption">Hình 2: Thiết bị Camera AI.</figcaption>
-                                </figure>
-                                <li><strong>Thiết bị kích hoạt cò (Bluetooth):</strong> x2</li>
-                                <figure class="figure text-center my-3">
-                                    <img src="{{ url_for('static', filename='image/co.png') }}" 
-                                        class="figure-img img-fluid rounded shadow-sm" 
-                                        alt="Minh họa cò">
-                                    <figcaption class="figure-caption">Hình 3: Thiết bị cò bắn đã được lắp đặt lên súng STV-380.</figcaption>
-                                </figure>
-                                <li><strong>Loa phát âm thanh (Bluetooth):</strong> x1</li>
-                                <figure class="figure text-center my-3">
-                                    <img src="{{ url_for('static', filename='image/loa.png') }}" 
-                                        class="figure-img img-fluid rounded shadow-sm" 
-                                        alt="Minh họa loa">
-                                    <figcaption class="figure-caption">Hình 4: Bất kỳ loại loa nào có khả năng kết nối bluetooth.</figcaption>
-                                </figure>
-                                <li><strong>Máy tính cá nhân đã cài đặt hệ thống máy chủ:</strong> x1</li>
-                                <figure class="figure text-center my-3">
-                                    <img src="{{ url_for('static', filename='image/laptop.png') }}" 
-                                        class="figure-img img-fluid rounded shadow-sm" 
-                                        alt="Minh họa laptop">
-                                    <figcaption class="figure-caption">Hình 4: máy tính đã cài đặt và truy cập hệ thống.</figcaption>
-                                </figure>
-                                <li><strong>Module wifi:</strong> x1</li>
-                                <figure class="figure text-center my-3">
-                                    <img src="{{ url_for('static', filename='image/wifi.png') }}" 
-                                        class="figure-img img-fluid rounded shadow-sm" 
-                                        alt="Minh họa module wifi">
-                                    <figcaption class="figure-caption">Hình 4: Bất kỳ loại module wifi nào có khả năng truyền dữ liệu cục bộ.</figcaption>
-                                </figure>
-                            </ul>
-                            <p>(Bạn có thể thêm hình ảnh các thiết bị ở đây).</p>
-                        </section>
-
-                        <section id="section-assembly" class="doc-section">
-                            <h2 class="pb-2 border-bottom">2. Hướng dẫn Lắp đặt</h2>
-                            <p>Quy trình lắp đặt lên súng:</p>
-                            <ol>
-                                <li><strong>Gắn Camera:</strong> Bắt bass của camera vào đầu nòng súng, cắm dây camera vào bo mạch Raspberry Pi</li>
-                                <li><strong>Gắn Pi:</strong> Kết nối nguồn cho Pi và cố định tại vị trí ống dẫn thoi</li>
-                                <li><strong>Gắn nút cò:</strong> Cố định nút bấm sau tay cò và hít thiết bị vào phần kim loại của súng</li>
-                            </ol>
-                            <figure class="figure text-center my-3">
-                                <img src="{{ url_for('static', filename='image/hinh1.png') }}" 
-                                     class="figure-img img-fluid rounded shadow-sm" 
-                                     alt="Minh họa lắp ráp Pi và Camera">
-                                <figcaption class="figure-caption">Hình 1: Thiết bị đã được lắp đặt lên súng STV-380.</figcaption>
-                            </figure>
-                        </section>
-
-                        <section id="section-connection" class="doc-section">
-                            <h2 class="pb-2 border-bottom">3. Kết nối Hệ thống</h2>
-                            <p>Đảm bảo cả Máy chủ (PC) và Raspberry Pi đều kết nối vào module wifi đã được hiệu chỉnh đồng bộ.</p>
-                            <ol>
-                                <li><strong>Khởi động Pi:</strong> Cắm nguồn cho Pi, Pi sẽ tự động khởi động và chạy chương trình.</li>
-                                <li><strong>Khởi động Máy chủ:</strong> Mở phần mềm desktop đã được cài đặt, máy chủ sẽ được chạy và kết nối đến trình duyệt</li>
-                                <li><strong>Kiểm tra kết nối:</strong> Kiểm tra các thành phần: nút cò, camera, loa đều hoạt động ổn định</li>
-                                <li><strong>Sau khi đã làm tất cả các bước, thiết bị lúc này đã có thể hoạt động.</strong></li>
-                            </ol>
-                        </section>
-
-                        <section id="section-software" class="doc-section">
-                            <h2 class="pb-2 border-bottom">4. Sử dụng Phần mềm</h2>
-                            <p>Truy cập vào địa chỉ `http://127.0.0.1:5000` trên trình duyệt của máy chủ để bắt đầu.</p>
-                            
-                            <h4 id="subsection-software-dashboard">Tổng quan</h4>
-                            <p>Đây là trang chủ, hiển thị thống kê nhanh...</p>
-
-                            <h4 id="subsection-software-soldiers">Quản lý Xạ thủ</h4>
-                            <p>Tại mục "Danh sách Xạ thủ", bạn có thể Thêm, Sửa, Xóa thông tin...</p>
-
-                            <h4 id="subsection-software-session">Tạo phiên tập</h4>
-                            <p>Tại mục "Quản lý Huấn luyện", nhấn "Tạo phiên mới"...</p>
-
-                            <h4 id="subsection-software-training">Huấn luyện (Chi tiết phiên)</h4>
-                            <p>Đây là giao diện chính khi huấn luyện.
-                                <ul>
-                                    <li><strong>Chọn xạ thủ:</strong> Nhấn "Chọn" bên cạnh tên xạ thủ để kích hoạt.</li>
-                                    <li><strong>Livestream:</strong> Video trực tiếp từ Pi sẽ hiển thị.</li>
-                                    <li><strong>Lịch sử bắn:</strong> Kết quả bắn sẽ tự động cập nhật ở đây.</li>
-                                </ul>
-                            </p>
-                        </section>
-
-                    </div>
-                </main>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+        </section>
+        <section id="section-features" class="slide bg-light">
+            </section>
+
+        <section class="slide">
+            </section>
+        
+        <section id="section-architecture" class="slide bg-light">
+            </section>
+
+        </div> </div> {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/guide.js') }}"></script>
 {% endblock %}
