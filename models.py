@@ -105,10 +105,12 @@ def init_db(app):
         db.session.commit()
 
         # Thêm mới danh sách bài tập
-        ex1 = Exercise(exercise_name='Bài 1: Phân đoạn 1 - Bắn bia số 4')
-        ex2 = Exercise(exercise_name='Bài 1: Phân đoạn 2 - Bắn bia số 7')
-        ex3 = Exercise(exercise_name='Bài 1: Phân đoạn 3 - Bắn bia số 8')
-        ex4 = Exercise(exercise_name='Bài 1: Tổng hợp 3 bia')
-        ex5 = Exercise(exercise_name='Bài 2: Bắn mục tiêu ẩn hiện ban ngày')
-        db.session.add_all([ex1, ex2, ex3, ex4, ex5])
+        ex1 = Exercise(exercise_name='STV-380 Bài 1: Phân đoạn 1 - Bắn bia số 4')
+        ex2 = Exercise(exercise_name='STV-380 Bài 1: Phân đoạn 2 - Bắn bia số 7')
+        ex3 = Exercise(exercise_name='STV-380 Bài 1: Phân đoạn 3 - Bắn bia số 8')
+        ex4 = Exercise(exercise_name='STV-380 Bài 1: Tổng hợp 3 bia')
+        ex5 = Exercise(exercise_name='K54 : Luyện tập bia 4b')
+        ex6 = Exercise(exercise_name='K54 : Luyện tập bia 4c')
+        ex7 = Exercise(exercise_name='K54 : Luyện tập tổng hợp')
+        db.session.add_all([ex1, ex2, ex3, ex4, ex5, ex6, ex7])
         db.session.commit()
