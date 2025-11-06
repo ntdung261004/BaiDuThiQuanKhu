@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
-</head>
+    
+    {% block styles %}{% endblock %}
+    </head>
 <body data-profile-incomplete="{{ PROFILE_INCOMPLETE }}">
     {% block content %}{% endblock %}
     

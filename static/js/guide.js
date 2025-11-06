@@ -1,35 +1,55 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Lấy khung cuộn chính
-    // Vì layout của bạn dùng #page-content-wrapper để cuộn,
-    // chúng ta cần theo dõi cuộn BÊN TRONG nó, không phải <body>
-    const scrollContainer = document.getElementById("page-content-wrapper");
 
-    // 2. Tìm tất cả các phần tử cần làm động
-    const targets = document.querySelectorAll(".fade-in");
+    // 1. Chức năng Toggle Sidebar
+    // (Đảm bảo nó hoạt động độc lập trên trang này)
+    var el = document.getElementById("wrapper");
+    var toggleButton = document.getElementById("menu-toggle");
 
-    // 3. Cài đặt Intersection Observer
-    // Nó sẽ theo dõi khi nào một phần tử đi vào khung nhìn (viewport)
-    const observer = new IntersectionObserver((entries, observer) => {
+    if (toggleButton) {
+        toggleButton.onclick = function () {
+            el.classList.toggle("toggled");
+        };
+    }
+
+    // 2. Kích hoạt hiệu ứng Fade-in khi cuộn
+    const targets = document.querySelectorAll('.fade-in');
+    
+    // Lấy vùng chứa cuộn (container) của trang
+    const scrollContainer = document.getElementById('page-content-wrapper');
+
+    const options = {
+        // Rất quan trọng: Phải theo dõi sự cuộn bên trong #page-content-wrapper
+        // chứ không phải 'document' hay 'window'
+        root: scrollContainer, 
+        rootMargin: '0px',
+        threshold: 0.2 // Kích hoạt khi 20% phần tử xuất hiện
+    };
+
+    const callback = (entries, observer) => {
         entries.forEach(entry => {
-            // Khi phần tử xuất hiện trong khung nhìn
+            // entry.isIntersecting: kiểm tra xem phần tử có trong tầm nhìn không
             if (entry.isIntersecting) {
-                // Thêm class 'is-visible' để kích hoạt CSS transition
-                entry.target.classList.add("is-visible");
-                
-                // Ngừng theo dõi phần tử này để tiết kiệm tài nguyên
-                observer.unobserve(entry.target);
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target); // Kích hoạt 1 lần rồi dừng theo dõi
             }
         });
-    }, {
-        // root: theo dõi cuộn bên trong scrollContainer
-        root: scrollContainer,
-        // rootMargin: Kích hoạt sớm hơn 50px trước khi nó vào màn hình
-        rootMargin: "0px 0px -50px 0px",
-        threshold: 0.1 // Kích hoạt khi 10% phần tử hiện ra
-    });
+    };
 
-    // 4. Bắt đầu theo dõi tất cả các phần tử
+    // Tạo đối tượng theo dõi
+    const observer = new IntersectionObserver(callback, options);
+
+    // Bắt đầu theo dõi tất cả các phần tử có lớp .fade-in
     targets.forEach(target => {
         observer.observe(target);
     });
+
+    // 3. Kích hoạt ngay lập tức cho Slide đầu tiên (Hero-slide)
+    // Vì slide này đã hiển thị ngay từ đầu
+    const firstSlideContent = document.querySelector('.hero-slide .fade-in');
+    if (firstSlideContent) {
+        // Thêm 1 chút delay nhỏ để tạo cảm giác mượt mà khi tải trang
+        setTimeout(() => {
+            firstSlideContent.classList.add('is-visible');
+        }, 300); 
+    }
 });

@@ -1,354 +1,215 @@
 {% extends "base.html" %}
 {% block title %}Trang chủ{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=4.0">
+{% endblock %}
+
 {% block content %}
 <div class="d-flex" id="wrapper">
     {% include 'sidebar.html' %}
-    <div id="page-content-wrapper">
+    
+    <div id="page-content-wrapper" class="dashboard-showcase-wrapper">
         <nav id="topbar" class="navbar navbar-expand-lg py-3 px-5">
-  <div class="d-flex align-items-center">
-    <h2 class="fs-3 m-0">Trang chủ</h2>
-  </div>
-  <div class="ms-auto">
-    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <img id="navbar-avatar" 
-               src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}" 
-               class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
-          <span id="navbar-greeting">Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}</span>
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
-          <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
-        </ul>
-      </li>
-    </ul>
-  </div>
-</nav>
+          <div class="d-flex align-items-center">
+            <i class="fas fa-align-left primary-text fs-4 me-3" id="menu-toggle"></i>
+            <h2 class="fs-3 m-0">Trang chủ</h2>
+          </div>
+          <div class="ms-auto">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle second-text fw-bold d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <img id="navbar-avatar" 
+                       src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}" 
+                       class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                  <span id="navbar-greeting">Chào, đồng chí {{ current_user.full_name.split()[-1] if current_user.full_name else current_user.username }}</span>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="{{ url_for('profile_page') }}">Hồ sơ cá nhân</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('logout') }}">Đăng xuất</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </nav>
 
-        
-
-        <div class="pt-6 px-4">
-    
-            <div class="row g-3 my-4 align-items-center section-intro">
-  <!-- CỘT TRÁI: Ảnh với hiệu ứng quét -->
-  <div class="col-md-5 text-center slide-in-left">
-    <div class="image-scan-wrapper">
-      <img src="{{ url_for('static', filename='image/ai-training.png') }}" 
-           alt="Thiết bị huấn luyện bắn súng AI"
-           class="img-fluid rounded shadow-lg radar-scan">
-    </div>
-  </div>
-
-  <!-- CỘT PHẢI: Chữ -->
-  <div class="col-md-7 slide-in-right">
-    <h3 class="fs-3 text-success">
-      Chào mừng đến với
-    </h3>
-    <h3 class="fs-3 mb-3 text-success fw-bold">
-      Hệ thống Quản lý Thiết bị Tập luyện bắn súng ứng dụng camera AI DA01
-    </h3>
-    <p class="text-muted fs-5" style="text-align: justify;">
-      Đây là thiết bị huấn luyện bắn súng thông minh, tích hợp trí tuệ nhân tạo và thuật toán xử lý ảnh để đánh giá chính xác kết quả.
-      Hệ thống quản lý theo dõi hiệu suất, thành tích cung cấp phân tích chuyên sâu và hỗ trợ người huấn luyện đưa ra phương pháp giúp bộ đội cải thiện đường ngắm dễ dàng,
-      đồng thời nâng cao tiêu chuẩn an toàn trong kiểm tra.
-    </p>
-    <div style="margin-top:40px; display:flex; justify-content:center;">
-    <a href="#scroll" id="scrollBtn" class="btn-khampha">
-      Khám phá thêm
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="white"
-           viewBox="0 0 16 16" style="animation: bounce 1.5s infinite;">
-        <path fill-rule="evenodd"
-              d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-      </svg>
-    </a>
-  </div>
-  </div>
-  
-</div>
-<section id="scroll" class="row g-3 my-2">
-                <h3 class="fs-4 mb-3 section-title">Thông tin tổng quan đơn vị</h3>
-                {% if current_user.is_profile_complete %}
-                <div class="col-12 zoom-in">
-  <div class="p-3 bgcard shadow-sm d-flex justify-content-between align-items-center rounded flex-wrap">
-    <div class="d-flex align-items-center mb-3 mb-md-0">
-      <i class="fas fa-user-shield fs-1 text-success me-4"></i>
-      <div>
-        <h4 class="fs-5 mb-1">
-          <strong>Đơn vị:</strong> {{ current_user.unit }}
-        </h4>
-        <p class="fs-6 text-muted mb-0">
-          <strong>{{ current_user.position }} :</strong> {{ current_user.full_name }} |
-          <strong>Cấp bậc:</strong> {{ current_user.rank }}
-        </p>
-      </div>
-    </div>
-
-    <!-- ✅ Cụm nút Thao tác nhanh nhỏ bên phải -->
-    <div class="quick-actions ms-auto position-relative">
-  <button class="btn btn-primary" id="toggleActions">
-    <i class="fas fa-bolt me-1"></i> Thao tác nhanh
-  </button>
-
-  <!-- LƯU Ý: bỏ style="display:none", bỏ position-absolute/end-0/mt-2 -->
-  <div class="quick-menu shadow rounded p-2 bg-white">
-    <a href="{{ url_for('training') }}"   class="btn btn-sm btn-outline-primary  w-100 mb-2">
-      <i class="fas fa-bullseye me-1"></i> Thêm phiên tập
-    </a>
-    <a href="{{ url_for('list_page') }}"  class="btn btn-sm btn-outline-success  w-100 mb-2">
-      <i class="fas fa-user-plus me-1"></i> Thêm chiến sĩ
-    </a>
-    <a href="{{ url_for('report') }}"     class="btn btn-sm btn-outline-danger  w-100 mb-2">
-      <i class="fas fa-chart-line me-1"></i> Xem báo cáo
-    </a>
-    <a href="{{ url_for('profile_page') }}" class="btn btn-sm btn-outline-secondary w-100">
-      <i class="fas fa-user-edit me-1"></i> Sửa hồ sơ
-    </a>
-  </div>
-</div>
-  </div>
-                </div>
-
-
-                {% endif %}
-                <div class="col-md-4 zoom-in">
-  <div class="stat-card p-3 shadow-sm d-flex justify-content-around align-items-center bg-primary-subtle">
-    
-    <div class="stat-info">
-      <h3 class="fs-1 "><span id="total-soldiers">{{ total_soldiers }}</span></h3>
-      <p class="fs-5 ">Chiến sĩ</p>
-    </div>
-    <div class="stat-icon text-primary">
-      <i class="fas fa-users"></i>
-    </div>
-    <!-- Nút xem khi hover -->
-    <a href="{{ url_for('list_page') }}" class="btn-view" style=" background: #6ea8fa;">Xem</a>
-  </div>
-</div>
-
-<div class="col-md-4 zoom-in">
-  <div class="stat-card p-3 shadow-sm d-flex justify-content-around align-items-center bg-secondary-subtle">
-    
-    <div class="stat-info">
-      <h3 class="fs-1 ">{{ total_sessions }}</h3>
-      <p class="fs-5 ">Phiên tập</p>
-    </div>
-    <div class="stat-icon text-secondary">
-      <i class="fas fa-bullseye"></i>
-    </div>
-    <a href="{{ url_for('training') }}" class="btn-view" style=" background: #c7ced2;">Xem</a>
-  </div>
-</div>
-
-
-                <div class="col-md-4 zoom-in">
-                    <div class=" p-3 {% if is_system_active %}bg-active text-white{% else %}bgcard{% endif %} shadow-sm d-flex justify-content-around align-items-center " style="border: groove; border-radius: 1rem;">
-                        <div>
-                            <h3 class="fs-2 mt-2">
-                                {% if is_system_active %}
-                                    Hoạt động
-                                {% else %}
-                                    Sẵn sàng
-                                {% endif %}
-                            </h3>
-                            <p class="fs-5">Hệ thống</p>
+        <section class="index-hero-slide">
+            <div class="container-fluid h-100 px-4">
+                <div class="row g-3 align-items-center section-intro h-100">
+                    <div class="col-md-5 text-center slide-in-left">
+                        <div class="image-scan-wrapper">
+                        <img src="{{ url_for('static', filename='image/ai-training.png') }}" 
+                            alt="Thiết bị huấn luyện bắn súng AI"
+                            class="img-fluid rounded shadow-lg radar-scan">
                         </div>
-                        {% if is_system_active %}
-                            <span class="spinner-border text-white" role="status" aria-hidden="true" style="width: 3rem; height: 3rem;"></span>
-                        {% else %}
-                            <i class="fas fa-power-off fs-1 text-info"></i>
-                        {% endif %}
+                    </div>
+
+                    <div class="col-md-7 slide-in-right">
+                        <h3 class="fs-3 text-success">
+                        Chào mừng đến với
+                        </h3>
+                        <h3 class="fs-3 mb-3 text-success fw-bold">
+                        Hệ thống Quản lý Thiết bị Tập luyện bắn súng ứng dụng camera AI DA01
+                        </h3>
+                        <p class="text-muted fs-5" style="text-align: justify;">
+                        Đây là thiết bị huấn luyện bắn súng thông minh, tích hợp trí tuệ nhân tạo và thuật toán xử lý ảnh để đánh giá chính xác kết quả.
+                        Hệ thống quản lý theo dõi hiệu suất, thành tích cung cấp phân tích chuyên sâu và hỗ trợ người huấn luyện đưa ra phương pháp giúp bộ đội cải thiện đường ngắm dễ dàng,
+                        đồng thời nâng cao tiêu chuẩn an toàn trong kiểm tra.
+                        </p>
+                        <div style="margin-top:40px; display:flex; justify-content:center;">
+                        <a href="#scroll" id="scrollBtn" class="btn-khampha">
+                        Khám phá thêm
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="white"
+                            viewBox="0 0 16 16" style="animation: bounce 1.5s infinite;">
+                            <path fill-rule="evenodd"
+                                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                        </a>
+                    </div>
                     </div>
                 </div>
-              </section>
-            <div class="row my-4">
-  <h3 class="fs-4 mb-4 mt-4 section-title">Chức năng chính của hệ thống</h3>
+            </div>
+        </section>
+        <section class="index-content-slide" id="scroll">
+            <div class="container-fluid px-4 pt-4"> 
+                
+                <div class="row g-3 my-2">
+                    <h3 class="fs-4 mb-3 section-title">Thông tin tổng quan đơn vị</h3>
+                    {% if current_user.is_profile_complete %}
+                    <div class="col-12 zoom-in">
+                        <div class="p-3 bgcard shadow-sm d-flex justify-content-between align-items-center rounded flex-wrap">
+                            <div class="d-flex align-items-center mb-3 mb-md-0">
+                              <i class="fas fa-user-shield fs-1 text-success me-4"></i>
+                              <div>
+                                <h4 class="fs-5 mb-1">
+                                  <strong>Đơn vị:</strong> {{ current_user.unit }}
+                                </h4>
+                                <p class="fs-6 text-muted mb-0">
+                                  <strong>{{ current_user.position }} :</strong> {{ current_user.full_name }} |
+                                  <strong>Cấp bậc:</strong> {{ current_user.rank }}
+                                </p>
+                              </div>
+                            </div>
+                            <div class="quick-actions ms-auto position-relative">
+                              <button class="btn btn-primary" id="toggleActions">
+                                <i class="fas fa-bolt me-1"></i> Thao tác nhanh
+                              </button>
+                              <div class="quick-menu shadow rounded p-2 bg-white">
+                                <a href="{{ url_for('training') }}"   class="btn btn-sm btn-outline-primary  w-100 mb-2">
+                                  <i class="fas fa-bullseye me-1"></i> Thêm phiên tập
+                                </a>
+                                <a href="{{ url_for('list_page') }}"  class="btn btn-sm btn-outline-success  w-100 mb-2">
+                                  <i class="fas fa-user-plus me-1"></i> Thêm chiến sĩ
+                                </a>
+                                <a href="{{ url_for('report') }}"     class="btn btn-sm btn-outline-danger  w-100 mb-2">
+                                  <i class="fas fa-chart-line me-1"></i> Xem báo cáo
+                                </a>
+                                <a href="{{ url_for('profile_page') }}" class="btn btn-sm btn-outline-secondary w-100">
+                                  <i class="fas fa-user-edit me-1"></i> Sửa hồ sơ
+                                </a>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-4 zoom-in">
+                      <div class="stat-card p-3 shadow-sm d-flex justify-content-around align-items-center bg-primary-subtle">
+                        <div class="stat-info">
+                          <h3 class="fs-1 "><span id="total-soldiers">{{ total_soldiers }}</span></h3>
+                          <p class="fs-5 ">Chiến sĩ</p>
+                        </div>
+                        <div class="stat-icon text-primary">
+                          <i class="fas fa-users"></i>
+                        </div>
+                        <a href="{{ url_for('list_page') }}" class="btn-view" style=" background: #6ea8fa;">Xem</a>
+                      </div>
+                    </div>
 
-  <div class="col-md-4 text-center">
-    <div class="feature-box shadow-sm p-4 rounded bg-white">
-      <div class="feature-icon mb-3">
-        <img src="{{ url_for('static', filename='image/feature_livestream.png') }}" alt="Livestream" class="feature-img">
-      </div>
-      <h5 class="fw-semibold">Phát livestream đường ngắm</h5>
-      <p class="text-muted small mt-2">
-        Từ AI Camera thời gian thực, hỗ trợ huấn luyện trực quan.
-      </p>
-    </div>
-  </div>
+                    <div class="col-md-4 zoom-in">
+                      <div class="stat-card p-3 shadow-sm d-flex justify-content-around align-items-center bg-secondary-subtle">
+                        <div class="stat-info">
+                          <h3 class="fs-1 ">{{ total_sessions }}</h3>
+                          <p class="fs-5 ">Phiên tập</p>
+                        </div>
+                        <div class="stat-icon text-secondary">
+                          <i class="fas fa-bullseye"></i>
+                        </div>
+                        <a href="{{ url_for('training') }}" class="btn-view" style=" background: #c7ced2;">Xem</a>
+                      </div>
+                    </div>
 
-  <div class="col-md-4 text-center">
-    <div class="feature-box shadow-sm p-4 rounded bg-white">
-      <div class="feature-icon mb-3">
-        <img src="{{ url_for('static', filename='image/feature_analysis.png') }}" alt="Phân tích điểm" class="feature-img">
-      </div>
-      <h5 class="fw-semibold">Phân tích & lưu trữ điểm số</h5>
-      <p class="text-muted small mt-2">
-        Hệ thống tự động ghi nhận kết quả từng phát bắn chính xác.
-      </p>
-    </div>
-  </div>
 
-  <div class="col-md-4 text-center">
-    <div class="feature-box shadow-sm p-4 rounded bg-white">
-      <div class="feature-icon mb-3">
-        <img src="{{ url_for('static', filename='image/feature_report.png') }}" alt="Báo cáo thống kê" class="feature-img">
-      </div>
-      <h5 class="fw-semibold">Thống kê & báo cáo chi tiết</h5>
-      <p class="text-muted small mt-2">
-        Theo dõi hiệu suất, so sánh thành tích từng buổi tập luyện.
-      </p>
-    </div>
-  </div>
+                    <div class="col-md-4 zoom-in">
+                        <div class=" p-3 {% if is_system_active %}bg-active text-white{% else %}bgcard{% endif %} shadow-sm d-flex justify-content-around align-items-center " style="border: groove; border-radius: 1rem;">
+                            <div>
+                                <h3 class="fs-2 mt-2">
+                                    {% if is_system_active %}
+                                        Hoạt động
+                                    {% else %}
+                                        Sẵn sàng
+                                    {% endif %}
+                                </h3>
+                                <p class="fs-5">Hệ thống</p>
+                            </div>
+                            {% if is_system_active %}
+                                <span class="spinner-border text-white" role="status" aria-hidden="true" style="width: 3rem; height: 3rem;"></span>
+                            {% else %}
+                                <i class="fas fa-power-off fs-1 text-info"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div> <div class="row my-4">
+                    <h3 class="fs-4 mb-4 mt-4 section-title">Chức năng chính của hệ thống</h3>
+
+                    <div class="col-md-4 text-center">
+                    <div class="feature-box shadow-sm p-4 rounded bg-white">
+                        <div class="feature-icon mb-3">
+                        <img src="{{ url_for('static', filename='image/feature_livestream.png') }}" alt="Livestream" class="feature-img">
+                        </div>
+                        <h5 class="fw-semibold">Phát livestream đường ngắm</h5>
+                        <p class="text-muted small mt-2">
+                        Từ AI Camera thời gian thực, hỗ trợ huấn luyện trực quan.
+                        </p>
+                    </div>
+                    </div>
+
+                    <div class="col-md-4 text-center">
+                    <div class="feature-box shadow-sm p-4 rounded bg-white">
+                        <div class="feature-icon mb-3">
+                        <img src="{{ url_for('static', filename='image/feature_analysis.png') }}" alt="Phân tích điểm" class="feature-img">
+                        </div>
+                        <h5 class="fw-semibold">Phân tích & lưu trữ điểm số</h5>
+                        <p class="text-muted small mt-2">
+                        Hệ thống tự động ghi nhận kết quả từng phát bắn chính xác.
+                        </p>
+                    </div>
+                    </div>
+
+                    <div class="col-md-4 text-center">
+                    <div class="feature-box shadow-sm p-4 rounded bg-white">
+                        <div class="feature-icon mb-3">
+                        <img src="{{ url_for('static', filename='image/feature_report.png') }}" alt="Báo cáo thống kê" class="feature-img">
+                        </div>
+                        <h5 class="fw-semibold">Thống kê & báo cáo chi tiết</h5>
+                        <p class="text-muted small mt-2">
+                        Theo dõi hiệu suất, so sánh thành tích từng buổi tập luyện.
+                        </p>
+                    </div>
+                    </div>
+                </div> </div> <footer class="simple-footer">
+                <div class="container-fluid">
+                    <p class="footer-text m-0">
+                        © 2025 - Hệ thống huấn luyện bắn súng ứng dụng Camera AI DA01 phiên bản 1.0
+                    </p>
+                </div>
+            </footer>
+            </section>
+        </div>
 </div>
-<!-- ========== SECTION: Dành cho người mới bắt đầu ========== -->
-<section class="cta-starter wow-fadeIn">
-  <div class="container">
-    <div class="cta-box">
-      <h2 class="cta-title">Dành cho người mới bắt đầu? Hãy bấm vào đây</h2>
-      <p class="cta-sub">Xem hướng dẫn cài đặt, quy trình thao tác và mẹo sử dụng hệ thống hiệu quả nhất.</p>
-      <a href="{{ url_for('guide') }}" class="btn btn-cta-pulse">
-        <i class="fas fa-book-open me-2"></i>Hướng dẫn sử dụng
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ========== SECTION: Trải nghiệm thực tế (2 cột) ========== -->
-<section class="xp-section slide-in-right">
-  <div class="container">
-    <div class="row align-items-center g-4">
-      <div class="col-lg-6">
-        <h3 class="xp-title">Trải nghiệm thực tế</h3>
-        <p class="xp-desc">
-          Quan sát đường ngắm theo thời gian thực, lưu toàn bộ điểm số từng phát bắn và nhận báo cáo phân tích trực quan.
-          Giao diện tối giản, hiệu năng cao – phù hợp cho huấn luyện thường xuyên lẫn kiểm tra định kỳ.
-        </p>
-        <ul class="xp-bullets">
-          <li><i class="fas fa-check-circle"></i> Livestream AI camera mượt, độ trễ thấp</li>
-          <li><i class="fas fa-check-circle"></i> Lưu/tra cứu phiên tập, so sánh đa chiều</li>
-          <li><i class="fas fa-check-circle"></i> Báo cáo PDF/Excel chỉ với 1 cú nhấp</li>
-        </ul>
-      </div>
-
-      <div class="col-lg-6">
-        <!-- Lưới ảnh kiểu mockup bạn gửi -->
-        <div class="xp-photos">
-          <div class="xp-photo card-tilt"><img src="{{ url_for('static', filename='image/xp_1.jpg') }}" alt="Ảnh 1"></div>
-          <div class="xp-photo card-tilt"><img src="{{ url_for('static', filename='image/xp_2.jpg') }}" alt="Ảnh 2"></div>
-          <div class="xp-photo wide card-tilt"><img src="{{ url_for('static', filename='image/xp_3.jpg') }}" alt="Ảnh 3"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ========== SECTION: Tác giả của sáng kiến (3 cột) ========== -->
-<section class="authors-section">
-  <div class="container">
-    <h3 class="section-title text-center mb-4">Tác giả của sáng kiến</h3>
-    <div class="row g-4">
-      <!-- Author 1 -->
-      <div class="col-md-4">
-        <div class="author-card fade-up">
-          <div class="author-avatar">
-            <img src="{{ url_for('static', filename='image/author_1.jpg') }}" alt="Tác giả 1">
-          </div>
-          <h5 class="author-name">Nguyễn Văn A</h5>
-          <p class="author-meta">Chủ nhiệm đề tài • Đại đội 1</p>
-          <p class="author-desc">Thiết kế quy trình, tiêu chuẩn nghiệp vụ và kiểm thử hiện trường.</p>
-        </div>
-      </div>
-      <!-- Author 2 -->
-      <div class="col-md-4">
-        <div class="author-card fade-up">
-          <div class="author-avatar">
-            <img src="{{ url_for('static', filename='image/author_2.jpg') }}" alt="Tác giả 2">
-          </div>
-          <h5 class="author-name">Trần Thị B</h5>
-          <p class="author-meta">Kỹ sư AI • Trung đội 2</p>
-          <p class="author-desc">Xử lý ảnh, thuật toán tính điểm và tối ưu hiệu năng.</p>
-        </div>
-      </div>
-      <!-- Author 3 -->
-      <div class="col-md-4">
-        <div class="author-card fade-up">
-          <div class="author-avatar">
-            <img src="{{ url_for('static', filename='image/author_3.jpg') }}" alt="Tác giả 3">
-          </div>
-          <h5 class="author-name">Lê Quốc C</h5>
-          <p class="author-meta">Full-stack • Ban Kỹ thuật</p>
-          <p class="author-desc">Kiến trúc hệ thống, giao diện và báo cáo.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ========== FOOTER (4 cột) ========== -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="row g-4">
-      <!-- Cột 1: Logo + mô tả -->
-      <div class="col-lg-3 col-md-6">
-        <div class="footer-brand">
-          <img src="{{ url_for('static', filename='image/favicon.png') }}" alt="Logo">
-          <div>
-            <h5>Hệ thống Huấn luyện</h5>
-            <p class="mb-0">Giải pháp theo dõi & đánh giá bắn súng ứng dụng AI.</p>
-          </div>
-        </div>
-      </div>
-      <!-- Cột 2 -->
-      <div class="col-lg-3 col-md-6">
-        <h6 class="footer-title">Tài liệu</h6>
-        <ul class="footer-list">
-          <li><a href="{{ url_for('guide') }}">Hướng dẫn sử dụng</a></li>
-          <li><a href="{{ url_for('report') }}">Mẫu báo cáo</a></li>
-          <li><a href="{{ url_for('training') }}">Quy trình phiên tập</a></li>
-          <li><a href="{{ url_for('list_page') }}">Quản lý chiến sĩ</a></li>
-        </ul>
-      </div>
-      <!-- Cột 3 -->
-      <div class="col-lg-3 col-md-6">
-        <h6 class="footer-title">Tính năng</h6>
-        <ul class="footer-list">
-          <li><a href="{{ url_for('livestream') }}">Livestream AI</a></li>
-          <li><a href="{{ url_for('report') }}">Phân tích điểm</a></li>
-          <li><a href="{{ url_for('report') }}">Thống kê nâng cao</a></li>
-          <li><a href="{{ url_for('report') }}">Xuất báo cáo</a></li>
-        </ul>
-      </div>
-      <!-- Cột 4 -->
-      <div class="col-lg-3 col-md-6">
-        <h6 class="footer-title">Liên hệ</h6>
-        <ul class="footer-list">
-          <li>Email: support@example.mil</li>
-          <li>Đường dây kỹ thuật: 1900 6868</li>
-          <li>Giờ làm việc: 08:00 – 17:00</li>
-          <li>Phiên bản: v1.0.0</li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-copy">© {{ 2025 }} Hệ thống Huấn luyện. All rights reserved.</div>
-  </div>
-</footer>
-
-
-            
-            
-        </div>
-    </div>
-</div>
-
-
 {% endblock %}
 
 {% block scripts %}
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
-
 <script src="{{ url_for('static', filename='js/soldiers.js') }}"></script>
-
 {% endblock %}

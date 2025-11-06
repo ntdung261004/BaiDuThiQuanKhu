@@ -1,18 +1,22 @@
-/* Định nghĩa biến màu của dự án (Lấy từ root.css và sidebar.css)
-  Chúng ta sẽ sử dụng các màu này cho slide tiêu đề.
+/* Định nghĩa biến màu của dự án
 */
 :root {
-    /* Màu xanh dương chính của hệ thống (lấy từ sidebar.css) */
-    --primary-color: #4e73df;
-    
-    /* Màu xanh đậm chính cho văn bản (lấy từ root.css) */
+    --primary-color: #4e73df; 
+    --app-green: #2f6d2f; 
     --primary-text: #1d3557; 
-    
-    /* Màu xám cho văn bản phụ (lấy từ root.css) */
-    --secondary-text: #495057;
-
-    /* Màu nền của slide tiêu đề (giữ nguyên màu xám/xanh nhạt) */
+    --secondary-text: #495057; /* Màu xám */
     --hero-bg-color: #f0f2f7; 
+}
+
+/* === Banner Cuộc thi === */
+.competition-banner {
+    background-color: var(--app-green);
+    color: #ffffff;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    letter-spacing: 0.05em;
 }
 
 /* === BẮT BUỘC: Ghi đè CSS từ layout chính === */
@@ -33,70 +37,106 @@
     border-bottom: 1px solid #e9ecef;
 }
 
-/* === SLIDE ĐẦU TIÊN (HERO-SLIDE) - Đã Tinh Chỉnh === */
+/* === SLIDE ĐẦU TIÊN (HERO-SLIDE) === */
 .hero-slide {
     min-height: 95vh;
-    background-color: var(--hero-bg-color); /* Nền xám/xanh nhạt */
+    background-color: var(--hero-bg-color);
     text-align: center;
-    
-    /* Tinh chỉnh 1: Canh lề trên (thay vì căn giữa) */
     align-items: flex-start;
-    padding-top: 8rem; /* Đẩy nội dung xuống 1 khoảng xa hơn */
+    
+    /* --- TINH CHỈNH: Đưa title lên gần topbar hơn --- */
+    padding-top: 2rem; 
+    
+    box-shadow: inset 0 -40px 20px -30px rgba(0, 0, 0, 0.05);
+    border-bottom: none; 
 }
 
 .hero-subheading {
-    /* Tinh chỉnh 2: Chữ nhỏ lại */
     font-size: 1rem; 
     font-weight: 600;
-    letter-spacing: 0.1em; /* Giữ khoảng cách ký tự */
-    
-    /* Tinh chỉnh 3: Dùng màu xanh chính của app */
-    color: var(--primary-color);
+    letter-spacing: 0.1em;
+    color: var(--secondary-text);
     margin-bottom: 1.5rem;
 }
 
 .hero-title {
     font-family: 'Arial', sans-serif; 
-    
-    /* Tinh chỉnh 2: Chữ nhỏ lại */
     font-size: 3.2rem; 
-    font-weight: 800;
-    line-height: 1.25; /* Giảm khoảng cách dòng */
-    
-    /* Tinh chỉnh 3: Dùng màu xanh đậm (màu text chính) của app */
-    color: var(--primary-text); 
-    max-width: 800px;
-    margin: 0 auto 1.5rem auto;
+    font-weight: 700; 
+    color: var(--app-green); 
+    line-height: 1.25; 
+    max-width: 900px; 
+    margin: 0 auto;
 }
 
-.hero-authors {
-    /* Tinh chỉnh 1: Tăng lề trên (do đã bỏ căn giữa) */
-    margin-top: 3rem; 
-    line-height: 1.7;
-    
-    /* Tinh chỉnh 3: Dùng màu xám (màu text phụ) của app */
-    color: var(--secondary-text); 
+.title-divider {
+    width: 80px;
+    height: 4px;
+    background-color: var(--app-green);
+    border-radius: 2px;
+    margin: 2rem auto 2.5rem auto; 
 }
 
-.hero-authors .author-title {
-    /* Tinh chỉnh 2: Chữ nhỏ lại */
+
+/* === SLIDE 1 (HERO) - BỐ CỤC TÁC GIẢ MỚI === */
+.authors-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.authors-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--app-green);
+    text-align: center;
+    margin-bottom: 2rem; 
+}
+
+.author-card {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0,0,0,.05);
+    height: 100%; 
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.author-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,.08);
+}
+
+.author-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1rem auto;
+    border: 4px solid var(--hero-bg-color); 
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.author-name {
     font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: var(--primary-text);
+    margin-bottom: 0.25rem;
 }
 
-.hero-authors .author-name {
-    /* Tinh chỉnh 2: Chữ nhỏ lại */
-    font-size: 0.95rem;
-    font-weight: 500;
+.author-rank {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    margin-bottom: 0;
 }
 
 
 /* === CSS CHO HIỆU ỨNG "ĐỘNG" (FADE-IN) === */
 .fade-in {
     opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    transform: translateY(50px); 
+    transition: opacity 1s ease-out, transform 1s ease-out;
 }
 
 .fade-in.is-visible {
@@ -104,11 +144,273 @@
     transform: translateY(0);
 }
 
-/* Tinh chỉnh nhỏ cho card */
-.card {
+
+/* === SLIDE CHUNG (Tiêu đề, Phụ đề) === */
+.slide-title {
+    font-size: 2.5rem; 
+    font-weight: 700;
+    color: var(--primary-text); 
+    margin-bottom: 1rem;
+}
+
+.slide-subtitle {
+    font-size: 1.1rem;
+    color: var(--secondary-text); 
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* === SLIDE 2: TÍNH NĂNG (FEATURE) === */
+/* Mã để fix ảnh nằm trong khung (ĐÃ CÓ) */
+.feature-card {
+    border: none; 
+    border-radius: 10px; 
+    overflow: hidden; 
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1)!important;
+}
+
+.feature-card .card-img-top {
+    width: 100%;
+    height: 200px; /* Cố định chiều cao ảnh */
+    object-fit: cover; /* Đảm bảo ảnh vừa vặn, không bị méo */
+    border-bottom: 1px solid #eee;
+}
+
+.feature-card .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+}
+
+/* === SLIDE 3: KIẾN TRÚC (ARCHITECTURE) === */
+.architecture-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.architecture-list .arch-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.75rem;
+}
+
+.architecture-list .arch-item i {
+    font-size: 2rem;
+    color: var(--primary-color);
+    width: 50px; 
+    text-align: center;
+    margin-right: 1.5rem;
+    margin-top: 5px;
+}
+
+.architecture-list .arch-item h6 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-text);
+    margin-bottom: 0.25rem;
+}
+
+.architecture-list .arch-item p {
+    font-size: 0.95rem;
+    color: var(--secondary-text);
+    margin-bottom: 0;
+}
+
+/* === SLIDE 4+: CÔNG NGHỆ (TECH) === */
+
+.tech-row {
+    margin-bottom: 2rem; /* Khoảng cách giữa các mục công nghệ */
+}
+
+/* Đường kẻ ngang tách biệt các công nghệ trên cùng 1 slide */
+.tech-divider {
+    margin: 4rem 0;
+    opacity: 0.1;
+}
+
+.tech-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--app-green); /* Dùng màu xanh lá chính */
+    margin-bottom: 1rem;
+}
+
+.tech-description {
+    font-size: 1rem;
+    color: var(--secondary-text);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.tech-features {
+    list-style: none;
+    padding-left: 0;
+}
+
+.tech-features li {
+    position: relative;
+    padding-left: 30px; /* Tạo không gian cho icon */
+    font-size: 0.95rem;
+    color: var(--primary-text);
+    margin-bottom: 0.75rem;
+}
+
+/* Dùng icon check (từ FontAwesome) */
+.tech-features li::before {
+    content: '\f00c'; /* Mã icon 'check' của FontAwesome */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    color: var(--app-green);
+    position: absolute;
+    left: 0;
+    top: 3px;
+    font-size: 1rem;
+}
+/* === SLIDE 7: DANH MỤC THIẾT BỊ (EQUIPMENT) === */
+
+.equipment-list {
+    list-style: none;
+    padding-left: 0;
+    max-width: 600px; /* Giới hạn chiều rộng để đẹp hơn */
+    margin: 0 auto; /* Căn giữa */
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden; /* Để bo góc */
+    box-shadow: 0 4px 12px rgba(0,0,0,.05);
+}
+
+.equipment-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.75rem;
+    font-size: 1.05rem;
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Cho dòng cuối cùng không có border */
+.equipment-list li:last-child {
+    border-bottom: none;
+}
+
+.equipment-list .component-name {
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.equipment-list .component-quantity {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--app-green); /* Dùng màu xanh lá chính */
+    background-color: var(--hero-bg-color); /* Nền xám nhạt */
+    padding: 0.25rem 0.75rem;
+    border-radius: 5px;
+}
+/* === SLIDE 8: QUY TRÌNH HOẠT ĐỘNG (OPERATION) === */
+
+.rifle-diagram-container {
+    max-width: 900px;
+    margin: 0 auto 3rem auto;
+}
+
+.rifle-diagram-container img {
+    max-height: 500px; /* Giới hạn chiều cao ảnh để không quá lớn */
+    width: auto; /* Giữ tỷ lệ */
+    display: block; /* Loại bỏ khoảng trắng dưới ảnh */
+    margin: 0 auto;
+}
+
+.process-steps {
+    margin-top: 3rem;
+}
+
+.process-step-item {
+    padding: 1rem;
+    height: 100%; /* Đảm bảo chiều cao đồng nhất */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.process-step-item .step-number {
+    width: 50px;
+    height: 50px;
+    background-color: var(--primary-color);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,.1);
+}
+
+.process-step-item .step-description {
+    font-size: 0.95rem;
+    color: var(--secondary-text);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+/* === SLIDE 9: KẾT LUẬN (CONCLUSION) === */
+
+.conclusion-item {
+    padding: 2.5rem 1.5rem;
+    background-color: #fff;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 12px rgba(0,0,0,.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.conclusion-item:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+
+.conclusion-icon {
+    font-size: 3rem;
+    color: var(--app-green);
+    margin-bottom: 1.5rem;
+}
+
+.conclusion-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-text);
+    margin-bottom: 1rem;
+}
+
+.conclusion-text {
+    font-size: 0.95rem;
+    color: var(--secondary-text);
+    line-height: 1.7;
+    margin-bottom: 0;
+}
+/* === FOOTER (MỚI - Đơn giản) === */
+.simple-footer {
+    background-color: var(--hero-bg-color); /* Nền xám nhạt */
+    padding: 2rem 1.5rem;
+    text-align: center;
+    
+    /* Trang trí đổ bóng ở phía trên */
+    box-shadow: inset 0 8px 20px -10px rgba(0, 0, 0, 0.1);
+    position: relative; 
+    z-index: 10; 
+    border-top: 1px solid #e9ecef;
+}
+
+.simple-footer .footer-text {
+    font-size: 0.9rem; /* Chữ nhỏ */
+    color: var(--secondary-text); /* Chữ mờ (màu xám) */
+    font-weight: 500;
 }

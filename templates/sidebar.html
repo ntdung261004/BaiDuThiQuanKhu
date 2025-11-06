@@ -46,25 +46,25 @@
         <a href="{{ url_for('list_page') }}"
            class="list-group-item list-group-item-action {% if request.endpoint=='list_page' %}active{% endif %}" data-spa="off">
           <i class="fas fa-list item-icon"></i>
-          <span class="item-label">Danh sách</span>
+          <span class="item-label">Quản lý Chiến sĩ</span>
         </a>
 
         <a href="{{ url_for('livestream') }}"
            class="list-group-item list-group-item-action {% if request.endpoint=='livestream' %}active{% endif %}" data-spa="off">
           <i class="fas fa-video item-icon"></i>
-          <span class="item-label">Hiệu chỉnh</span>
+          <span class="item-label">Kết nối & Hiệu chỉnh</span>
         </a>
 
         <a href="{{ url_for('training') }}"
            class="list-group-item list-group-item-action {% if request.endpoint=='training' %}active{% endif %}" data-spa="off">
           <i class="fas fa-bullseye item-icon"></i>
-          <span class="item-label">Tập luyện</span>
+          <span class="item-label">Quản lý Tập luyện</span>
         </a>
 
         <a href="{{ url_for('report') }}"
            class="list-group-item list-group-item-action {% if request.endpoint in ['report','report_page'] %}active{% endif %}" data-spa="off">
           <i class="fas fa-chart-line item-icon"></i>
-          <span class="item-label">Báo cáo</span>
+          <span class="item-label">Báo cáo Thống kê</span>
         </a>
         <a href="{{ url_for('logout') }}"
    class="list-group-item list-group-item-action"
