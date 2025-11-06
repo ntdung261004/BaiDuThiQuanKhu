@@ -291,7 +291,26 @@ def forgot_password():
 @app.route("/list", endpoint="list_page")
 @login_required
 def list_page():
-    return render_template("list.html")
+    total_soldiers = Soldier.query.count()
+
+    # lấy danh sách đơn vị khác nhau
+    unit_list = (
+        db.session.query(Soldier.unit)
+        .filter(Soldier.unit.isnot(None))
+        .filter(Soldier.unit != "")
+        .distinct()
+        .order_by(Soldier.unit.asc())
+        .all()
+    )
+    # unit_list dạng [( 'Đại đội 1', ), ( 'Đại đội 2', )] => map ra chuỗi
+    unit_list = [u[0] for u in unit_list]
+
+    return render_template(
+        "list.html",
+        total_soldiers=total_soldiers,
+        unit_list=unit_list,      # 👈 truyền xuống template
+        unit_filter=request.args.get("unit", "")
+    )
 
 @app.route('/guide')
 @login_required
@@ -330,7 +349,6 @@ def training():
 @login_required
 def profile_page():
     return render_template('profile.html')
-
 @app.route('/session/<int:session_id>')
 @login_required
 def session_details(session_id):
@@ -408,7 +426,35 @@ def update_profile():
     db.session.commit()
 
     return jsonify({'message': 'Cập nhật thông tin thành công!'}), 200
+# === XÓA ẢNH ĐẠI DIỆN ===
+@app.route('/api/profile/avatar', methods=['DELETE'])
+@login_required
+def delete_avatar():
+    try:
+        # Nếu user chưa có avatar -> coi như xóa xong
+        if not current_user.avatar_url:
+            return ('', 204)
 
+        folder = app.config['AVATAR_UPLOAD_FOLDER']   # thư mục đã cấu hình ở trên
+        filename = current_user.avatar_url            # bạn đang lưu chỉ là tên file
+        path = os.path.join(folder, filename)
+
+        # Xoá file nếu tồn tại
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except FileNotFoundError:
+            pass
+
+        # Clear trường trong DB
+        current_user.avatar_url = None
+        db.session.commit()
+
+        return jsonify({'ok': True})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.exception('Delete avatar error')
+        return jsonify({'error': str(e)}), 500
 # --- Khởi chạy Server ---
 if __name__ == '__main__':
     ip_address = get_ip_address()

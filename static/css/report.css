@@ -88,3 +88,90 @@
   background-color: #e9f5e9 !important;
   transition: background-color 0.2s ease-in-out;
 }
+
+/* ====== SELECT SKIN (trang báo cáo) ====== */
+.select-hidden {
+  display: none !important;
+}
+
+.select-skin-trigger {
+  flex: 1 1 auto;
+  background: #fff;
+  border: none;
+  outline: none;
+  height: 45px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 0 .5rem .5rem 0; /* vì bên trái đã có .input-group-text */
+  font-weight: 500;
+  color: #243246;
+  cursor: pointer;
+}
+
+.select-skin-trigger::after {
+  content: "\f078"; /* caret-down */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  font-size: .75rem;
+  color: #243246;
+}
+
+/* menu nổi */
+.select-skin-menu {
+  position: fixed;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0,0,0,.12);
+  overflow: hidden;
+  z-index: 2000;
+  display: none;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.select-skin-menu.on {
+  display: block;
+}
+
+/* từng option */
+.select-option {
+  padding: 10px 14px;
+  font-size: .9rem;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  transition: background .15s ease, color .15s ease;
+}
+
+/* hover giống bạn nói */
+.select-option:hover {
+  background: #00b700;
+  color: #fff;
+}
+
+/* option đang được chọn */
+.select-option.active {
+  background: #eef5ff;
+  font-weight: 600;
+}
+
+/* thanh scroll gọn gọn */
+.select-skin-menu::-webkit-scrollbar {
+  width: 6px;
+}
+.select-skin-menu::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15);
+  border-radius: 100px;
+}
+.soldier-panel__body .input-group.with-icon .input-group-text {
+  border-radius: .75rem 0 0 .75rem;
+  border: none;
+}
+.soldier-panel__body .input-group.with-icon .select-skin-trigger {
+  border-radius: 0 .75rem .75rem 0;
+}

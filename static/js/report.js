@@ -1,159 +1,247 @@
+// === SKIN SELECT cho trang báo cáo ===
+(function () {
+  function ensureMenu() {
+    let m = document.querySelector('.select-skin-menu');
+    if (!m) {
+      m = document.createElement('div');
+      m.className = 'select-skin-menu';
+      document.body.appendChild(m);
+    }
+    return m;
+  }
+
+  function placeMenu(menu, trigger) {
+    const r = trigger.getBoundingClientRect();
+    menu.style.top = (r.bottom + 6) + 'px';
+    menu.style.left = r.left + 'px';
+    menu.style.minWidth = r.width + 'px';
+  }
+
+  function skinOneSelect(selectEl) {
+    if (!selectEl || selectEl.dataset.skinned === '1') return;
+
+    // ẩn select thật
+    selectEl.classList.add('select-hidden');
+
+    // tạo nút trigger
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'select-skin-trigger';
+    trigger.textContent = selectEl.selectedOptions[0]?.textContent || 'Chọn';
+
+    // chèn ngay sau select trong input-group
+    selectEl.parentElement.insertBefore(trigger, selectEl.nextSibling);
+
+    let menu = null;
+
+    function closeMenu() {
+      if (!menu) return;
+      menu.classList.remove('on');
+      menu._cleanup && menu._cleanup();
+    }
+
+    function openMenu() {
+      menu = ensureMenu();
+      menu.innerHTML = '';
+
+      Array.from(selectEl.options).forEach(opt => {
+        const item = document.createElement('div');
+        item.className = 'select-option' + (opt.value === selectEl.value ? ' active' : '');
+        item.textContent = opt.textContent;
+        item.addEventListener('click', () => {
+          selectEl.value = opt.value;
+          trigger.textContent = opt.textContent;
+          closeMenu();
+          // để report.js nghe được
+          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        menu.appendChild(item);
+      });
+
+      placeMenu(menu, trigger);
+      menu.classList.add('on');
+
+      const onDoc = (e) => {
+        if (e.target !== trigger && !menu.contains(e.target)) {
+          closeMenu();
+        }
+      };
+      const onEsc = (e) => { if (e.key === 'Escape') closeMenu(); };
+      const onReflow = () => {
+        if (menu.classList.contains('on')) placeMenu(menu, trigger);
+      };
+
+      document.addEventListener('click', onDoc, { once: true });
+      document.addEventListener('keydown', onEsc, { once: true });
+      window.addEventListener('scroll', onReflow, { passive: true });
+      window.addEventListener('resize', onReflow);
+
+      menu._cleanup = () => {
+        document.removeEventListener('click', onDoc);
+        document.removeEventListener('keydown', onEsc);
+        window.removeEventListener('scroll', onReflow);
+        window.removeEventListener('resize', onReflow);
+      };
+    }
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const opened = document.querySelector('.select-skin-menu.on');
+      if (opened && opened !== menu) {
+        opened.classList.remove('on');
+        opened._cleanup && opened._cleanup();
+      }
+      if (menu && menu.classList.contains('on')) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    // sync nếu value đổi từ code
+    selectEl.addEventListener('change', () => {
+      trigger.textContent = selectEl.selectedOptions[0]?.textContent || trigger.textContent;
+    });
+
+    selectEl.dataset.skinned = '1';
+  }
+
+  // export để report.js gọi lại sau khi load danh sách
+  window.ReportSelectSkin = {
+    skin: skinOneSelect,
+    refresh(id) {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      sel.dataset.skinned = '';
+      const next = sel.nextElementSibling;
+      if (next && next.classList.contains('select-skin-trigger')) {
+        next.remove();
+      }
+      skinOneSelect(sel);
+    }
+  };
+
+  // auto skin lúc DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const rt = document.getElementById('report-type-select');
+    const it = document.getElementById('item-select');
+    if (rt) window.ReportSelectSkin.skin(rt);
+    if (it) window.ReportSelectSkin.skin(it);
+  });
+})();
+
+    
+
 // static/js/report.js
-
 document.addEventListener('DOMContentLoaded', function() {
-    // --- KHAI BÁO BIẾN ---
-    const reportTypeSelect = document.getElementById('report-type-select');
-    const itemSelect = document.getElementById('item-select');
+    // ====== PHẦN PHẦN TỬ CHÍNH ======
     const reportContainer = document.getElementById('report-container');
-    const mainContainer = document.querySelector('.container-fluid[data-report-type]');
-// --- LOGIC CHO POPUP XEM CHI TIẾT QUÁ TRÌNH BẮN ---
 
-    // Biến toàn cục để lưu trữ dữ liệu và trạng thái của popup
-    let shotDetailModal = new bootstrap.Modal(document.getElementById('shotDetailModal'));
+    // select thật (ẩn) – để JS xử lý
+    const reportTypeSelect = document.getElementById('report-type-select');
+    const itemSelect       = document.getElementById('item-select');
+
+    // ====== POPUP XEM QUÁ TRÌNH BẮN ======
+    const shotDetailModal   = new bootstrap.Modal(document.getElementById('shotDetailModal'));
+    const shotDetailImage   = document.getElementById('shot-detail-image');
+    const shotDetailLoading = document.getElementById('shot-detail-loading');
+    const shotDetailTime    = document.getElementById('shot-detail-time');
+    const shotDetailTarget  = document.getElementById('shot-detail-target');
+    const shotDetailScore   = document.getElementById('shot-detail-score');
+    const shotCounter       = document.getElementById('shot-counter');
+    const prevShotBtn       = document.getElementById('prev-shot-btn');
+    const nextShotBtn       = document.getElementById('next-shot-btn');
+
     let currentShots = [];
     let currentIndex = 0;
 
-    // Các phần tử trong popup
-    const shotDetailImage = document.getElementById('shot-detail-image');
-    const shotDetailLoading = document.getElementById('shot-detail-loading');
-    const shotDetailTime = document.getElementById('shot-detail-time');
-    const shotDetailTarget = document.getElementById('shot-detail-target');
-    const shotDetailScore = document.getElementById('shot-detail-score');
-    const shotCounter = document.getElementById('shot-counter');
-    const prevShotBtn = document.getElementById('prev-shot-btn');
-    const nextShotBtn = document.getElementById('next-shot-btn');
+    function displayShot(idx) {
+        if (!currentShots.length) return;
+        currentIndex = idx;
+        const shot = currentShots[idx];
 
-    /**
-     * Hàm hiển thị thông tin của một phát bắn cụ thể lên popup
-     * @param {number} index - Vị trí của phát bắn trong danh sách currentShots
-     */
-    function displayShot(index) {
-        if (!currentShots || currentShots.length === 0) return;
-
-        currentIndex = index;
-        const shot = currentShots[index];
-        
-        // Ẩn ảnh cũ và hiển thị trạng thái đang tải
         shotDetailImage.style.display = 'none';
         shotDetailLoading.style.display = 'block';
 
-        // Gán các giá trị vào popup
-        shotDetailTime.textContent = shot.shot_time;
+        shotDetailTime.textContent   = shot.shot_time;
         shotDetailTarget.textContent = shot.target_name;
-        shotDetailScore.textContent = shot.score;
+        shotDetailScore.textContent  = shot.score;
+        shotCounter.textContent      = `Phát ${idx + 1} / ${currentShots.length}`;
 
-        // Cập nhật bộ đếm
-        shotCounter.textContent = `Phát ${index + 1} / ${currentShots.length}`;
-        
-        // Vô hiệu hóa các nút
-        prevShotBtn.disabled = (index === 0);
-        nextShotBtn.disabled = (index === currentShots.length - 1);
+        prevShotBtn.disabled = (idx === 0);
+        nextShotBtn.disabled = (idx === currentShots.length - 1);
 
-        // <<< THAY ĐỔI TẠI ĐÂY: XỬ LÝ ĐƯỜNG DẪN ẢNH VÀ CÁC TRẠNG THÁI >>>
         if (shot.result_image_path) {
-            
             shotDetailImage.src = `/user_data/${shot.result_image_path}`;
-            
             shotDetailImage.onload = () => {
                 shotDetailLoading.style.display = 'none';
                 shotDetailImage.style.display = 'block';
             };
-            
             shotDetailImage.onerror = () => {
-                // Hiển thị ảnh giữ chỗ khi ảnh gốc không tồn tại
                 shotDetailImage.src = '/static/image/placeholder_image.png';
                 shotDetailLoading.style.display = 'none';
                 shotDetailImage.style.display = 'block';
-                console.error('Lỗi khi tải ảnh từ đường dẫn:', shot.result_image_path);
             };
         } else {
-            // Hiển thị ảnh giữ chỗ nếu không có đường dẫn ảnh
             shotDetailImage.src = '/static/image/placeholder_image.png';
             shotDetailLoading.style.display = 'none';
             shotDetailImage.style.display = 'block';
         }
     }
 
-    // Bắt sự kiện click trên toàn bộ container báo cáo
-    reportContainer.addEventListener('click', async function(event) {
-        const viewProcessBtn = event.target.closest('.view-process-btn');
-        
-        // Nếu người dùng bấm vào nút "Xem quá trình"
-        if (viewProcessBtn) {
-            event.preventDefault(); // Ngăn hành vi mặc định của thẻ <a>
-            
-            const sessionId = viewProcessBtn.dataset.sessionId;
-            const soldierId = viewProcessBtn.dataset.soldierId;
+    reportContainer.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.view-process-btn');
+        if (!btn) return;
+        e.preventDefault();
 
-            if (!sessionId || !soldierId) return;
+        const sessionId = btn.dataset.sessionId;
+        const soldierId = btn.dataset.soldierId;
+        if (!sessionId || !soldierId) return;
 
-            // Mở popup và hiển thị trạng thái loading
-            shotDetailModal.show();
-            shotDetailImage.style.display = 'none';
-            shotDetailLoading.style.display = 'block';
-            shotDetailLoading.innerHTML = '<div class="spinner-border mb-3" role="status"></div><p>Đang tải dữ liệu...</p>';
-            
-            try {
-                // Gọi API để lấy danh sách chi tiết các phát bắn
-                const response = await fetch(`/api/report/shot_details?session_id=${sessionId}&soldier_id=${soldierId}`);
-                currentShots = await response.json();
-                
-                if (currentShots.length > 0) {
-                    currentIndex = 0; // Bắt đầu từ phát bắn đầu tiên
-                    displayShot(currentIndex);
-                } else {
-                    shotDetailLoading.innerHTML = '<p class="text-warning">Không có dữ liệu chi tiết cho lựa chọn này.</p>';
-                }
+        shotDetailModal.show();
+        shotDetailImage.style.display = 'none';
+        shotDetailLoading.style.display = 'block';
+        shotDetailLoading.innerHTML = '<div class="spinner-border mb-3"></div><p>Đang tải dữ liệu...</p>';
 
-            } catch (error) {
-                console.error("Lỗi khi tải chi tiết phát bắn:", error);
-                shotDetailLoading.innerHTML = '<p class="text-danger">Lỗi khi tải dữ liệu.</p>';
+        try {
+            const res = await fetch(`/api/report/shot_details?session_id=${sessionId}&soldier_id=${soldierId}`);
+            currentShots = await res.json();
+            if (currentShots.length) {
+                displayShot(0);
+            } else {
+                shotDetailLoading.innerHTML = '<p class="text-warning">Không có dữ liệu chi tiết.</p>';
             }
+        } catch (err) {
+            console.error(err);
+            shotDetailLoading.innerHTML = '<p class="text-danger">Lỗi khi tải dữ liệu.</p>';
         }
     });
 
-    // Gán sự kiện cho nút "Next"
     nextShotBtn.addEventListener('click', () => {
-        if (currentIndex < currentShots.length - 1) {
-            currentIndex++;
-            displayShot(currentIndex);
-        }
+        if (currentIndex < currentShots.length - 1) displayShot(currentIndex + 1);
     });
-
-    // Gán sự kiện cho nút "Previous"
     prevShotBtn.addEventListener('click', () => {
-        if (currentIndex > 0) {
-            currentIndex--;
-            displayShot(currentIndex);
-        }
+        if (currentIndex > 0) displayShot(currentIndex - 1);
     });
-    Chart.register(ChartDataLabels);
 
-    // Biến để lưu trữ biểu đồ, giúp hủy biểu đồ cũ trước khi vẽ cái mới
+    // ====== CHART SETUP ======
+    Chart.register(ChartDataLabels);
     let mainChart = null;
 
-    // --- CÁC HÀM RENDER GIAO DIỆN ---
-
-    /**
-     * Hiển thị tiêu đề của báo cáo
-     */
     function renderReportTitle(data, reportType) {
         const reportTitle = document.getElementById('report-title');
         if (reportType === 'session') {
             reportTitle.innerHTML = `Báo cáo Phiên tập: <span class="text-primary">${data.session_name}</span>
-                             <p class="text-muted fs-6 mb-0">${data.exercise_name}</p>`;
+                <p class="text-muted fs-6 mb-0">${data.exercise_name}</p>`;
         } else {
             reportTitle.innerHTML = `Báo cáo Xạ thủ: <span class="text-primary">${data.soldier_rank} ${data.soldier_name}</span>`;
         }
     }
 
-    /**
-     * Hiển thị các thẻ thông số chính (KPIs)
-     */
     function renderKpiCards(data, reportType) {
         const kpiContainer = document.getElementById('kpi-cards-container');
-        let stats = reportType === 'session' ? data : data.overall_stats;
-        
+        const stats = reportType === 'session' ? data : data.overall_stats;
+
         kpiContainer.innerHTML = `
             <div class="col-md-3">
                 <div class="card stat-card shadow-sm">
@@ -182,99 +270,78 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="col-md-3">
                 <div class="card stat-card shadow-sm" style="border-left-color: var(--bs-info);">
                     <div class="card-body">
-                        <div class="stat-value text-info">${reportType === 'session' ? data.soldiers_performance.length : stats.total_sessions}</div>
-                        <div class="stat-label">${reportType === 'session' ? 'Xạ thủ tham gia' : 'Phiên tham gia'}</div>
+                        <div class="stat-value text-info">
+                            ${reportType === 'session' ? data.soldiers_performance.length : stats.total_sessions}
+                        </div>
+                        <div class="stat-label">
+                            ${reportType === 'session' ? 'Xạ thủ tham gia' : 'Phiên tham gia'}
+                        </div>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    /**
-     * Hiển thị bảng dữ liệu chi tiết
-     */
-    // Thay thế hoàn toàn hàm renderDetailsTable hiện tại của bạn bằng hàm này
-
-    /**
-     * Hiển thị bảng dữ liệu chi tiết, có khả năng lọc theo bài tập
-     */
     function renderDetailsTable(data, reportType, exerciseFilter = 'all') {
         const tableContainer = document.getElementById('details-table-container');
-        const tableTitle = document.getElementById('table-title');
-        let tableHtml = '<table class="table table-striped table-hover"><thead><tr>';
-        let items = [];
+        const tableTitle     = document.getElementById('table-title');
+        let html = '<table class="table table-striped table-hover"><thead><tr>';
 
         if (reportType === 'session') {
             tableTitle.textContent = 'Thành tích Xạ thủ';
-            tableHtml += '<th>#</th><th>Tên Xạ thủ</th><th>Điểm TB</th><th>Số phát bắn</th><th>Tỷ lệ trúng</th><th>Phân tích</th></tr></thead><tbody>';
-            
-            items = data.soldiers_performance;
-            items.forEach((item, index) => {
-                const hitRate = item.total_shots > 0 ? ((item.hit_shots / item.total_shots) * 100).toFixed(0) : 0;
-                tableHtml += `
+            html += '<th>#</th><th>Tên Xạ thủ</th><th>Điểm TB</th><th>Số phát bắn</th><th>Tỷ lệ trúng</th><th>Phân tích</th></tr></thead><tbody>';
+            data.soldiers_performance.forEach((it, idx) => {
+                const hitRate = it.total_shots ? ((it.hit_shots / it.total_shots) * 100).toFixed(0) : 0;
+                html += `
                     <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.rank} ${item.name}</td>
-                        <td>${item.avg_score}</td>
-                        <td>${item.total_shots}</td>
-                        <td>${item.hit_shots}/${item.total_shots} - <strong>${hitRate}%</strong></td>
-                        <td><a href="#" class="view-process-btn" data-soldier-id="${item.id}" data-session-id="${data.session_id}">Xem quá trình</a></td>
+                        <td>${idx + 1}</td>
+                        <td>${it.rank} ${it.name}</td>
+                        <td>${it.avg_score}</td>
+                        <td>${it.total_shots}</td>
+                        <td>${it.hit_shots}/${it.total_shots} - <strong>${hitRate}%</strong></td>
+                        <td><a href="#" class="view-process-btn" data-session-id="${data.session_id}" data-soldier-id="${it.id}">Xem quá trình</a></td>
                     </tr>
                 `;
             });
-        } else { // reportType === 'soldier'
-            const filterText = exerciseFilter === 'all' ? 'Tất cả bài tập' : exerciseFilter;
-            tableTitle.textContent = `Lịch sử Phiên tập - ${filterText}`;
-            
-            // <<< SỬA LẠI TIÊU ĐỀ BẢNG: Bỏ cột "Bài tập", thêm cột "Phân tích" >>>
-            tableHtml += '<th>#</th><th>Tên Phiên</th><th>Điểm TB</th><th>Số phát bắn</th><th>Tỷ lệ trúng</th><th>Phân tích</th></tr></thead><tbody>';
-            
-            items = (exerciseFilter === 'all')
+        } else {
+            const list = (exerciseFilter === 'all')
                 ? data.sessions_performance
                 : data.sessions_performance.filter(s => s.exercise_name === exerciseFilter);
+            tableTitle.textContent = `Lịch sử Phiên tập - ${exerciseFilter === 'all' ? 'Tất cả bài tập' : exerciseFilter}`;
+            html += '<th>#</th><th>Tên Phiên</th><th>Điểm TB</th><th>Số phát bắn</th><th>Tỷ lệ trúng</th><th>Phân tích</th></tr></thead><tbody>';
 
-            if (items.length === 0) {
-                tableHtml += '<tr><td colspan="5" class="text-center text-muted p-3">Không có dữ liệu cho lựa chọn này.</td></tr>';
+            if (!list.length) {
+                html += '<tr><td colspan="6" class="text-center text-muted p-3">Không có dữ liệu.</td></tr>';
             } else {
-                items.forEach((item, index) => {
-                    const hitRate = item.total_shots > 0 ? ((item.hit_shots / item.total_shots) * 100).toFixed(0) : 0;
-                
-                    // <<< SỬA LẠI NỘI DUNG HÀNG: Bỏ tên bài tập, thêm link "Xem quá trình" >>>
-                    tableHtml += `
+                list.forEach((it, idx) => {
+                    const hitRate = it.total_shots ? ((it.hit_shots / it.total_shots) * 100).toFixed(0) : 0;
+                    html += `
                         <tr>
-                            <td>${index + 1}</td>
-                            <td>${item.session_name}</td>
-                            <td>${item.avg_score}</td>
-                            <td>${item.total_shots}</td>
-                            <td>${item.hit_shots}/${item.total_shots} - <strong>${hitRate}%</strong></td>
-                            <td><a href="#" class="view-process-btn" data-session-id="${item.session_id}" data-soldier-id="${data.soldier_id}">Xem quá trình</a></td>
+                            <td>${idx + 1}</td>
+                            <td>${it.session_name}</td>
+                            <td>${it.avg_score}</td>
+                            <td>${it.total_shots}</td>
+                            <td>${it.hit_shots}/${it.total_shots} - <strong>${hitRate}%</strong></td>
+                            <td><a href="#" class="view-process-btn" data-session-id="${it.session_id}" data-soldier-id="${data.soldier_id}">Xem quá trình</a></td>
                         </tr>
                     `;
                 });
             }
         }
 
-        tableHtml += '</tbody></table>';
-        tableContainer.innerHTML = tableHtml;
+        html += '</tbody></table>';
+        tableContainer.innerHTML = html;
     }
-    /**
-     * Vẽ biểu đồ chính
-     */
-    // Thay thế hoàn toàn hàm renderMainChart cũ
-    /**
-     * Vẽ biểu đồ chính, có khả năng thay đổi dựa vào bộ lọc
-     */
+
     function renderMainChart(data, reportType, exerciseFilter = 'all') {
         const ctx = document.getElementById('main-chart').getContext('2d');
-        let chartConfig = {};
 
-        if (mainChart) {
-            mainChart.destroy(); // Hủy biểu đồ cũ nếu có
-        }
+        if (mainChart) mainChart.destroy();
+
+        let config;
 
         if (reportType === 'session') {
-            // --- Vẽ biểu đồ cho Báo cáo Phiên tập (giữ nguyên) ---
-            chartConfig = {
+            config = {
                 type: 'bar',
                 data: {
                     labels: data.soldiers_performance.map(s => `${s.rank} ${s.name}`),
@@ -288,23 +355,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 options: {
                     scales: { y: { beginAtZero: true, max: 10 } },
-                    responsive: true,
                     plugins: {
                         legend: { display: false },
                         title: { display: true, text: 'So sánh Điểm trung bình các Xạ thủ' },
                         datalabels: {
                             anchor: 'end', align: 'top', color: '#495057',
                             font: { weight: 'bold' },
-                            formatter: (value) => Math.round(value * 10) / 10
+                            formatter: v => Math.round(v * 10) / 10
                         }
                     }
                 }
             };
-        } else { // reportType === 'soldier'
-            // --- LOGIC MỚI: Vẽ biểu đồ cho Báo cáo Chiến sĩ dựa vào bộ lọc ---
+        } else {
             if (exerciseFilter === 'all') {
-                // Nếu chọn "Tất cả", vẽ biểu đồ cột so sánh các bài tập
-                chartConfig = {
+                config = {
                     type: 'bar',
                     data: {
                         labels: data.performance_by_exercise.map(e => e.exercise_name),
@@ -318,165 +382,137 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     options: {
                         scales: { y: { beginAtZero: true, max: 10 } },
-                        responsive: true,
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: true, text: 'So sánh Điểm trung bình theo Bài tập' }
-                        }
+                        plugins: { legend: { display: false }, title: { display: true, text: 'So sánh Điểm trung bình theo Bài tập' } }
                     }
                 };
             } else {
-                // Nếu chọn 1 bài tập cụ thể, vẽ biểu đồ đường thể hiện tiến độ
-                const filteredSessions = data.sessions_performance.filter(s => s.exercise_name === exerciseFilter);
-                chartConfig = {
+                const filtered = data.sessions_performance.filter(s => s.exercise_name === exerciseFilter).reverse();
+                config = {
                     type: 'line',
                     data: {
-                        labels: filteredSessions.map(s => s.session_name).reverse(),
+                        labels: filtered.map(s => s.session_name),
                         datasets: [{
                             label: 'Điểm trung bình',
-                            data: filteredSessions.map(s => s.avg_score).reverse(),
-                            fill: false,
+                            data: filtered.map(s => s.avg_score),
                             borderColor: 'rgb(255, 99, 132)',
                             tension: 0.1
                         }]
                     },
                     options: {
                         scales: { y: { beginAtZero: true, max: 10 } },
-                        responsive: true,
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: true, text: `Tiến độ bài tập "${exerciseFilter}"` }
-                        }
+                        plugins: { legend: { display: false }, title: { display: true, text: `Tiến độ bài tập "${exerciseFilter}"` } }
                     }
                 };
             }
         }
-        mainChart = new Chart(ctx, chartConfig);
+
+        mainChart = new Chart(ctx, config);
     }
-    /**
-     * Vẽ bộ lọc bài tập cho báo cáo chiến sĩ
-     */
+
     function renderExerciseFilter(data) {
-        // Tìm đến vị trí sẽ đặt bộ lọc (chúng ta sẽ tạo vị trí này ở dưới)
         const filterContainer = document.getElementById('chart-filter-container');
         if (!filterContainer) return;
-
-        // Lấy ra danh sách các bài tập mà chiến sĩ đã thực hiện
         const exercises = data.performance_by_exercise || [];
-
-        // Tạo HTML cho bộ lọc
-        let filterHtml = `
+        let html = `
             <div class="d-flex justify-content-end align-items-center">
                 <label for="exercise-filter-select" class="form-label me-2 mb-0 small">Lọc theo bài tập:</label>
                 <select class="form-select form-select-sm w-auto" id="exercise-filter-select">
                     <option value="all">Tất cả bài tập</option>
         `;
-
         exercises.forEach(ex => {
-            filterHtml += `<option value="${ex.exercise_name}">${ex.exercise_name}</option>`;
+            html += `<option value="${ex.exercise_name}">${ex.exercise_name}</option>`;
         });
+        html += '</select></div>';
+        filterContainer.innerHTML = html;
 
-        filterHtml += `</select></div>`;
-
-        // Đưa bộ lọc vào giao diện
-        filterContainer.innerHTML = filterHtml;
-        // <<< THÊM KHỐI CODE NÀY ĐỂ GÁN SỰ KIỆN >>>
-        const exerciseFilterSelect = document.getElementById('exercise-filter-select');
-        if (exerciseFilterSelect) {
-            exerciseFilterSelect.addEventListener('change', () => {
-                const selectedExercise = exerciseFilterSelect.value;
-                // Gọi lại hàm vẽ biểu đồ với giá trị bộ lọc mới
-                renderMainChart(data, 'soldier', selectedExercise);
-                renderDetailsTable(data, 'soldier', selectedExercise); 
-            });
-        }
+        document.getElementById('exercise-filter-select').addEventListener('change', (e) => {
+            const v = e.target.value;
+            renderMainChart(data, 'soldier', v);
+            renderDetailsTable(data, 'soldier', v);
+        });
     }
 
-    // --- CÁC HÀM LOGIC CHÍNH ---
-
+    // ====== LOAD DANH SÁCH ĐỐI TƯỢNG ======
     async function populateItemSelect(reportType) {
-        let apiUrl = (reportType === 'session') ? '/api/training_sessions' : '/api/soldiers/all';
-        
-        itemSelect.innerHTML = '<option>Đang tải danh sách...</option>';
-        itemSelect.disabled = true;
+        const apiUrl = (reportType === 'session') ? '/api/training_sessions' : '/api/soldiers/all';
+
+        // báo đang tải
+        itemSelect.innerHTML = '<option value="">Đang tải...</option>';
+        if (window.ReportSelectSkin) window.ReportSelectSkin.refresh('item-select');
 
         try {
-            const response = await fetch(apiUrl);
-            const items = await response.json();
-            itemSelect.innerHTML = `<option value="">-- Vui lòng chọn một mục --</option>`;
-            items.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                
-                // <<< DÒNG NÀY ĐÃ ĐƯỢC SỬA LẠI ĐỂ THÊM TÊN BÀI TẬP >>>
-                option.textContent = (reportType === 'session') 
-                    ? `${item.session_name || `Phiên tập #${item.id}`} (${item.exercise_name})` 
-                    : `${item.rank} ${item.name}`;
+            const res = await fetch(apiUrl);
+            const items = await res.json();
 
-                itemSelect.appendChild(option);
+            itemSelect.innerHTML = '<option value="">-- Vui lòng chọn một mục --</option>';
+            items.forEach(it => {
+                const opt = document.createElement('option');
+                if (reportType === 'session') {
+                    opt.value = it.id;
+                    opt.textContent = `${it.session_name || `Phiên tập #${it.id}`} (${it.exercise_name})`;
+                } else {
+                    opt.value = it.id;
+                    opt.textContent = `${it.rank} ${it.name}`;
+                }
+                itemSelect.appendChild(opt);
             });
-        } catch (error) {
-            console.error('Lỗi khi tải danh sách:', error);
-            itemSelect.innerHTML = '<option>Lỗi tải dữ liệu</option>';
-        } finally {
-            itemSelect.disabled = false;
+
+            // >>> rất quan trọng: refresh lại select giả
+            if (window.ReportSelectSkin) window.ReportSelectSkin.refresh('item-select');
+
+        } catch (err) {
+            console.error('Lỗi khi tải danh sách:', err);
+            itemSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+            if (window.ReportSelectSkin) window.ReportSelectSkin.refresh('item-select');
         }
     }
 
-    // Thay thế hoàn toàn hàm generateReport cũ
+    // ====== TẠO BÁO CÁO ======
     async function generateReport(reportType, reportId, updateHistory = true) {
         if (!reportType || !reportId) return;
 
-        // <<< THÊM DÒNG NÀY ĐỂ CẬP NHẬT URL >>>
         if (updateHistory) {
-            updateUrl(reportType, reportId);
+            const newUrl = `/report/${reportType}/${reportId}`;
+            window.history.pushState({ reportType, reportId }, '', newUrl);
         }
 
-        console.log(`Yêu cầu tạo báo cáo: Loại=${reportType}, ID=${reportId}`);
         reportContainer.innerHTML = `
             <div class="text-center p-5">
-                <div class="spinner-border text-primary" role="status"></div>
+                <div class="spinner-border text-primary"></div>
                 <p class="mt-3 text-muted">Đang tải dữ liệu báo cáo...</p>
-            </div>`;
-        
-        try {
-            const response = await fetch(`/api/report/${reportType}/${reportId}`);
-            const data = await response.json();
+            </div>
+        `;
 
-        // <<< THÊM KHỐI LOGIC KIỂM TRA TRẠNG THÁI NÀY VÀO >>>
-            if (reportType === 'session' && data.status !== 'COMPLETED') {
-                // Xác định thông báo dựa trên trạng thái
-                const statusText = data.status === 'IN_PROGRESS' 
-                    ? 'đang huấn luyện' 
-                    : 'chưa bắt đầu';
-                
-                // Hiển thị thông báo và dừng hàm tại đây
+        try {
+            const res  = await fetch(`/api/report/${reportType}/${reportId}`);
+            const data = await res.json();
+
+            // nếu phiên chưa hoàn thành
+            if (reportType === 'session' && data.status && data.status !== 'COMPLETED') {
+                const statusText = data.status === 'IN_PROGRESS' ? 'đang huấn luyện' : 'chưa bắt đầu';
                 reportContainer.innerHTML = `
                     <div class="text-center p-5">
                         <i class="fas fa-info-circle fa-4x text-info mb-4"></i>
                         <h3 class="mb-3">Phiên tập này chưa kết thúc</h3>
-                        <p class="lead text-muted">Báo cáo chi tiết sẽ có sẵn sau khi phiên tập được đánh dấu là "Đã huấn luyện".</p>
+                        <p class="lead text-muted">Báo cáo chi tiết sẽ có sau khi phiên được đánh dấu "Đã huấn luyện".</p>
                         <p class="text-muted">Trạng thái hiện tại: <strong>${statusText}</strong></p>
                     </div>
                 `;
-                return; // Dừng, không hiển thị báo cáo
+                return;
             }
 
-            // Xóa spinner và render giao diện báo cáo
+            // render khung
             reportContainer.innerHTML = `
                 <h3 id="report-title" class="mb-3"></h3>
                 <div class="row g-3 mb-4" id="kpi-cards-container"></div>
-                
                 <div class="row g-3 mb-4">
                     <div class="col-12">
                         <div id="chart-filter-container" class="mb-3"></div>
-                        
                         <div id="chart-container">
                             <canvas id="main-chart"></canvas>
                         </div>
                     </div>
                 </div>
-
                 <div class="row g-3">
                     <div class="col-12">
                         <div class="card shadow-sm h-100">
@@ -487,78 +523,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
 
-            // Gọi các hàm render chi tiết
             renderReportTitle(data, reportType);
             renderKpiCards(data, reportType);
             renderDetailsTable(data, reportType, 'all');
             renderMainChart(data, reportType, 'all');
-            
-            // <<< GỌI HÀM RENDER BỘ LỌC (CHỈ KHI XEM THEO CHIẾN SĨ) >>>
-            if (reportType === 'soldier') {
-                renderExerciseFilter(data);
-            }
+            if (reportType === 'soldier') renderExerciseFilter(data);
 
-        } catch (error) {
-            console.error('Lỗi khi tạo báo cáo:', error);
+        } catch (err) {
+            console.error(err);
             reportContainer.innerHTML = `<p class="text-center text-danger p-5">Không thể tải dữ liệu báo cáo.</p>`;
         }
     }
 
-    /**
-     * Cập nhật URL trên thanh địa chỉ mà không cần tải lại trang.
-     */
-    function updateUrl(reportType, reportId) {
-        const newUrl = `/report/${reportType}/${reportId}`;
-        const state = { reportType, reportId };
-        // Sử dụng pushState để thêm một mục mới vào lịch sử duyệt web
-        window.history.pushState(state, '', newUrl);
-    }
-    // --- GÁN SỰ KIỆN ---
-
-    reportTypeSelect.addEventListener('change', () => {
-        populateItemSelect(reportTypeSelect.value);
-        reportContainer.innerHTML = '<h3 id="report-title" class="mb-3">Vui lòng chọn một mục để xem báo cáo</h3>';
+    // ====== SỰ KIỆN ======
+    // khi đổi loại báo cáo
+    reportTypeSelect.addEventListener('change', async () => {
+        const type = reportTypeSelect.value;
+        await populateItemSelect(type);
+        // reset khung
+        reportContainer.innerHTML = `<h3 id="report-title" class="mb-3">Vui lòng chọn một mục để xem báo cáo</h3>
+            <div class="row g-3 mb-4" id="kpi-cards-container"></div>
+            <div class="row g-3 mb-4"><div class="col-12"><div id="chart-container" class="bg-white rounded shadow-sm p-3">
+            <canvas id="main-chart"></canvas></div></div></div>`;
     });
 
+    // khi chọn đối tượng
     itemSelect.addEventListener('change', () => {
-        if (itemSelect.value) {
-            generateReport(reportTypeSelect.value, itemSelect.value);
-        }
+        const id   = itemSelect.value;
+        const type = reportTypeSelect.value;
+        if (id) generateReport(type, id);
     });
 
-    // --- KHỞI CHẠY LẦN ĐẦU ---
-
-    // Thay thế hoàn toàn hàm initializePage cũ
-    /**
-     * Khởi tạo trang: Đọc URL để tải đúng báo cáo khi người dùng tải lại trang.
-     */
-    async function initializePage() {
-        const pathParts = window.location.pathname.split('/');
-        // URL có dạng: ["", "report", "session", "3"]
-        const pageType = pathParts[1];
-        const initialReportType = pathParts[2];
-        const initialReportId = pathParts[3];
-        
-        if (pageType === 'report' && initialReportType && initialReportId) {
-            // --- TRƯỜNG HỢP 1: Người dùng tải lại một báo cáo cụ thể ---
-            console.log(`Tải lại báo cáo: ${initialReportType} #${initialReportId}`);
-            
-            // 1. Cập nhật ô chọn loại báo cáo
-            reportTypeSelect.value = initialReportType;
-            
-            // 2. Tải danh sách tương ứng
-            await populateItemSelect(initialReportType);
-            
-            // 3. Chọn đúng mục trong danh sách
-            itemSelect.value = initialReportId;
-            
-            // 4. Tạo báo cáo (không cần cập nhật URL nữa)
-            await generateReport(initialReportType, initialReportId, false);
-        } else {
-            // --- TRƯỜNG HỢP 2: Người dùng vào trang /report chung ---
-            await populateItemSelect(reportTypeSelect.value);
+    // ====== KHỞI TẠO BAN ĐẦU ======
+    (async function init() {
+        // skin 2 cái select ngay từ đầu (nếu file skin-select đã load)
+        if (window.ReportSelectSkin) {
+            window.ReportSelectSkin.skin(reportTypeSelect);
+            window.ReportSelectSkin.skin(itemSelect);
         }
-    }
-    
-    initializePage();
+
+        // đọc URL để auto load
+        const parts = window.location.pathname.split('/');
+        // /report/<type>/<id>
+        if (parts[1] === 'report' && parts[2] && parts[3]) {
+            const t = parts[2];
+            const id = parts[3];
+
+            reportTypeSelect.value = t;
+            if (window.ReportSelectSkin) window.ReportSelectSkin.refresh('report-type-select');
+
+            await populateItemSelect(t);
+            itemSelect.value = id;
+            if (window.ReportSelectSkin) window.ReportSelectSkin.refresh('item-select');
+
+            await generateReport(t, id, false);
+        } else {
+            // mặc định: load danh sách của "session"
+            await populateItemSelect(reportTypeSelect.value || 'session');
+        }
+    })();
 });

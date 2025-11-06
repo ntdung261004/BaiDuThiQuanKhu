@@ -42,16 +42,28 @@
                 <div class="row">
                     <!-- Cột ảnh đại diện -->
                     <div class="col-md-4 text-center mb-4">
-                        <img id="avatar-preview" 
-                            src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/default_avatar.png') }}"
-                            class="rounded-circle mb-3"
-                            width="150" height="150"
-                            style="object-fit: cover; border: 4px solid #dee2e6;">
-                        <br>
-                        <button type="button" id="change-avatar-btn" class="btn btn-outline-primary mt-2">
-                            <i class="fas fa-camera me-2"></i>Đổi ảnh
-                        </button>
-                    </div>
+    <img id="avatar-preview"
+     src="{{ url_for('serve_user_data', filename=current_user.avatar_url) if current_user.avatar_url else url_for('static', filename='image/avatar.png') }}"
+     data-default-src="{{ url_for('static', filename='image/avatar.png') }}"
+     class="rounded-circle mb-3" width="150" height="150" style="object-fit:cover;border:4px solid #dee2e6;">
+    <br>
+
+    <button type="button" id="change-avatar-btn" class="btn btn-outline-primary mt-2 me-2">
+        <i class="fas fa-camera me-2"></i>Đổi ảnh
+    </button>
+
+    <!-- ✅ Thêm nút XÓA ẢNH -->
+    <button
+  type="button"
+  id="delete-avatar-btn"
+  class="btn btn-outline-danger mt-2"
+  data-delete-url="{{ url_for('delete_avatar') }}"
+>
+  <i class="fas fa-trash-alt me-2"></i>Xóa ảnh
+</button>
+
+</div>
+
 
                     <!-- Cột thông tin -->
                     <div class="col-md-8">

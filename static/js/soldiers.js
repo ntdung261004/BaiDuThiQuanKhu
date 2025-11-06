@@ -1,6 +1,7 @@
 // static/js/soldiers.js
 // Quản lý danh sách chiến sĩ (CRUD + Toast + Confirm + Đếm tổng)
 
+// ================== TOAST ==================
 window.showToast = function (message = "Thao tác thành công!", type = "success") {
   let container = document.getElementById("toastContainer");
   if (!container) {
@@ -45,7 +46,8 @@ window.showToast = function (message = "Thao tác thành công!", type = "succes
   toast.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 20 20">
       <circle cx="10" cy="10" r="9" fill="${color}"></circle>
-      <path d="M6 10.3l2.3 2.5L14 7.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6 10.3l2.3 2.5L14 7.5" fill="none" stroke="#fff" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     <div style="flex:1;font-size:15px;">${message}</div>
     <button style="background:none;border:none;font-size:18px;color:#777;cursor:pointer;">×</button>
@@ -63,6 +65,7 @@ window.showToast = function (message = "Thao tác thành công!", type = "succes
     toast.style.opacity = "1";
     toast.style.transform = "translateY(0)";
   });
+
   setTimeout(() => {
     if (toast.isConnected) {
       toast.style.opacity = "0";
@@ -71,19 +74,20 @@ window.showToast = function (message = "Thao tác thành công!", type = "succes
     }
   }, 3000);
 };
-// ===== CENTER ALERT (Success/Info/Warning/Error) =====
+
+// ================== ALERT CENTER ==================
 window.alertCenter = function ({
-  title   = "Success alert",
+  title = "Success alert",
   message = "Your work has been saved",
-  okText  = "OK",
-  variant = "success" // success | info | warning | danger
+  okText = "OK",
+  variant = "success"
 } = {}) {
   return new Promise((resolve) => {
     const COLORS = {
-      success: { ring: "#22c55e",  fill: "#22c55e",  icon: "check" },
-      info:    { ring: "#3b82f6",  fill: "#3b82f6",  icon: "info"  },
-      warning: { ring: "#f59e0b",  fill: "#f59e0b",  icon: "warn"  },
-      danger:  { ring: "#ef4444",  fill: "#ef4444",  icon: "x"     },
+      success: { ring: "#22c55e", fill: "#22c55e", icon: "check" },
+      info: { ring: "#3b82f6", fill: "#3b82f6", icon: "info" },
+      warning: { ring: "#f59e0b", fill: "#f59e0b", icon: "warn" },
+      danger: { ring: "#ef4444", fill: "#ef4444", icon: "x" },
     };
     const C = COLORS[variant] || COLORS.success;
 
@@ -91,20 +95,22 @@ window.alertCenter = function ({
       C.icon === "check" ? `
         <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
           <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
-          <path d="M14 24.5l6 6L34 17" fill="none" stroke="${C.fill}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`
-      : C.icon === "x" ? `
+          <path d="M14 24.5l6 6L34 17" fill="none" stroke="${C.fill}" stroke-width="4"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>` :
+      C.icon === "x" ? `
         <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
           <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
-          <path d="M16 16l16 16M32 16L16 32" fill="none" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
-        </svg>`
-      : C.icon === "warn" ? `
+          <path d="M16 16l16 16M32 16L16 32" fill="none" stroke="${C.fill}" stroke-width="4"
+                stroke-linecap="round"/>
+        </svg>` :
+      C.icon === "warn" ? `
         <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
           <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
           <path d="M24 13v16" stroke="${C.fill}" stroke-width="4" stroke-linecap="round"/>
           <circle cx="24" cy="35" r="2.5" fill="${C.fill}"/>
-        </svg>`
-      : `
+        </svg>` :
+      `
         <svg width="64" height="64" viewBox="0 0 48 48" aria-hidden="true">
           <circle cx="24" cy="24" r="22" fill="none" stroke="${C.ring}" stroke-width="2" opacity=".25"></circle>
           <circle cx="24" cy="16" r="3" fill="${C.fill}"/>
@@ -118,9 +124,7 @@ window.alertCenter = function ({
         <div class="modal-content border-0" style="box-shadow:0 10px 30px rgba(0,0,0,.15);">
           <div class="modal-body text-center p-4">
             <div class="d-flex justify-content-center mb-2">${svgIcon}</div>
-            
             <h5 class="fw-bold mb-1">${title}</h5>
-            
             <div class="text-muted mb-3">${message}</div>
             <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">${okText}</button>
           </div>
@@ -134,7 +138,7 @@ window.alertCenter = function ({
   });
 };
 
-// ===== MODAL XÁC NHẬN =====
+// ================== CONFIRM CENTER ==================
 window.confirmCenter = function ({
   title = "Xác nhận",
   message = "Bạn có chắc chắn muốn thực hiện thao tác này?",
@@ -154,11 +158,13 @@ window.confirmCenter = function ({
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <p><span class="d-inline-flex align-items-center justify-content-center rounded-circle"
-                        style="width:40px;height:40px;background: var(--bs-${type}-subtle, #f8d7da);">
-                    <i class="fas fa-exclamation-triangle"
-                       style="color: var(--bs-${type}, #dc3545);"></i>
-                  </span>  ${message}</p>
+            <p>
+              <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                    style="width:40px;height:40px;background: var(--bs-${type}-subtle, #f8d7da);">
+                <i class="fas fa-exclamation-triangle" style="color: var(--bs-${type}, #dc3545);"></i>
+              </span>
+              ${message}
+            </p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">${cancelText}</button>
@@ -180,29 +186,37 @@ window.confirmCenter = function ({
   });
 };
 
-// ===== CRUD LOGIC =====
+// ================== CRUD + LIST ==================
 (function () {
-  const tbody = document.getElementById("soldier-tbody");
-  const addForm = document.getElementById("add-soldier-form");
-  const editForm = document.getElementById("edit-soldier-form");
-  const addModalEl = document.getElementById("addSoldierModal");
-  const editModalEl = document.getElementById("editSoldierModal");
-  const addModal = addModalEl ? new bootstrap.Modal(addModalEl) : null;
-  const editModal = editModalEl ? new bootstrap.Modal(editModalEl) : null;
-  const btnAddSave = document.getElementById("btn-add-save");
-  const btnEditSave = document.getElementById("btn-edit-save");
-  const paginationControls = document.getElementById("pagination-controls");
-  const sortOptions = document.getElementById("sort-options");
+  const tbody             = document.getElementById("soldier-tbody");
+  const addForm           = document.getElementById("add-soldier-form");
+  const editForm          = document.getElementById("edit-soldier-form");
+  const addModalEl        = document.getElementById("addSoldierModal");
+  const editModalEl       = document.getElementById("editSoldierModal");
+  const addModal          = addModalEl ? new bootstrap.Modal(addModalEl) : null;
+  const editModal         = editModalEl ? new bootstrap.Modal(editModalEl) : null;
+  const btnAddSave        = document.getElementById("btn-add-save");
+  const btnEditSave       = document.getElementById("btn-edit-save");
+  const paginationControls= document.getElementById("pagination-controls");
+  const sortOptions       = document.getElementById("sort-options");
+  const filterForm        = document.getElementById("filter-form");
+  const searchInput       = filterForm ? filterForm.querySelector('input[name="search"]') : null;
+  const unitSelect        = document.getElementById("filter-unit");
+  const loadingSpinner    = document.getElementById("loading-spinner");
 
   let currentSoldierId = null;
-  let currentPage = 1;
-  let currentSortBy = "created_at";
+  let currentPage      = 1;
+  let currentSortBy    = "created_at";
   let currentSortOrder = "desc";
 
   const API = {
     list: (params = {}) => {
       const url = new URL(window.SOLDIER_API.list, window.location.origin);
-      Object.entries(params).forEach(([k, v]) => v && url.searchParams.append(k, v));
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") {
+          url.searchParams.append(k, v);
+        }
+      });
       return fetch(url).then(r => r.json());
     },
     create: (data) => fetch(window.SOLDIER_API.create, {
@@ -262,25 +276,41 @@ window.confirmCenter = function ({
 
   async function loadTable(page = 1) {
     currentPage = page;
+
+    if (loadingSpinner) loadingSpinner.style.display = "block";
+
     try {
       const data = await API.list({
         page,
         sort_by: currentSortBy,
-        sort_order: currentSortOrder
+        sort_order: currentSortOrder,
+        search: searchInput ? searchInput.value.trim() : "",
+        unit:   unitSelect   ? unitSelect.value : ""
       });
-      const soldiers = data.soldiers || [];
+
+      const soldiers   = data.soldiers || data.items || [];
       const pagination = data.pagination || { page: 1, total_pages: 1, per_page: 10 };
+
       if (!soldiers.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">
-          <i class="fas fa-users-slash fa-2x mb-2"></i><br>Không có chiến sĩ nào</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted">
+              <i class="fas fa-users-slash fa-2x mb-2"></i><br>
+              Không có chiến sĩ nào
+            </td>
+          </tr>`;
       } else {
         const start = (pagination.page - 1) * pagination.per_page;
         tbody.innerHTML = soldiers.map((s, i) => rowTemplate(start + i + 1, s)).join("");
       }
+
       renderPagination(pagination);
       updateTotalCount();
-    } catch {
+    } catch (err) {
+      console.error(err);
       tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi tải dữ liệu</td></tr>`;
+    } finally {
+      if (loadingSpinner) loadingSpinner.style.display = "none";
     }
   }
 
@@ -288,18 +318,22 @@ window.confirmCenter = function ({
     if (!paginationControls) return;
     paginationControls.innerHTML = "";
     if (pagination.total_pages <= 1) return;
-    const addBtn = (p, label, dis, act) => {
+
+    const addBtn = (p, label, disabled, active) => {
       paginationControls.insertAdjacentHTML("beforeend",
-        `<li class="page-item ${dis ? "disabled" : ""} ${act ? "active" : ""}">
-          <a class="page-link" href="#" data-page="${p}">${label}</a></li>`);
+        `<li class="page-item ${disabled ? "disabled" : ""} ${active ? "active" : ""}">
+          <a class="page-link" href="#" data-page="${p}">${label}</a>
+        </li>`);
     };
-    addBtn(pagination.page - 1, "Trước", !pagination.has_prev);
-    for (let i = 1; i <= pagination.total_pages; i++)
+
+    addBtn(pagination.page - 1, "Trước", !pagination.has_prev, false);
+    for (let i = 1; i <= pagination.total_pages; i++) {
       addBtn(i, i, false, i === pagination.page);
-    addBtn(pagination.page + 1, "Sau", !pagination.has_next);
+    }
+    addBtn(pagination.page + 1, "Sau", !pagination.has_next, false);
   }
 
-  // === Thêm ===
+  // ======== THÊM ========
   btnAddSave?.addEventListener("click", async () => {
     const data = {
       name: addForm.name.value.trim(),
@@ -316,14 +350,14 @@ window.confirmCenter = function ({
     try {
       const res = await API.create(data);
       if (res.error) throw new Error(res.error);
-addModal?.hide();
-await alertCenter({
-  title: "Thành công",
-  message: "Chiến sĩ mới đã được lưu.",
-  variant: "success"
-});
-await loadTable(currentPage);
 
+      addModal?.hide();
+      await alertCenter({
+        title: "Thành công",
+        message: "Chiến sĩ mới đã được lưu.",
+        variant: "success"
+      });
+      await loadTable(currentPage);
     } catch (err) {
       showToast(err.message, "error");
     } finally {
@@ -332,16 +366,16 @@ await loadTable(currentPage);
     }
   });
 
-  // === Sửa ===
+  // ======== SỬA ========
   tbody?.addEventListener("click", e => {
     const btn = e.target.closest(".btn-edit");
     if (!btn) return;
     const tr = btn.closest("tr");
     currentSoldierId = tr.dataset.id;
     const tds = tr.querySelectorAll("td");
-    editForm.name.value = tds[1].textContent.trim();
-    editForm.unit.value = tds[2].textContent.trim() === "-" ? "" : tds[2].textContent.trim();
-    editForm.rank.value = tds[3].textContent.trim() === "-" ? "" : tds[3].textContent.trim();
+    editForm.name.value  = tds[1].textContent.trim();
+    editForm.unit.value  = tds[2].textContent.trim() === "-" ? "" : tds[2].textContent.trim();
+    editForm.rank.value  = tds[3].textContent.trim() === "-" ? "" : tds[3].textContent.trim();
     editForm.notes.value = tds[4].textContent.trim() === "-" ? "" : tds[4].textContent.trim();
     editModal?.show();
   });
@@ -362,14 +396,14 @@ await loadTable(currentPage);
     try {
       const res = await API.update(currentSoldierId, data);
       if (res.error) throw new Error(res.error);
-editModal?.hide();
-await alertCenter({
-  title: "Cập nhật thành công",
-  message: "Thông tin chiến sĩ đã được lưu.",
-  variant: "success"
-});
-await loadTable(currentPage);
 
+      editModal?.hide();
+      await alertCenter({
+        title: "Cập nhật thành công",
+        message: "Thông tin chiến sĩ đã được lưu.",
+        variant: "success"
+      });
+      await loadTable(currentPage);
     } catch (err) {
       showToast(err.message, "error");
     } finally {
@@ -378,52 +412,47 @@ await loadTable(currentPage);
     }
   });
 
-  // === Xóa ===
+  // ======== XÓA ========
   tbody?.addEventListener("click", async e => {
     const btn = e.target.closest(".btn-delete");
     if (!btn) return;
-    const id = btn.closest("tr").dataset.id;
-    const nameCell = btn.closest("tr")?.querySelector("td:nth-child(2)");
-const soldierName = nameCell ? nameCell.textContent.trim() : `Chiến sĩ #${id}`;
+    const tr = btn.closest("tr");
+    const id = tr.dataset.id;
+    const soldierName = tr.querySelector("td:nth-child(2)")?.textContent.trim() || `Chiến sĩ #${id}`;
+
     const ok = await confirmCenter({
       title: "Xác nhận xoá",
-      message: `Bạn có chắc muốn xoá chiến sĩ <strong>${soldierName}</strong} ?`,
+      message: `Bạn có chắc muốn xoá chiến sĩ <strong>${soldierName}</strong>?`,
       confirmText: "Xoá ngay",
       cancelText: "Hủy",
       type: "danger"
     });
     if (!ok) return;
+
     try {
       const res = await API.delete(id);
       if (res.error) throw new Error(res.error);
 
-// Lấy tên chiến sĩ từ dòng đang xoá
-const nameCell = btn.closest("tr")?.querySelector("td:nth-child(2)");
-const soldierName = nameCell ? nameCell.textContent.trim() : `Chiến sĩ #${id}`;
-
-await loadTable(currentPage);
-
-await alertCenter({
-  title: `Đã xoá: ${soldierName}`,
-  message: "Chiến sĩ này đã được xoá khỏi hệ thống.",
-  variant: "success"
-});
-
-await loadTable(currentPage);
-
+      await loadTable(currentPage);
+      await alertCenter({
+        title: `Đã xoá: ${soldierName}`,
+        message: "Chiến sĩ này đã được xoá khỏi hệ thống.",
+        variant: "success"
+      });
     } catch (err) {
       showToast("Không thể xoá: " + err.message, "error");
     }
   });
 
-  // === Phân trang & Sort ===
+  // ======== PHÂN TRANG ========
   paginationControls?.addEventListener("click", e => {
     e.preventDefault();
     const a = e.target.closest("a[data-page]");
     if (!a) return;
-    loadTable(parseInt(a.dataset.page));
+    loadTable(parseInt(a.dataset.page, 10));
   });
 
+  // ======== SẮP XẾP ========
   sortOptions?.addEventListener("click", e => {
     const a = e.target.closest("a[data-sortby]");
     if (!a) return;
@@ -434,122 +463,105 @@ await loadTable(currentPage);
     loadTable(1);
   });
 
-  // === Khởi tạo lần đầu ===
+  // ======== LỌC (form) ========
+  if (filterForm) {
+    filterForm.addEventListener("submit", function (e) {
+      e.preventDefault();       // không reload trang
+      loadTable(1);             // gọi lại với search + unit mới
+    });
+  }
+
+  // khởi tạo lần đầu
   loadTable(1);
+
+  // bó lại để skin-select phía dưới còn gọi được
+  window.__reloadSoldiersTable = () => loadTable(1);
 })();
 
-
+// ================== SKIN SELECT cho ô ĐƠN VỊ ==================
 (function () {
-  // Tái dùng bộ icon nếu cần mở rộng sau này
-  const ICONS = { default: "fa-circle" };
+  function skinSelect(selectEl) {
+    if (!selectEl || selectEl.dataset.skinned === "1") return;
 
-  // tạo 1 menu portal dùng lại
-  let sharedMenu = null;
-  function ensureMenu() {
-    if (sharedMenu) return sharedMenu;
-    const el = document.createElement('div');
-    el.className = 'select-skin-menu';
-    document.body.appendChild(el);
-    sharedMenu = el;
-    return el;
-  }
-  function placeMenu(menu, trigger) {
-    const r = trigger.getBoundingClientRect();
-    menu.style.top = (r.bottom + 6) + 'px';
-    menu.style.left = r.left + 'px';
-    menu.style.minWidth = r.width + 'px';
-  }
+    selectEl.classList.add("select-hidden");
 
-  function skinSelect(select) {
-    if (!select) return;
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "select-skin-trigger";
+    trigger.textContent = selectEl.selectedOptions[0]?.textContent || "Chọn";
 
-    // Ẩn select native (để soldiers.js vẫn đọc value bình thường)
-    select.classList.add('select-hidden'); // class này chỉ cần { display:none } trong css “skin”
+    selectEl.parentElement.insertBefore(trigger, selectEl.nextSibling);
 
-    // Tạo trigger ngay sau select để không phá layout input-group
-    const trigger = document.createElement('button');
-    trigger.type = 'button';
-    trigger.className = 'select-skin-trigger';
-    trigger.setAttribute('aria-haspopup', 'listbox');
-    trigger.setAttribute('aria-expanded', 'false');
+    let menu = null;
 
-    const label = select.selectedOptions[0]?.textContent || select.options[0]?.textContent || 'Chọn';
-    trigger.innerHTML = `<span class="select-skin-text">${label}</span>`;
-
-    // chèn sau select
-    select.parentElement.insertBefore(trigger, select.nextSibling);
-
-    // mở menu
     function openMenu() {
-      const menu = ensureMenu();
-      menu.innerHTML = '';
+      menu = document.querySelector(".select-skin-menu");
+      if (!menu) {
+        menu = document.createElement("div");
+        menu.className = "select-skin-menu";
+        document.body.appendChild(menu);
+      }
+      menu.innerHTML = "";
 
-      // render options
-      Array.from(select.options).forEach(opt => {
-        const item = document.createElement('div');
-        item.className = 'select-option' + (opt.selected ? ' active' : '');
-        item.innerHTML = `<span>${opt.textContent}</span>`;
-        item.addEventListener('click', () => {
-          // cập nhật select + label
-          select.value = opt.value;
-          trigger.querySelector('.select-skin-text').textContent = opt.textContent;
-          // active state
-          menu.querySelectorAll('.select-option.active').forEach(el => el.classList.remove('active'));
-          item.classList.add('active');
-          // đóng và bắn sự kiện change để soldiers.js loadTable()
+      Array.from(selectEl.options).forEach(opt => {
+        const item = document.createElement("div");
+        item.className = "select-option" + (opt.value === selectEl.value ? " active" : "");
+        item.textContent = opt.textContent;
+        item.addEventListener("click", () => {
+          selectEl.value = opt.value;
+          trigger.textContent = opt.textContent;
           closeMenu();
-          select.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // bắn change
+          selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+
+          // nếu có form lọc thì cho nó submit -> đã bị chặn ở trên để gọi loadTable
+          const form = selectEl.closest("form");
+          if (form && form.id === "filter-form") {
+            form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+          }
         });
         menu.appendChild(item);
       });
 
-      placeMenu(menu, trigger);
-      menu.classList.add('on');
-      trigger.setAttribute('aria-expanded', 'true');
+      const r = trigger.getBoundingClientRect();
+      menu.style.top = r.bottom + 6 + "px";
+      menu.style.left = r.left + "px";
+      menu.style.minWidth = r.width + "px";
+      menu.classList.add("on");
 
-      // đóng khi click ngoài / ESC / scroll/resize
-      const onDocClick = (e) => { if (!menu.contains(e.target) && e.target !== trigger) closeMenu(); };
-      const onEsc = (e) => { if (e.key === 'Escape') closeMenu(); };
-      const onReflow = () => { if (menu.classList.contains('on')) placeMenu(menu, trigger); };
-
-      document.addEventListener('click', onDocClick, { once: true });
-      document.addEventListener('keydown', onEsc, { once: true });
-      window.addEventListener('scroll', onReflow, { passive: true });
-      window.addEventListener('resize', onReflow);
-
-      // lưu cleanup
-      menu._cleanup = () => {
-        document.removeEventListener('click', onDocClick);
-        document.removeEventListener('keydown', onEsc);
-        window.removeEventListener('scroll', onReflow);
-        window.removeEventListener('resize', onReflow);
+      const onDoc = (e) => {
+        if (e.target !== trigger && !menu.contains(e.target)) closeMenu();
       };
+      document.addEventListener("click", onDoc, { once: true });
+      menu._cleanup = () => document.removeEventListener("click", onDoc);
     }
 
     function closeMenu() {
-      if (!sharedMenu) return;
-      sharedMenu.classList.remove('on');
-      sharedMenu._cleanup && sharedMenu._cleanup();
-      trigger.setAttribute('aria-expanded', 'false');
+      if (!menu) return;
+      menu.classList.remove("on");
+      menu._cleanup && menu._cleanup();
     }
 
-    // toggle
-    trigger.addEventListener('click', (e) => {
+    trigger.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (sharedMenu && sharedMenu.classList.contains('on')) closeMenu(); else openMenu();
+      const opened = document.querySelector(".select-skin-menu.on");
+      if (opened && opened !== menu) {
+        opened.classList.remove("on");
+        opened._cleanup && opened._cleanup();
+      }
+      if (menu && menu.classList.contains("on")) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
     });
 
-    // nếu value bị đổi từ code khác => sync label
-    select.addEventListener('change', () => {
-      const txt = select.selectedOptions[0]?.textContent || '';
-      if (txt) trigger.querySelector('.select-skin-text').textContent = txt;
-    });
+    selectEl.dataset.skinned = "1";
   }
 
-  // Khởi tạo cho select Đơn vị
-  document.addEventListener('DOMContentLoaded', () => {
-    const unitSelect = document.getElementById('filter-unit');
+  document.addEventListener("DOMContentLoaded", () => {
+    const unitSelect = document.getElementById("filter-unit");
     if (unitSelect) skinSelect(unitSelect);
   });
 })();
-
