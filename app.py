@@ -142,6 +142,7 @@ def index():
     
     return render_template(
         'index.html', 
+        soldiers=soldiers,
         total_soldiers=total_soldiers, 
         total_sessions=total_sessions, 
         is_system_active=is_system_active,

@@ -77,10 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
   reveal(); // chạy ban đầu
 });
 
- document.getElementById("scrollBtn").addEventListener("click", function (e) {
-    e.preventDefault();
-    document.querySelector("#scroll").scrollIntoView({ behavior: "smooth" });
-  });
   // === Scroll reveal cho các section mới ===
 document.addEventListener("DOMContentLoaded", () => {
   const wowEls = document.querySelectorAll(".wow-fadeIn, .card-tilt");
