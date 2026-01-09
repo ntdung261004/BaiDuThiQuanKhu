@@ -209,4 +209,39 @@ document.addEventListener('DOMContentLoaded', function() {
     function getRenderedVideoSize(){const vA=STREAM_SIZE.width/STREAM_SIZE.height;const cW=videoFeed.clientWidth;const cH=videoFeed.clientHeight;const cA=cW/cH;let rW,rH,oX,oY;if(cA>vA){rH=cH;rW=rH*vA;oX=(cW-rW)/2;oY=0;}else{rW=cW;rH=rW/vA;oX=0;oY=(cH-rH)/2;}return{renderedWidth:rW,renderedHeight:rH,offsetX:oX,offsetY:oY};}
     function drawCrosshair(e){if(!isCalibrating)return;const{renderedWidth:rW,renderedHeight:rH,offsetX:oX,offsetY:oY}=getRenderedVideoSize();const rect=videoFeed.getBoundingClientRect();const mX=e.clientX-rect.left;const mY=e.clientY-rect.top;ctx.clearRect(0,0,canvas.width,canvas.height);if(mX>=oX&&mX<=oX+rW&&mY>=oY&&mY<=oY+rH){const rMX=mX-oX;const rMY=mY-oY;const sX=STREAM_SIZE.width/rW;const sY=STREAM_SIZE.height/rH;const rX=Math.round(rMX*sX);const rY=Math.round(rMY*sY);ctx.beginPath();ctx.moveTo(mX,oY);ctx.lineTo(mX,oY+rH);ctx.strokeStyle='rgba(255,0,0,0.7)';ctx.lineWidth=1;ctx.stroke();ctx.beginPath();ctx.moveTo(oX,mY);ctx.lineTo(oX+rW,mY);ctx.stroke();const cT=`X: ${rX}, Y: ${rY}`;ctx.fillStyle='white';ctx.font='14px Arial';ctx.shadowColor='black';ctx.shadowBlur=4;ctx.fillText(cT,mX+15,mY-15);ctx.shadowBlur=0;}}
     async function handleVideoClick(e){if(!isCalibrating)return;const{renderedWidth:rW,renderedHeight:rH,offsetX:oX,offsetY:oY}=getRenderedVideoSize();const rect=videoFeed.getBoundingClientRect();const mX=e.clientX-rect.left;const mY=e.clientY-rect.top;if(mX>=oX&&mX<=oX+rW&&mY>=oY&&mY<=oY+rH){const rMX=mX-oX;const rMY=mY-oY;const sX=STREAM_SIZE.width/rW;const sY=STREAM_SIZE.height/rH;const cX=Math.round(rMX*sX);const cY=Math.round(rMY*sY);try{const r=await fetch('/set_center',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({center:{x:cX,y:cY}})});if(!r.ok)throw new Error('!');await r.json();showToast('Đã hiệu chỉnh tâm ngắm mới');toggleCalibrationMode();}catch(e){showToast('Gửi tọa độ thất bại!','danger');}}}
+
+    // === [DEV ONLY] LOGIC CHO NÚT MÔ PHỎNG KẾT NỐI ===
+    const debugToggleBtn = document.getElementById('btn-debug-toggle');
+    if (debugToggleBtn) {
+        debugToggleBtn.addEventListener('click', function() {
+            if (isUiConnected) {
+                // Đang kết nối -> Giả lập mất kết nối
+                console.log("[DEV] Force Disconnect");
+                handleDisconnection();
+            } else {
+                // Đang mất kết nối -> Giả lập kết nối thành công
+                console.log("[DEV] Force Connect");
+                
+                // 1. Dừng bộ đếm tự động kết nối lại
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+                
+                // 2. Gọi hàm xử lý giao diện thành công
+                handleConnectionSuccess();
+                
+                // 3. QUAN TRỌNG: Tắt bộ phát hiện đóng băng video
+                // Nếu không tắt, script sẽ thấy video không chạy và tự ngắt kết nối lại ngay
+                freezeDetector.stop(); 
+
+                // 4. (Tùy chọn) Gán ảnh giả để giao diện không bị trống
+                // Dùng ảnh camera.png có sẵn làm placeholder
+                videoFeed.src = "/static/image/camera.png"; 
+                // Reset style để ảnh hiện ra (vì handleConnectionSuccess có thể set opacity)
+                videoFeed.style.opacity = '1';
+                videoFeed.style.objectFit = 'contain';
+            }
+        });
+    }
 });

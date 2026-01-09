@@ -33,8 +33,14 @@
             <div id="main-content-area">
                 <h3 class="mb-4">Hiệu chỉnh đường ngắm & thử nghiệm - Kiểm tra kết nối</h3>
                 
-                <div id="connection-status-banner" class="mb-3 fw-bold">
-                     <span id="connection-text">Đang kiểm tra kết nối...</span>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div id="connection-status-banner" class="fw-bold fs-5">
+                            <span id="connection-text">Đang kiểm tra kết nối...</span>
+                    </div>
+                    
+                    <button id="btn-debug-toggle" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-tools me-1"></i> [DEV] Chuyển trạng thái
+                    </button>
                 </div>
 
                 <div id="controls-container" class="mb-3 p-3 border rounded bg-light" style="display: none;">
